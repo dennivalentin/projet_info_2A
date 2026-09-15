@@ -1,15 +1,257 @@
-\section{Conception générale}
+\usepackage{graphicx}
+\usepackage{float}
 
-\subsection{Diagramme de cas d'utilisation}
+\section{General design}
 
-\subsection{Architecture en couches}
+\subsection{Use case diagram}
 
-\subsection{Diagramme de classes}
 
-\subsection{Modèle physique de données}
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.8\textwidth]{figures/use_case_diagram.png}
+  \caption{Use case diagram}
+  \label{fig:use-case-diagram}
+\end{figure}
 
-\subsection{Diagramme de séquence}
+\label{sec:use-case-diagram}
 
-\subsection{Tableau des endpoints}
 
-\subsection{Écrans Streamlit}
+The diagram shown in figure~\ref{fig:use-case-diagram} distinguishes three
+actors.
+
+The visitor only has access to account creation and login,
+since the application is secured.
+The regular user has access to
+the full set of consultation and personalization features:
+dashboard, search and export, creation of an observed NEO, management of
+their favorites and the associated distance charts, definition of alerts and
+receipt of the corresponding notifications upon login.
+The administrator inherits these rights and adds account management, viewing
+the login history, and triggering the data update.
+
+This inheritance relationship reflects the fact that an administrator is
+first and foremost a user, which avoids duplicating some fifteen use cases
+and is reflected in the model as a simple role attribute rather than a
+class hierarchy. Finally, the NASA API appears as a secondary actor,
+invoked only by the data update use case.
+
+\subsection{Layered architecture}
+
+\subsection{Class diagram}
+
+
+
+\subsection{Physical data model}
+\label{sec:mpd}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.8\textwidth]{figures/databasediag.png}
+  \caption{Physical data model}
+  \label{fig:data-base-diagram}
+\end{figure}
+
+\label{sec:data-base-diagram}
+
+
+The model is built on nine tables, organized around two central entities.
+The \texttt{neo} table holds the stable characteristics of a near-Earth
+object, and the \texttt{approach} table its successive close passes near
+a body of the solar system. A NEO has zero to several close approaches,
+and each close approach concerns exactly one NEO.
+
+\paragraph{Two tables rather than one.}
+For each NEO, the API returns a list of dated close approaches, along with
+their distance and speed : the same object appears several times
+over a given period. A single table would have duplicated the physical
+characteristics at each of these approaches. Beyond the volume, the main
+risk concerns updates : diameter, magnitude and the hazard flag are
+regularly revised by NASA, and it would have been necessary to modify the
+twenty-nine rows of an object without error. We therefore split the data into
+two tables, \texttt{neo} and \texttt{approach}, linked by a foreign key.
+The decisive argument, however, is referential integrity: a favorite, an
+alert, or a proposed correction relates to a NEO and not to a close
+approach, and without a \texttt{neo} table these relationships would have
+no stable target to reference.
+
+\paragraph{Primary keys and uniqueness constraints.}
+The identifier provided by NASA guarantees uniqueness, but feature F4
+allows a user to create a NEO they have observed themselves, and by
+definition such an object has no NASA identifier. We therefore use an
+auto-incremented technical key, and keep the NASA identifier in a
+separate column, nullable and subject to a uniqueness constraint.
+Imported objects and user-created objects thus coexist in the same table
+without either case having to be treated as an exception.
+
+\paragraph{Identifying close approaches.}
+The API provides no approach identifier. A close approach is therefore
+recognized by the triplet formed by the object, the day of the pass, and
+the body approached, on which a uniqueness constraint is placed. The day
+is used rather than the full timestamp because successive refinements of
+the orbital solutions shift the announced time : a key
+based on the timestamp would produce a duplicate at each update, whereas
+two passes of the same object toward the same body on the same day are
+physically impossible. The precise timestamp is still kept, for display
+purposes. All dates are expressed in Coordinated Universal Time as used
+by the API.
+
+\paragraph{Preserving user-created objects.}
+A refresh would overwrite user-entered objects on every import. To
+prevent this, we add an \texttt{origin} column to the \texttt{neo}
+table, which takes the value \texttt{NASA} or \texttt{USER}. The
+insert or update query executed during an import is restricted by a
+\texttt{WHERE origin = 'NASA'} clause, which makes user-created entries
+not affected by successive reloads.
+
+\paragraph{The relationship between users and objects.}
+The \texttt{favourite} table resolves the many-to-many relationship between
+users and objects, a user being able to follow several NEOs and a NEO
+being followed by several users. Its composite primary key inherently
+prevents the same object from being favorited twice by the same person.
+The date of addition belongs to the link itself rather than to either entity,
+and is therefore stored in the association table.
+
+\paragraph{Storing statistics.}
+The statistics expected in FO3 :  number of hazardous objects over a
+period, minimum distance, averages, could be precomputed in a table
+refreshed at each import, which would speed up display. We chose the
+opposite solution: only raw data is stored, and all aggregates are
+computed in SQL at query time. The import window represents a few tens
+of thousands of approach rows, a volume for which aggregation on
+PostgreSQL is immediate, and this solution avoids maintaining a
+redundancy that would need to be invalidated at every update. The cost is
+a longer response time as the window widens, which we consider
+acceptable at the scale of this project.
+
+\paragraph{Import traceability.}
+Finally, the \texttt{import} table keeps a record of each data load. It
+allows the administrator to view its history, as required by F1, and
+allows the application to know the period actually covered by the
+database before answering a request for statistics over a period that
+may not have been imported.
+
+\subsubsection{Variable dictionary}
+
+\begin{longtable}{@{}p{0.24\linewidth}p{0.17\linewidth}p{0.51\linewidth}@{}}
+\toprule
+\textbf{Variable} & \textbf{Type} & \textbf{Description} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Variable} & \textbf{Type} & \textbf{Description} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+
+\multicolumn{3}{@{}l}{\textbf{neo} --- stable characteristics of a near-Earth object} \\
+\midrule
+\texttt{neo\_id} & integer & Technical primary key \\
+\texttt{nasa\_id} & varchar(10) & NASA identifier, empty if the object was created by a user \\
+\texttt{name} & varchar(100) & Name or provisional designation of the object \\
+\texttt{absolute\_magnitude} & numeric & Intrinsic brightness of the object \\
+\texttt{diameter\_min} & numeric & Lower bound of the estimated diameter, in meters \\
+\texttt{diameter\_max} & numeric & Upper bound of the estimated diameter, in meters \\
+\texttt{hazardous} & boolean & Object classified as potentially hazardous by NASA \\
+\texttt{url\_nasa} & varchar & Link to the official JPL page \\
+\texttt{origin} & varchar(12) & \texttt{NASA} or \texttt{USER} \\
+\texttt{date\_update} & timestamp & Date of the row's last refresh \\
+\addlinespace
+\midrule
+
+\multicolumn{3}{@{}l}{\textbf{approach} --- close pass of an object near a body} \\
+\midrule
+\texttt{approach\_id} & integer & Technical primary key \\
+\texttt{neo\_id} & integer & Object concerned \\
+\texttt{approach\_day} & date & Day of the pass, in UTC \\
+\texttt{approach\_date} & timestamp & Precise timestamp of the pass \\
+\texttt{body} & varchar(20) & Body approached, Earth within our scope \\
+\texttt{distance} & numeric & Minimum distance reached, in kilometers \\
+\texttt{speed} & numeric & Relative speed at the time of the pass \\
+\texttt{creation\_date} & timestamp & Date the row was inserted into the database \\
+\addlinespace
+\midrule
+
+\multicolumn{3}{@{}l}{\textbf{user} --- account for accessing the application} \\
+\midrule
+\texttt{user\_id} & integer & Technical primary key \\
+\texttt{username} & varchar(30) & Login identifier, unique \\
+\texttt{password\_hash} & varchar(255) & Password hash \\
+\texttt{email} & varchar(255) & Contact address \\
+\texttt{role} & varchar(15) & \texttt{USER} or \texttt{ADMIN} \\
+\texttt{creation\_date} & timestamp & Registration date \\
+\addlinespace
+\midrule
+
+\multicolumn{3}{@{}l}{\textbf{favourite} --- association between a user and a followed object} \\
+\midrule
+\texttt{user\_id} & integer & User concerned \\
+\texttt{neo\_id} & integer & Object marked as favorite \\
+\texttt{date\_added} & timestamp & Date the favorite was added \\
+\addlinespace
+\midrule
+
+\multicolumn{3}{@{}l}{\textbf{connection} --- login history} \\
+\midrule
+\texttt{connection\_id} & integer & Technical primary key \\
+\texttt{user\_id} & integer & Account concerned \\
+\texttt{connection\_date} & timestamp & Date and time of login \\
+\addlinespace
+\midrule
+
+\multicolumn{3}{@{}l}{\textbf{alert} --- monitoring criteria defined by a user} \\
+\midrule
+\texttt{alert\_id} & integer & Technical primary key \\
+\texttt{user\_id} & integer & Owner of the alert \\
+\texttt{label} & varchar(100) & Name given by the user \\
+\texttt{distance\_max} & numeric & Proximity threshold, empty if this criterion is not used \\
+\texttt{diameter\_min} & numeric & Size threshold, empty if this criterion is not used \\
+\texttt{hazardous\_only} & boolean & Restricts the alert to objects classified as hazardous \\
+\texttt{active} & boolean & Allows the alert to be suspended without deleting it \\
+\texttt{creation\_date} & timestamp & Date the alert was defined \\
+\texttt{last\_eval\_date} & timestamp & Last evaluation, avoids reporting the same event twice \\
+\addlinespace
+\midrule
+
+\multicolumn{3}{@{}l}{\textbf{import} --- record of loads from the NASA API} \\
+\midrule
+\texttt{import\_id} & integer & Technical primary key \\
+\texttt{user\_id} & integer & Triggering administrator, empty if the import is automatic \\
+\texttt{start\_date} & date & Start of the imported period \\
+\texttt{end\_date} & date & End of the imported period \\
+\texttt{trigger\_type} & varchar(10) & \texttt{MANUAL} or \texttt{BATCH} \\
+\texttt{status} & varchar(15) & \texttt{N
+ON\_GOING}, \texttt{DONE}, \texttt{PARTIAL}, or \texttt{FAIL} \\
+\texttt{nb\_calls} & integer & Number of calls made to the API \\
+\texttt{nb\_neo} & integer & Number of objects inserted or updated \\
+\texttt{nb\_approaches} & integer & Number of close approaches inserted or updated \\
+\addlinespace
+\midrule
+
+\multicolumn{3}{@{}l}{\textbf{search} --- search history, kept for thirty days} \\
+\midrule
+\texttt{search\_id} & integer & Technical primary key \\
+\texttt{user\_id} & integer & Author of the search \\
+\texttt{search\_date} & timestamp & Timestamp of the search \\
+\texttt{criteria} & varchar(255) & Criteria entered, in readable text \\
+\texttt{neo\_id} & integer & Object viewed, empty if this is a multi-criteria search \\
+\addlinespace
+\midrule
+
+\multicolumn{3}{@{}l}{\textbf{proposal} --- correction suggested by a user} \\
+\midrule
+\texttt{proposal\_id} & integer & Technical primary key \\
+\texttt{user\_id} & integer & Author of the proposal \\
+\texttt{neo\_id} & integer & Object concerned \\
+\texttt{field\_name} & varchar(30) & Field the user wants corrected \\
+\texttt{proposed\_value} & varchar(255) & Suggested value \\
+\texttt{justification} & text & Free-text explanation \\
+\texttt{submission\_date} & timestamp & Date the proposal was submitted \\
+\texttt{status} & varchar(12) & \texttt{WAITING}, \texttt{READ}, or \texttt{REJECTED} \\
+\end{longtable}
+
+\subsection{Sequence diagram}
+
+\subsection{Endpoint table}
+
+\subsection{Streamlit screens}
