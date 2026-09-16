@@ -263,7 +263,30 @@ ON\_GOING}, \texttt{DONE}, \texttt{PARTIAL}, or \texttt{FAIL} \\
 
 \subsection{Packages diagram}
 
+The application is built upon a strict layered architecture to separate concerns and ensure maintainability. The \texttt{FRONTEND}, built with Streamlit, manages the user interface and captures user inputs. It communicates via HTTP requests with the \texttt{CONTROLLER} layer, handled by FastAPI. The controller routes these requests to the \texttt{SERVICE LAYER}, which acts as the "brain" of the project, executing the core business logic and interacting with the external NASA API when data updates are required. Finally, the \texttt{DAO} (Data Access Object) is responsible for data persistence; it translates Python commands into SQL queries to interact with the local PostgreSQL \texttt{DATABASE}. The dependencies flow strictly downwards, preventing circular imports.
+
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.8\textwidth]{figures/diagramme_packages.drawio.png}
+  \caption{Packages diagram}
+  \label{fig:packages-diagram}
+\end{figure}
+
 \subsection{Sequence diagram}
+
+This sequence diagram details the internal execution flow when a user searches for near-Earth objects based on specific criteria. When the search is submitted, the request travels from the Streamlit frontend down to the service layer. The DAO then executes a SQL JOIN query between the neo and approach tables in the local PostgreSQL database. Crucially, this read operation relies entirely on our pre-populated database and does not trigger any external calls to the NASA API.  The diagram highlights two alternative outcomes using an alt block: if matches are found, the data is formatted and passed back to the frontend to be displayed as a sortable table. An opt (optional) block illustrates the CSV export feature, which is handled purely on the client side without querying the database again. If no NEO matches the criteria, the system gracefully propagates an empty list back to the user interface to display a "No results found" message. 
+
+
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.8\textwidth]{figures/diagramme_sequence.drawio.png}
+  \caption{Sequence diagram}
+  \label{fig:sequence-diagram}
+\end{figure}
+
+
 
 \subsection{Endpoint table}
 
