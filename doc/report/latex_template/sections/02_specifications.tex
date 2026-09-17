@@ -10,11 +10,146 @@ To meet these objectives, NEO-Watch includes a user account management system an
 
 \vspace{0.25cm}
 
-The scope of the project is thus defined around three main areas: access to NEO data, searching for NEOs, and customization for each user. The various features designed to meet these objectives will be detailed in the following sections of the specifications, along with how those features will  choices selected by the group.
+The scope of the project is thus defined around three main areas: access to NEO data, searching for NEOs, and customization for each user. The various features designed to meet these objectives will be detailed in the following sections of the specifications.
 
-\subsection{Open questions and design choices}
+\subsection{Questions and choices}
+
+This section presents the choices made about the data source, the imported
+data and the update policy. The way the data is split into tables, the
+identification of objects, the protection of user-created NEOs and the
+storage of statistics follow from these choices and are detailed in
+Section~\ref{sec:mpd}.
+
+\subsubsection{Choice of the API entry point}
+
+The NASA NeoWs API offers three entry points: \texttt{/neo/browse}, which
+lists all the NEOs; \texttt{/feed}, which gives all the close approaches
+within a period; and \texttt{/neo/\{id\}}, which shows all the details about
+an object. One page of \texttt{/neo/browse} shows at most 20 NEOs. As more
+than 60,000 NEOs are registered, browsing the catalog requires 3,114 calls,
+and since each object has an average of 29 approaches, this represents about
+1.8 million rows. Moreover, \texttt{/neo/browse} is organized by NEO, whereas
+F2, F3 and F6 work by period  : each such request would require reading the
+whole catalog to extract a few approaches.
+
+We therefore decided not to use \texttt{/neo/browse} and to keep only
+\texttt{/feed} as the source of our database. It is completed with
+\texttt{/neo/\{id\}} when a user marks a NEO as a favorite. The consequence
+of this choice is that we will never have access to the full catalog : a NEO
+that is far from Earth during our import will not be present in our
+database. The application focuses only on close objects, not on small
+objects or those too far away.
+
+\subsubsection{API limits and import cost}
+
+Filling the database has limits and a cost. With one key, we can make 2,000
+requests per hour. In addition, \texttt{/feed} limits the period of a
+request to a maximum of seven days; beyond one week, a 400 error is raised.
+Filling a three-year database requires about 157 calls (1,096 days divided
+by 7), whereas \texttt{/neo/browse} would have required 3,114 calls. We also
+decided that each group member will use their own key rather than a single
+shared key : running many imports during development will probably require
+more requests than one key allows, and would therefore block the other
+members.
+
+\subsubsection{Selection of the data used}
+
+The API does not provide a precise diameter value, only a size interval. We
+could have kept the mean of the minimum and maximum of the interval, but
+since this number is not present in the data, we chose to keep only the
+minimum value. This choice is more cautious, especially for F6: with an
+alert such as ``more than 100 m wide'', we are sure that the NEO's diameter
+is effectively greater than 100 m. The complete interval is shown on the
+NEO's detail page, and the minimum value is used only for sorting and
+filtering. For the same reasons of consistency, measurements are expressed
+in kilometers (km) and kilometers per hour (km/h).
+
+NASA gives each approach distance in kilometers, miles, lunar distances and
+astronomical units. The lunar distance is the most understandable for an
+inexperienced user, but the people we aim to reach are already passionate
+about astronomy. Therefore, besides distances in kilometers, users can also
+read them in astronomical units, which we do not store since they are
+obtained by a simple division.
+
+Finally, the number of potentially hazardous NEOs requested by F2 requires
+no computation, as the API already provides the attribute
+\texttt{is\_potentially\_hazardous\_asteroid}.
+
+\subsubsection{Import window}
+
+F2 asks for upcoming approaches, which pulls towards the future, and FO3
+asks for the evolution of the number of approaches, which pulls towards the
+past. For F5, which requires the distance history of a favorite,
+\texttt{/neo/\{id\}} returns all the approaches of the NEO in a single call,
+without anything having to be imported. We import two years of past and one
+year of future data. The past is imported once and considered frozen, with
+no reason to be refreshed.
+
+Since an object passes again on average every ten years, each NEO appears
+only once in our window. A final restriction concerns the
+nature of possible statistics. Any statistic about the evolution of a
+characteristic over time is out of reach, and this is not a limitation of
+the import window but of the model itself. What FO3 can offer is of another
+kind : distributions over the population of objects in the database (size
+distribution, proportion of potentially hazardous objects).
+
+\subsubsection{Data updates}
+
+Each daily update adds one day at the end of the one-year future window
+(one call) and refreshes the next thirty days with the NEOs newly discovered
+over that period (five calls in seven-day periods), which amounts to about
+six calls per day. We do not purge: the volume involved is small and there
+is no maintenance cost. A purge would also raise an integrity issue, since a
+NEO referenced by a favorite or an alert cannot disappear.
+
+F1 gives the administrator the responsibility of triggering updates, and FO7
+proposes automatic triggering. We implement both: a daily batch process and
+a button in the administrator space that call the same service. An ongoing
+import is signaled by a status in the \texttt{import} table.
+
+\subsubsection{Export formats}
+
+F3 requires an export of search results and F5 an export of distance
+history. Tabular data is exported as CSV. These exports trigger no call to
+NASA : a favorite's history was retrieved when it was marked as a favorite
+and lives in the database.
+
+\subsubsection{NEOs creation by users}
+
+One of the crucial points about being able to create NEOs, is that many users could create a NEO according to one recently observed. But we do not want a lot of creation just for one real NEO. In order to fix this, we chose that, to create a NEO a request has to be sent, and then an admin will accept it or not. By this process we also avoid some creations that could be made just as a joke for example.
+Another point is how do we know if a NEO has been created by a user or not. In the class Neo, an attribute custom is present. It is used to know if a user or the NASA has referenced the object. But as the class Neo is linked with the class Proposal, we can also know who created the NEO if necessary.
+
+This Proposal class is needed, when the user wants to add a NEO, he can propose his idea and he gives as much information as he can, after one admin will inspect it, and then accept or decline the proposal.
+
+\subsubsection{Alerts}
+
+The goal of this function is to send a notification according to the criteria the user has chosen. In order to do it, we need a criterion that will send the alert. According to the information available from the NASA API, we will have three criteria. The first one is if a NEO with a bigger diameter than a chosen value is detected, then if the NEO is closer than a maximum distance from an object like the Earth or Venus. Finally if a precise NEO, chosen by the user is detected. All of these can be combined together.
+As the notification has to be sent when the user logs in, we can evaluate these criteria at this moment. Another option would have been to send the notification each time the database is updated, however it means that the user could be notified several times in one use which can be annoying for him if he needs to regularly update the database. There could be the same issue if this person logs in many times in a day but we can assume that usually people will use the application once or twice a day.
+Moreover, one major problem about notifications, is that we do not want to send the same notification over and over. Once it has been sent, it has to be the first and last time. In order to do that, we could have saved all the notifications sent but with time, the table could become too voluminous. One way to answer this issue, is to save only the last criteria asked by the user, and delete it once it has been shown.
+
+\subsubsection{Account}
+
+As each admin has to be promoted by another admin, we obviously need to create by ourselves the first admin.  We can create a special id in the code, which has by default the admin status. And then, when a new admin is needed, the first one can upgrade an account to “admin”. When the new role is accepted, nothing changes except his permissions. An admin is also a user. He can do whatever a user can do, just he has the status of “admin” which provides him other functions to use.
+
+
+
+Once an account has been deleted, his favourites and notifications are also deleted. However, the NEOs created by the user are kept in the table. As we assume that our user will be well informed, we suppose that their creations are useful and that is the reason why we want them to be still there.
+
+\subsubsection{Optional features}
+
+We chose to add three optional features to our app. The first one is FO3. It consists of providing some other statistics to the user. This one is important for us as we suppose that our users will be passionate about astronomy, and therefore, they will request more information about the NEOs.
+Then we will add FO7. The principle is to update our database regularly. As this function already exists, but it has to be used manually, we want it to be automatic in case an admin cannot update it often enough.
+
+
+
+Finally, our last choice was to choose FO8 which shows the picture of the day provided by NASA whenever the user wants. In fact, it does not provide any information, but it can be pretty pleasant for the user to see different pictures of our space as our users are probably here to inform themselves, seeing a new picture every day can push them to search about what they are looking for.
 
 \subsection{Feature description}
+
+The first six features detailed in this section correspond to the core requirements (F1 to F6) explicitly mandated by the project specifications.
+
+
+\vspace{0.25cm}
 
 The first functionality of NEO-Watch concerns user management and access to the application. The application will provide a secured access system based on user accounts. A regular user will be able to create an account and log in to access the application's features and their personal space. Administrators will have additional permissions, allowing them to manage user accounts, consult connection history and trigger a data update. An administrator will also have access to the regular features of the application, while benefiting from these additional management capabilities.
 
