@@ -4,11 +4,11 @@
 
 The NEO-Watch project involves developing an application that allows users to analyze data on near-Earth objects provided by NASA. The application is designed to let users view available information on NEOs, search for specific objects, and track them more easily using customized features.
 
-\vspace{0.25}
+\vspace{0.25cm}
 
 To meet these objectives, NEO-Watch includes a user account management system and a personal dashboard where each user can access their own information. The application also offers a search function for NEOs in its database, as well as the ability to create and edit a favorites list. Users can also add specific NEOs to the database and set up alerts based on the information that interests them.
 
-\vspace{0.25}
+\vspace{0.25cm}
 
 The scope of the project is thus defined around three main areas: access to NEO data, searching for NEOs, and customization for each user. The various features designed to meet these objectives will be detailed in the following sections of the specifications, along with the implementation choices selected by the group.
 
@@ -19,36 +19,36 @@ The scope of the project is thus defined around three main areas: access to NEO 
 The first functionality of NEO-Watch concerns user management and access to the application. The application will provide a secured access system based on user accounts. A regular user will be able to create an account and log in to access the application's features and their personal space. Administrators will have additional permissions, allowing them to manage user accounts, consult connection history and trigger a data update. An administrator will also have access to the regular features of the application, while benefiting from these additional management capabilities.
 
 
-\vspace{0.25}
+\vspace{0.25cm}
 
 
 Once connected, the user will have access to a personalized dashboard providing an overview of the most relevant information available in NEO-Watch. It will notably present upcoming close approaches, potentially hazardous NEOs among these approaches, and the object expected to come closest to Earth over a given period. The dashboard will also take the user's preferences into account by displaying information related to their favourite NEOs. The objective is to provide the user with a quick overview of the current situation without requiring them to perform a search each time they use the application.
 
 
-\vspace{0.25}
+\vspace{0.25cm}
 
 The application will also provide a browsing and search system allowing users to explore the NEOs available in the database. Several search criteria will be available, such as the name or identifier of an object, its dimensions or the date of its next close approach. The results will be sortable according to different criteria in order to make it easier to find the most relevant objects. By selecting a NEO, the user will be able to access a more detailed view containing its relevant characteristics and information about its close approaches to Earth. Search results will also be exportable, allowing users to keep or further process the information obtained from the application.
 
-\vspace{0.25}
+\vspace{0.25cm}
 
 NEO-Watch will additionally allow users to create NEOs in the application's database. This feature is intended to give users the possibility of adding an object they have observed when it is not already available in the data used by the application. These user-created objects will be kept separately from the data provided by NASA so that they remain available when the database is subsequently updated. This functionality therefore allows the database to contain both information originating from NASA and objects added directly by NEO-Watch users.
 
-\vspace{0.25}
+\vspace{0.25cm}
 
 
 Another important feature of the application will be the management of a favourite NEO list. Users will be able to add or remove objects from their personal list and consult it at any time. The application will keep historical information about the distance of these favourite objects from Earth, making it possible to monitor their evolution over time. This history will also be used to produce graphs that can be exported by the user, providing a more visual way of following the objects they are interested in.
 
 
-\vspace{0.25}
+\vspace{0.25cm}
 
 Finally, users will be able to create personalized alerts based on information concerning NEOs and their close approaches. For example, a user could request to be notified when an asteroid exceeding a given size passes within a specified distance of Earth. The application will regularly check the available data against the criteria defined by the user and store the corresponding notifications. These notifications will then be displayed when the user logs in, allowing them to quickly identify events matching their interests.
 
 
-\vspace{0.25}
+\vspace{0.25cm}
 
 There will also be a feature that would provide users with additional information about the NEOs contained in the database, such as the distribution of their sizes, the proportion of potentially hazardous objects or the number of close approaches over a given period. The statistics would be presented in a way that makes them easy to interpret and relevant to the information available in NEO-Watch.
 
-\vspace{0.25}
+\vspace{0.25cm}
 
 Moreover, NEO-Watch’s database will be automatically reloaded. NEO-Watch will already provide administrators with the possibility of manually updating the application's data. The optional functionality would extend this mechanism by allowing the update process to be performed automatically on a regular basis. This would reduce the need for an administrator to manually maintain the database and would help keep the information used by the application up to date.
 At last, the app will give “the NASA Astronomy Picture of the Day” to the user. Users will be able to access the picture provided by NASA through its dedicated API. Although this feature is not directly related to the monitoring of NEOs, it provides a more general and engaging astronomical experience. It also gives users the opportunity to discover another aspect of NASA's available data alongside the information provided by NEO-Watch.
