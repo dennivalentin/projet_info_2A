@@ -288,21 +288,48 @@ This sequence diagram details the internal execution flow when a user searches f
 
 
 
-\begin{figure}[H]
-  \centering
-  \includegraphics[width=0.8\textwidth]{figures/diagramme_sequence.drawio.png}
-  \caption{Sequence diagram}
-  \label{fig:sequence-diagram}
-\end{figure}
+\begin{sidewaysfigure}
+    \centering
+    \includegraphics[width=\textwidth]{figures/diagramme_sequence.drawio.png}
+    \caption{Sequence diagram for NEO Search (F3)}
+    \label{fig:seq_search}
+\end{sidewaysfigure}
 
+\subsection{Streamlit screens}
+
+NEO-Watch's frontend will be built with Streamlit. As no screens have been implemented yet, this section presents the planned screen structure, derived from the choices made in section 2.2.
+
+\paragraph{Home / Dashboard.}
+Entry point after login. Lists upcoming approaches within a selectable window, the count of potentially dangerous NEOs among them (flagged via the API's \texttt{is\_potentially\_hazardous\_asteroid} field), and the closest NEO to Earth over a set period (F2), alongside the user's favorites and shortcuts to search, favorites and alerts.
+
+\paragraph{Search.}
+Lets the user query approaches over a date range, by name, id, dimensions or date (F3). Results are shown as a sortable table (distance in km and AU, speed in km/h) with a CSV export button, built directly from stored data with no additional call to the NASA API.
+
+\paragraph{NEO detail page.}
+Full record for one object: diameter range as returned by the API, distances, an "add to favorites" action, and for favorites, the distance history retrieved via \texttt{/neo/id} (F5), with CSV export of the history graph.
+
+\paragraph{Create a NEO.}
+Form for user-submitted observations (F4), limited to the fields an amateur observer can realistically provide; submitted objects are tagged \texttt{origin = USER} to protect them from the daily NASA import.
+
+\paragraph{Alerts.}
+Lets the user define and manage notification criteria (diameter, distance thresholds) (F6), and view past notifications received at login.
+
+\paragraph{Statistics (FO3).}
+Distributions over the objects currently in the database (size, share of hazardous objects), computed on demand in SQL rather than pre-aggregated.
+
+\paragraph{Picture of the Day (FO8).}
+Displays the NASA APOD image and description.
+
+\paragraph{Admin panel.}
+Account management and connection history (F1), a manual "trigger update" button calling the same service as the scheduled daily job (FO7), and the status of the current/last import.
 
 
 \subsection{Endpoint table}
 
+The following table details the endpoints:
 
 \begin{table}[htbp]
     \centering
-    \renewcommand{\arraystretch}{1.4} % Augmente un peu l'espacement vertical pour la lisibilité
     \begin{tabular}{|l|p{9cm}|}
         \hline
         \textbf{Endpoint} & \textbf{Description} \\
@@ -336,30 +363,4 @@ This sequence diagram details the internal execution flow when a user searches f
     \label{tab:endpoints}
 \end{table}
 
-\subsection{Streamlit screens}
 
-NEO-Watch's frontend will be built with Streamlit. As no screens have been implemented yet, this section presents the planned screen structure, derived from the choices made in section 2.2.
-
-\paragraph{Home / Dashboard.}
-Entry point after login. Lists upcoming approaches within a selectable window, the count of potentially dangerous NEOs among them (flagged via the API's \texttt{is\_potentially\_hazardous\_asteroid} field), and the closest NEO to Earth over a set period (F2), alongside the user's favorites and shortcuts to search, favorites and alerts.
-
-\paragraph{Search.}
-Lets the user query approaches over a date range, by name, id, dimensions or date (F3). Results are shown as a sortable table (distance in km and AU, speed in km/h) with a CSV export button, built directly from stored data with no additional call to the NASA API.
-
-\paragraph{NEO detail page.}
-Full record for one object: diameter range as returned by the API, distances, an "add to favorites" action, and for favorites, the distance history retrieved via \texttt{/neo/id} (F5), with CSV export of the history graph.
-
-\paragraph{Create a NEO.}
-Form for user-submitted observations (F4), limited to the fields an amateur observer can realistically provide; submitted objects are tagged \texttt{origin = USER} to protect them from the daily NASA import.
-
-\paragraph{Alerts.}
-Lets the user define and manage notification criteria (diameter, distance thresholds) (F6), and view past notifications received at login.
-
-\paragraph{Statistics (FO3).}
-Distributions over the objects currently in the database (size, share of hazardous objects), computed on demand in SQL rather than pre-aggregated.
-
-\paragraph{Picture of the Day (FO8).}
-Displays the NASA APOD image and description.
-
-\paragraph{Admin panel.}
-Account management and connection history (F1), a manual "trigger update" button calling the same service as the scheduled daily job (FO7), and the status of the current/last import.
