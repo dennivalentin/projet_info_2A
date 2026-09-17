@@ -32,6 +32,13 @@ class hierarchy.
 
 \subsection{Layered architecture}
 
+The layered architecture is the foundation of our application. Each task required by the application is distributed between the different layers which have different roles.
+
+The first one is the frontend. Its role is the only layer that users see and interact with. It shows everything that has to be displayed. In addition, it is also where people can press the buttons in order to navigate in the app. He will be able to choose the features he wants to try. Once the function is chosen, the request goes to the controller which is part of the backend.
+
+The controller receives and sends https requests from the frontend, like the choice of users, or from the API. Its role is to link the API with the service, which is where all the process truly happens. In the classes Service, we have all the methods in order to make our application useful. It is like the brain of the project. For example, that is where the statistics are calculated, we can also create or delete a NEO. But, to be able to do that, it needs the data. Therefore, at this moment, the service calls the DAO (Data Access Object). The DAO receives the request in python of the service, converts it in sql, and sends that to the database. Once the response from the table is arrived, it is translated back to python, in an object that the app understands, and given to the concerned service.
+
+
 \subsection{Class diagram}
 
 \label{sec:mpd}
@@ -45,6 +52,11 @@ class hierarchy.
 
 \label{sec:class-diagram}
 
+The class diagram contains most of the classes that we will need for the app. Many classes will be coded later, but we chose to show only these ones, because other classes about DAO or the controller for example, do not provide a lot of information as they are always present in this kind of app. What we can see is the heart of the project, it is the structure of all the functions provided by the app.
+
+Moreover, except for the classes Neo and User; the classes that have been created will be used only in one function. Even if we wanted to gather them as much as possible, in order to simplify our app, as all the functions are pretty different, we could not reduce their count.
+
+Among all these, one class is isolated from the others. ApodData is the class that will fulfill the features of displaying the Picture of the Day. As its only role is to show this picture to the user, there is no link between an user information or a Neo, the class does not need any link.
 
 
 
