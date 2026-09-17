@@ -286,14 +286,14 @@ The application is built upon a strict layered architecture to separate concerns
 
 This sequence diagram details the internal execution flow when a user searches for near-Earth objects based on specific criteria. When the search is submitted, the request travels from the Streamlit frontend down to the service layer. The DAO then executes a SQL JOIN query between the neo and approach tables in the local PostgreSQL database. This read operation relies entirely on our pre-populated database and does not trigger any external calls to the NASA API.  The diagram highlights two alternative outcomes using an alt block: if matches are found, the data is formatted and passed back to the frontend to be displayed as a sortable table. An opt (optional) block illustrates the CSV export feature, which is handled purely on the client side without querying the database again. If no NEO matches the criteria, the system propagates an empty list back to the user interface to display a "No results found" message. 
 
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.8\textwidth]{figures/diagramme_sequence.drawio.png}
+  \caption{Sequence diagram for NEO Search (F3)}
+  \label{fig:seq_search}
+\end{figure}
 
 
-\begin{sidewaysfigure}
-    \centering
-    \includegraphics[width=\textwidth]{figures/diagramme_sequence.drawio.png}
-    \caption{Sequence diagram for NEO Search (F3)}
-    \label{fig:seq_search}
-\end{sidewaysfigure}
 
 \subsection{Streamlit screens}
 
