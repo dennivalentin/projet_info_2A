@@ -183,16 +183,3 @@ Finally, our last choice was to choose FO8 which shows the picture of the day pr
   \item Read-only access to the NASA API: no modification or write access on NASA's side, only NEO-Watch's own data (accounts, added NEOs, alerts, favourites) can be modified
   \item Data freshness: alerts and the dashboard depend on regular updates, which constrains how often synchronization with the API must occur
 \end{itemize}
-
-
-\subsection{Team work and organization}
-
-The whole writing process of our intermediate report was based on a clear set of rules. Firstly, division of labor: everyone in the group contributed, with some members contributing more to certain sections based on differences in skill or familiarity with the topic. Every section not only had a writer but also a designated reviewer, ensuring that each part was checked by someone other than its writer, reducing the risk of errors or inconsistencies going unnoticed.
-
-\vspace{0.25cm}
-
-Beyond the writing itself, the group follows two rules meant to keep both the report and the technical work consistent from the start. The first concerns sequencing: section 2.2 ("Questions and Choices") is written before any other technical section, since it requires obtaining a NASA API key and actually querying the API to understand its real data structure, request quotas, and any missing or unexpected fields. Every other technical section, from the class diagram to the endpoint table, depends on this section, so starting elsewhere would risk having to rework and correct sections a second time.
-
-\vspace{0.25cm}
-
-The second rule concerns vocabulary. The team shares a reference document where naming decisions are fixed once and reused consistently throughout the project, for instance, choosing between "NEO" and "Asteroid," or "Approach" and "CloseApproach." These names must remain identical across the class diagram, the physical data model, and the API endpoints; inconsistent naming between different parts is one of the most visible issues an evaluator can spot, so agreeing on terminology in advance avoids this problem entirely.
