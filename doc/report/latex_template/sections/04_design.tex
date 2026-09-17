@@ -290,4 +290,41 @@ This sequence diagram details the internal execution flow when a user searches f
 
 \subsection{Endpoint table}
 
+
+\begin{table}[htbp]
+    \centering
+    \renewcommand{\arraystretch}{1.4} % Augmente un peu l'espacement vertical pour la lisibilité
+    \begin{tabular}{|l|p{9cm}|}
+        \hline
+        \textbf{Endpoint} & \textbf{Description} \\
+        \hline
+        \texttt{POST /api/v1/auth/login} & Authenticate a user (regular or administrator) and initiate a session. \\
+        \hline
+        \texttt{GET /api/v1/dashboard} & Retrieve personalized dashboard metrics (upcoming approaches, hazardous NEOs count, closest NEO). \\
+        \hline
+        \texttt{GET /api/v1/neos} & Search the local database for NEOs and approaches based on query parameters (name, dates, dimensions). \\
+        \hline
+        \texttt{GET /api/v1/neos/\{neo\_id\}} & Retrieve detailed characteristics and the complete close approach history for a specific NEO. \\
+        \hline
+        \texttt{POST /api/v1/neos} & Submit a new amateur observation to create a custom NEO in the database. \\
+        \hline
+        \texttt{GET /api/v1/users/me/favorites} & Get the authenticated user's list of favorite NEOs. \\
+        \hline
+        \texttt{POST /api/v1/users/me/favorites/\{neo\_id\}} & Add a specific NEO to the user's favorites list. \\
+        \hline
+        \texttt{DELETE /api/v1/users/me/favorites/\{neo\_id\}} & Remove a NEO from the user's favorites list. \\
+        \hline
+        \texttt{GET /api/v1/users/me/alerts} & Retrieve the user's active alert configurations and any pending notifications. \\
+        \hline
+        \texttt{POST /api/v1/users/me/alerts} & Create a new alert configuration (e.g., minimum diameter, maximum distance). \\
+        \hline
+        \texttt{GET /api/v1/stats} & Compute and retrieve global statistics (size distribution, hazardous proportion) from the local database. \\
+        \hline
+        \texttt{POST /api/v1/admin/import} & Trigger a manual data update pulling the latest data from the NASA API into the local database. \\
+        \hline
+    \end{tabular}
+    \caption{Endpoints requiring user identification utilize the \texttt{/users/me/} path, ensuring secure and isolated access to personal favorites and alerts. The \texttt{/api/v1/admin/import} route is restricted to administrator accounts. }
+    \label{tab:endpoints}
+\end{table}
+
 \subsection{Streamlit screens}
