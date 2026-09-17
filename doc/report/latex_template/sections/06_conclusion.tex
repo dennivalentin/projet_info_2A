@@ -1,1 +1,22 @@
 \section{Conclusion}
+At this level, our work has mainly focused on analysis and design rather than implementation. Following the group's own rule, we started by opening the NASA NeoWs API to understand its real constraints, endpoints, rate limits, and data structure, prior to making any technical commitment, since every other technical section depended on it.
+
+\vspace{0.25cm}
+
+This exploration shaped several key decisions. We chose /feed over /neo/browse as our import source, since our features query by date rather than by object, cutting the cost of populating the database from roughly 3,000 calls to about 150. We split neo and approach into two related tables to avoid duplicating an object's physical characteristics across its repeated approaches, and added an origin column so user-created NEOs (F4) survive the daily NASA import instead of being overwritten. We also fixed our shared vocabulary early, so naming stays consistent across the class diagram, the physical data model, and the endpoints, the kind of inconsistency that is clear to a reader.
+
+\vspace{0.25cm}
+
+These choices come with trade-offs we accept knowingly. Our two-year-past/one-year-future import window means NEO-Watch monitors close approaches rather than acting as a full catalogue of near-Earth objects, and any statistic tracking how an object's characteristics change over time is out of reach, not really a limitation of the window's size, but of the model itself.
+
+\vspace{0.25cm}
+
+The remaining work for the final report is the implementation of our features from F1 to F6 and also three chosen optional features (FO3, FO7, FO8), building on the layered architecture (view / services / DAO) defined during this analysis phase, followed by testing against the real API and completion of the final documentation.
+
+\vspace{0.25cm}
+
+Beyond these design trade-offs, NEO-Watch has a few limits by scope rather than by oversight. The app performs no orbital calculations or collision predictions of its own, it displays and organizes NASA's data but never actually reinterprets it, so its accuracy is entirely tied to the NASA API's own accuracy and uptime. Similarly, alerts and tracking are only as current as NASA's import cadence allows; NEO-Watch cannot notify users of an event faster than its source does. Finally, our own database can only ever complement NASA's, not replace or correct it: everything except user accounts, manually added NEOs, alerts, and favorites lists stays read-only by design. In other words, the main setback is that everything is hyper dependent on NASA's API.
+
+\vspace{0.25cm}
+
+More broadly, this project reflects a challenge that goes beyond NEO-Watch itself: as space-observation data becomes more abundant and more public, the real bottleneck shifts from access to usability. Tools like NEO-Watch are one small answer to that shift, turning a raw, technical API into something a non-specialist can actually use day to day. The same logic could extend well past near-Earth objects, to any domain where open scientific data outpaces the tools built to make sense of it.
