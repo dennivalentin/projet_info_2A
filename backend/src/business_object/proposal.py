@@ -16,7 +16,18 @@ class Proposal:
         _justification (str): The user's reasoning or source for the proposal.
         _status (str): The status of the proposal ('pending', 'accepted', 'rejected').
     """
-    def __init__(self, proposal_id: int, neo_id: int, user_id: int, submission_date: datetime, field_name: str, proposed_value: str, justification: str, status: str):
+
+    def __init__(
+        self,
+        proposal_id: int,
+        neo_id: int,
+        user_id: int,
+        submission_date: datetime,
+        field_name: str,
+        proposed_value: str,
+        justification: str,
+        status: str,
+    ):
         self._proposal_id = proposal_id
         self._neo_id = neo_id
         self._user_id = user_id

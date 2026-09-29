@@ -17,7 +17,20 @@ class Neo:
         _custom (bool): True if the NEO was created by a user, False if from NASA.
         _date_update (datetime): The date this record was last updated.
     """
-    def __init__(self, neo_id: int, nasa_id: str, name: str, absolute_magnitude: float, diameter_min: float, diameter_max: float, hazardious: bool, url_nasa: str, custom: bool, date_update: datetime):
+
+    def __init__(
+        self,
+        neo_id: int,
+        nasa_id: str,
+        name: str,
+        absolute_magnitude: float,
+        diameter_min: float,
+        diameter_max: float,
+        hazardious: bool,
+        url_nasa: str,
+        custom: bool,
+        date_update: datetime,
+    ):
         self._neo_id = neo_id
         self._nasa_id = nasa_id
         self._name = name

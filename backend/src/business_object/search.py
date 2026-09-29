@@ -12,7 +12,15 @@ class Search:
         _criteria (str): The search parameters or keywords used.
         _neo_id (int): The ID of the NEO selected from the search results (if any).
     """
-    def __init__(self, search_id: int, user_id: int, search_date: datetime, criteria: str, neo_id: int):
+
+    def __init__(
+        self,
+        search_id: int,
+        user_id: int,
+        search_date: datetime,
+        criteria: str,
+        neo_id: int,
+    ):
         self._search_id = search_id
         self._user_id = user_id
         self._search_date = search_date
