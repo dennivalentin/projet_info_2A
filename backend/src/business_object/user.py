@@ -1,7 +1,7 @@
 from date import datetime
 
 
-class User():
+class User:
     """
     Class describing a user of the app
 
@@ -14,7 +14,15 @@ class User():
         _role (str): The authorization level ('regular', 'admin').
     """
 
-    def __init__(self, user_id: int, username: str, email: str, password_hash: str, cration_date: datetime, role: str)
+    def __init__(
+        self,
+        user_id: int,
+        username: str,
+        email: str,
+        password_hash: str,
+        cration_date: datetime,
+        role: str,
+    ):
         self._user_id = user_id
         self._username = username
         self._email = email

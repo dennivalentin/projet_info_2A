@@ -11,6 +11,7 @@ class ApodData:
         caption (str): The description or explanation provided by NASA.
         url (str): The direct URL to the image resource.
     """
+
     def __init__(self, title: str, date: datetime, caption: str, url: str):
         self.title = title
         self.date = date

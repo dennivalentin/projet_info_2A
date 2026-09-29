@@ -14,7 +14,16 @@ class Approach:
         _approach_day (datetime): The day of the approach (without specific time).
         _body (str): The celestial body being approached (e.g., 'Earth', 'Mars').
     """
-    def __init__(self, approach_id: int, neo_id: int, approach_date: datetime, distance: float, speed: float, body: str):
+
+    def __init__(
+        self,
+        approach_id: int,
+        neo_id: int,
+        approach_date: datetime,
+        distance: float,
+        speed: float,
+        body: str,
+    ):
         self._approach_id = approach_id
         self._neo_id = neo_id
         self._approach_date = approach_date

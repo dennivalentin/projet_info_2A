@@ -16,7 +16,18 @@ class Import:
         _nb_neo (int): The number of Near-Earth Objects imported.
         _nb_approaches (int): The number of close approaches imported.
     """
-    def __init__(self, user_id: int, start_date: datetime, end_date: datetime, trigger_type: str, status: str, nb_calls: int, nb_neo: int, nb_approaches: int):
+
+    def __init__(
+        self,
+        user_id: int,
+        start_date: datetime,
+        end_date: datetime,
+        trigger_type: str,
+        status: str,
+        nb_calls: int,
+        nb_neo: int,
+        nb_approaches: int,
+    ):
         self._user_id = user_id
         self._start_date = start_date
         self._end_date = end_date

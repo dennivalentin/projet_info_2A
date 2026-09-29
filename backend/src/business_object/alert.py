@@ -14,7 +14,17 @@ class Alert:
         _max_distance (float): The maximum approach distance threshold.
         _is_active (bool): Indicates whether the alert is currently active or dismissed.
     """
-    def __init__(self, alert_id: int, neo_id: int, user_id: int, obj_neo: Neo, min_diameter: float, max_distance: float, is_active: bool):
+
+    def __init__(
+        self,
+        alert_id: int,
+        neo_id: int,
+        user_id: int,
+        obj_neo: Neo,
+        min_diameter: float,
+        max_distance: float,
+        is_active: bool,
+    ):
         self._alert_id = alert_id
         self._neo_id = neo_id
         self._user_id = user_id
