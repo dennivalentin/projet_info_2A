@@ -20,7 +20,7 @@ class User:
         username: str,
         email: str,
         password_hash: str,
-        cration_date: datetime,
+        creation_date: datetime,
         role: str,
     ):
         self._user_id = user_id
