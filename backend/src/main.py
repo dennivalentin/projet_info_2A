@@ -9,7 +9,7 @@ from fastapi import FastAPI, Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse, RedirectResponse
 
-from controller import game_controller, login_controller, player_controller
+from controller import login_controller, neo_controller, user_controller
 from utils.env_variables import display_values, load_environment_variables
 from utils.log_utils import LogMiddleware, get_logger, initialize_logs
 from utils.reset_database import ResetDatabase
@@ -17,13 +17,13 @@ from utils.reset_database import ResetDatabase
 logger = get_logger(__name__)
 
 # Initialization
-initialize_logs("Webservice")
+initialize_logs("NEO-Watch")
 
 load_environment_variables()
 display_values()
 
 
-app = FastAPI(title="My Webservice")
+app = FastAPI(title="NEO-Watch")
 
 app.add_middleware(LogMiddleware)
 
@@ -44,9 +44,9 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
     )
 
 
-app.include_router(player_controller.router, prefix="/player", tags=["Players"])
+app.include_router(neo_controller.router, prefix="/neos", tags=["NEOs"])
 app.include_router(login_controller.router, prefix="/login", tags=["Login"])
-app.include_router(game_controller.router, prefix="/game", tags=["Games"])
+app.include_router(user_controller.router, prefix="/users", tags=["Users"])
 
 
 @app.get("/", include_in_schema=False)
@@ -83,4 +83,4 @@ if __name__ == "__main__":
         port=int(os.getenv("UVICORN_PORT", "5000")),
     )
 
-    logger.info("Webservice stopped")
+    logger.info("NEO-Watch stopped")
