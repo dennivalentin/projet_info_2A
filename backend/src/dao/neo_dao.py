@@ -23,20 +23,21 @@ class NeoDao(metaclass=Singleton):
             with DBConnection().connection as connection:
                 with connection.cursor() as cursor:
                     cursor.execute(
-                        "INSERT INTO player(neo_id, nasa_id, name, absolute_magnitude, diameter_min, diameter_max, hazardious, url_nasa, custom, date_update) VALUES "
-                        "(%(neo_id)s, %(nasa_id)s, %(name)s, %(absolute_magnitude)s, %(diameter_min)s, %(diameter_max)s, %(hazardious)s, %(url_nasa)s, %(custom)s, %(date_update)s) "
-                        "RETURNING id_player;",
+                        "INSERT INTO neo(nasa_id, name, absolute_magnitude, diameter_min, diameter_max, hazardious, url_nasa, custom, date_update) VALUES "
+                        "(%(nasa_id)s, %(name)s, %(absolute_magnitude)s, %(diameter_min)s, %(diameter_max)s, %(hazardious)s, %(url_nasa)s, %(custom)s, %(date_update)s) "
+                        "ON CONFLICT (nasa_id) DO UPDATE SET name = EXCLUDED.name, date_update = EXCLUDED.date_update "
+                        "RETURNING neo_id;",
                         {
                             "neo_id": neo._neo_id,
                             "nasa_id": neo._nasa_id,
                             "name": neo._name,
-                            "absolute_magnitude": neo.absolute_magnitude,
+                            "absolute_magnitude": neo._absolute_magnitude,
                             "diameter_min": neo._diameter_min,
-                            "diameter_max": neo.__diameter_max,
+                            "diameter_max": neo._diameter_max,
                             "hazardious": neo._hazardious,
                             "url_nasa": neo._url_nasa,
                             "custom": neo._custom,
-                            "date_update": neo._date_update
+                            "date_update": neo._date_update,
                         },
                     )
                     res = cursor.fetchone()
@@ -46,7 +47,7 @@ class NeoDao(metaclass=Singleton):
 
         created = False
         if res:
-            neo._neo_id = res["neo_id"]
+            neo._neo_id = res["neo_id"] if isinstance(res, dict) else res[0]
             created = True
 
         return created

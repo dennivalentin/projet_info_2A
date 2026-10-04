@@ -1,4 +1,4 @@
-from date import datetime
+from datetime import datetime
 
 
 class Neo:
@@ -6,7 +6,7 @@ class Neo:
     Class describing a NEO in the app
 
     Attributes:
-        _neo_id (int): The internal unique identifier for the NEO.
+        _neo_id (int | None): The internal unique identifier for the NEO, by default None.
         _nasa_id (str): The official identifier provided by NASA.
         _name (str): The name of the Near-Earth Object.
         _absolute_magnitude (float): The absolute magnitude of the NEO.
@@ -20,7 +20,6 @@ class Neo:
 
     def __init__(
         self,
-        neo_id: int,
         nasa_id: str,
         name: str,
         absolute_magnitude: float,
@@ -30,6 +29,7 @@ class Neo:
         url_nasa: str,
         custom: bool,
         date_update: datetime,
+        neo_id: int | None = None,
     ):
         self._neo_id = neo_id
         self._nasa_id = nasa_id

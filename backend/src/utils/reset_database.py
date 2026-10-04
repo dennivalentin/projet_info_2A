@@ -37,7 +37,9 @@ class ResetDatabase(metaclass=Singleton):
         dotenv.load_dotenv()
 
         schema = os.environ["POSTGRES_SCHEMA"]
-        create_schema = f"DROP SCHEMA IF EXISTS {schema} CASCADE; CREATE SCHEMA {schema};"
+        create_schema = (
+            f"DROP SCHEMA IF EXISTS {schema} CASCADE; CREATE SCHEMA {schema};"
+        )
 
         # Utilisation de l'objet Path pour lire les fichiers
         try:
@@ -47,7 +49,9 @@ class ResetDatabase(metaclass=Singleton):
             with open(pop_data_path, encoding="utf-8") as pop_db_file:
                 pop_db_as_string = pop_db_file.read()
         except FileNotFoundError as e:
-            logger.error(f"Erreur de chemin : impossible de trouver le fichier {e.filename}")
+            logger.error(
+                f"Erreur de chemin : impossible de trouver le fichier {e.filename}"
+            )
             raise
 
         try:

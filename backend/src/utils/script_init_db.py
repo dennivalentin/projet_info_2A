@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+
 def run_init_sql():
     """
     Create necessary table for the app (No observation in it)
@@ -23,7 +24,7 @@ def run_init_sql():
         port=os.getenv("POSTGRES_PORT", "5432"),
         dbname=os.getenv("POSTGRES_DB"),
         user=os.getenv("POSTGRES_USER"),
-        password=os.getenv("POSTGRES_PASSWORD")
+        password=os.getenv("POSTGRES_PASSWORD"),
     )
 
     try:
@@ -36,5 +37,6 @@ def run_init_sql():
         print(f"Erreur SQL : {e}")
     finally:
         conn.close()
+
 
 run_init_sql()
