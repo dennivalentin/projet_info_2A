@@ -24,7 +24,9 @@ class GameService:
             HTTPException: 404 if one or both players are not found in the database.
         """
         if id_player == id_opponent:
-            raise HTTPException(status_code=400, detail="Two different players required")
+            raise HTTPException(
+                status_code=400, detail="Two different players required"
+            )
 
         p1 = PlayerDao().find_by_id(id_player)
         p2 = PlayerDao().find_by_id(id_opponent)
@@ -76,8 +78,12 @@ class GameService:
         score_a = 1.0 if player_a_won else 0.0
         score_b = 1.0 - score_a
 
-        new_elo_a = round(elo_a + k_factor * (score_a - cls.calculate_expected_score(elo_a, elo_b)))
-        new_elo_b = round(elo_b + k_factor * (score_b - cls.calculate_expected_score(elo_b, elo_a)))
+        new_elo_a = round(
+            elo_a + k_factor * (score_a - cls.calculate_expected_score(elo_a, elo_b))
+        )
+        new_elo_b = round(
+            elo_b + k_factor * (score_b - cls.calculate_expected_score(elo_b, elo_a))
+        )
 
         return new_elo_a, new_elo_b
 
@@ -89,4 +95,6 @@ class GameService:
         if not winner:
             return
 
-        p1.elo, p2.elo = cls.calculate_new_ratings(p1.elo, p2.elo, player_a_won=(p1 == winner))
+        p1.elo, p2.elo = cls.calculate_new_ratings(
+            p1.elo, p2.elo, player_a_won=(p1 == winner)
+        )

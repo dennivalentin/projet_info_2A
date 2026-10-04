@@ -37,7 +37,9 @@ with st.container(horizontal_alignment="center"):
         logger.info(f"Attempting login for user: {username}")
 
         try:
-            response = api_client.post("/login", json={"username": username, "password": password})
+            response = api_client.post(
+                "/login", json={"username": username, "password": password}
+            )
 
             if response:
                 status_code = response.get("status_code")
@@ -51,7 +53,9 @@ with st.container(horizontal_alignment="center"):
                     st.success(f"Welcome {player['username']} ! 🎉")
                     st.switch_page("pages/player_menu.py")
                 elif status_code == 401:
-                    logger.warning(f"Login failed: 401 Unauthorized for user {username}.")
+                    logger.warning(
+                        f"Login failed: 401 Unauthorized for user {username}."
+                    )
                     st.error("Invalid credentials")
                 else:
                     logger.error(f"Login failed: Status {status_code}, Data: {data}")
