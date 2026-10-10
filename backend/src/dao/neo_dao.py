@@ -46,6 +46,7 @@ class NeoDao(metaclass=Singleton):
             raise
 
         created = False
+
         if res:
             neo._neo_id = res["neo_id"] if isinstance(res, dict) else res[0]
             created = True
