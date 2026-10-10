@@ -7,6 +7,12 @@ CREATE TABLE IF NOT EXISTS app_user (
     role VARCHAR(50) NOT NULL DEFAULT 'regular'
 );
 
+
+INSERT INTO app_user(user_id, username, email, password_hash, role) 
+VALUES (1, 'admin', 'admin@email.fr', 'admin_password_hash', 'ADMIN')
+ON CONFLICT (user_id) DO NOTHING;
+
+
 CREATE TABLE IF NOT EXISTS connection (
     connection_id SERIAL PRIMARY KEY,
     user_id INT NOT NULL REFERENCES app_user(user_id) ON DELETE CASCADE,
@@ -38,14 +44,16 @@ CREATE TABLE IF NOT EXISTS neo (
     date_update TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
+DROP TABLE IF EXISTS approach CASCADE;
+
 CREATE TABLE IF NOT EXISTS approach (
     approach_id SERIAL PRIMARY KEY,
     neo_id INT NOT NULL REFERENCES neo(neo_id) ON DELETE CASCADE,
     approach_date TIMESTAMP NOT NULL,
     distance FLOAT NOT NULL,
     speed FLOAT NOT NULL,
-    approach_day TIMESTAMP NOT NULL,
-    body VARCHAR(100) NOT NULL
+    body VARCHAR(100) NOT NULL,
+    CONSTRAINT uq_approach_neo_day_body UNIQUE (neo_id, approach_date, body)
 );
 
 CREATE TABLE IF NOT EXISTS favourite (

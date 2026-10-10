@@ -1,4 +1,4 @@
-from date import datetime
+from datetime import datetime
 
 
 class Approach:
@@ -17,12 +17,12 @@ class Approach:
 
     def __init__(
         self,
-        approach_id: int,
         neo_id: int,
         approach_date: datetime,
         distance: float,
         speed: float,
         body: str,
+        approach_id: int | None = None,
     ):
         self._approach_id = approach_id
         self._neo_id = neo_id
