@@ -58,31 +58,25 @@ class PlayerService:
         return player if PlayerDao().update(player) else None
 
     @log
-    def delete(self, player) -> bool:
-        """Delete a player account.
+    def delete(self, user) -> bool:
+        """Delete a user account.
         Args:
-            Player object to be deleted.
+            User object to be deleted.
         Returns:
             True if deletion was successful, False otherwise.
         """
-        return PlayerDao().delete(player)
+        return UserDao().delete(user)
 
     @log
-    def login(self, username: str, password: str) -> Player:
-        """Authenticates a player using their credentials.
-        Args:
-            username (str)
-            password (str)
-        Returns:
-            Player object if authentication is successful, otherwise None.
-        """
-        player = PlayerDao().login(username, hash_password(password, username))
-        if player:
-            # Generate a token and update the Player
-            player.access_token = secrets.token_urlsafe(32)
-            self.update(player)
-            return player
-        return None
+    def login(self, username, password):
+        user = UserDao().find_by_username(username) 
+        if user is None:
+            return None
+        if not hmac.compare_digest(user.password_hash, hash_password(password, username)): #compare les deux chaines en temps constant pour une meilleure sécurité 
+            return None                                
+        ConnectionDao().create(user.user_id)
+        return user
+
 
     @log
     def username_already_used(self, username: str) -> bool:
