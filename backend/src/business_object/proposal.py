@@ -1,4 +1,4 @@
-from date import datetime
+from datetime import datetime
 
 
 class Proposal:
@@ -14,7 +14,7 @@ class Proposal:
         _field_name (str): The specific field or attribute being proposed/updated.
         _proposed_value (str): Values suggested by the user.
         _justification (str): The user's reasoning or source for the proposal.
-        _status (str): The status of the proposal ('pending', 'accepted', 'rejected').
+        _status (str): The status of the proposal ('pending', 'approved' or 'rejected').
     """
 
     def __init__(

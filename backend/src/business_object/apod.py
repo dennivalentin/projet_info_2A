@@ -1,4 +1,4 @@
-from date import datetime
+from datetime import datetime
 
 
 class ApodData:
