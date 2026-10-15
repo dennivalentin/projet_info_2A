@@ -1,4 +1,4 @@
-from business_object.player import Player
+from business_object.user import User.py
 from dao.db_connection import DBConnection
 from utils.log_utils import get_logger, log
 from utils.singleton import Singleton
@@ -6,86 +6,82 @@ from utils.singleton import Singleton
 logger = get_logger(__name__)
 
 
-class PlayerDao(metaclass=Singleton):
-    """Class containing methods to access Players in the database."""
+class UserDao(metaclass=Singleton):
+    """Class containing methods to access users in the database."""
 
     @log
-    def create(self, player) -> bool:
-        """Create a player in the database.
+    def create(self, user: User) -> bool:
+        """Create a user in the database.
+
         Args:
-            Player to create
+            user (User): The user to create.
+
         Returns:
-            True if creation is successful, False otherwise
+            bool: True if the user was inserted, False otherwise.
         """
-        res = None
+        nb_affected_rows = 0
 
         try:
             with DBConnection().connection as connection:
                 with connection.cursor() as cursor:
                     cursor.execute(
-                        "INSERT INTO player(username, password, elo, email, pokemon_fan) VALUES "
-                        "(%(username)s, %(password)s, %(elo)s, %(email)s, %(pokemon_fan)s) "
-                        "RETURNING id_player;",
+                        'INSERT INTO "user" (username, password_hash, email, role)      '
+                        "VALUES (%(username)s, %(password_hash)s, %(email)s, %(role)s); ",
                         {
-                            "username": player.username,
-                            "password": player.password,
-                            "elo": player.elo,
-                            "email": player.email,
-                            "pokemon_fan": player.pokemon_fan,
+                            "username": user.username,
+                            "password_hash": user.password_hash,
+                            "email": user.email,
+                            "role": user.role,
                         },
                     )
-                    res = cursor.fetchone()
+                    nb_affected_rows = cursor.rowcount
         except Exception as e:
             logger.error(e)
             raise
 
-        created = False
-        if res:
-            player.id_player = res["id_player"]
-            created = True
-
-        return created
+        return nb_affected_rows == 1
 
     @log
-    def find_by_id(self, id_player: int) -> Player:
-        """Find a player by their id.
-        Args:
-            id_player (int): The ID of the player to find
-        Returns:
-            Player matching the given id
-        """
-        try:
-            with DBConnection().connection as connection:
-                with connection.cursor() as cursor:
-                    cursor.execute(
-                        "SELECT *                            "
-                        "  FROM player                       "
-                        " WHERE id_player = %(id_player)s;   ",
-                        {"id_player": id_player},
-                    )
-                    res = cursor.fetchone()
-        except Exception as e:
-            logger.error(e)
-            raise
+def find_by_id(self, user_id: int) -> User:
+    """Find a user by their id.
+    Args:
+        user_id (int): The ID of the user to find
+    Returns:
+        User matching the given id
+    """
+    try:
+        with DBConnection().connection as connection:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    "SELECT *                            "
+                    '  FROM "user" '
+                    " WHERE user_id = %(user_id)s;       ",
+                    {"user_id": user_id},
+                )
+                res = cursor.fetchone()
+    except Exception as e:
+        logger.error(e)
+        raise
 
-        player = None
-        if res:
-            player = Player(
-                username=res["username"],
-                elo=res["elo"],
-                email=res["email"],
-                pokemon_fan=res["pokemon_fan"],
-                id_player=res["id_player"],
-                password=res["password"],
-            )
+    user = None
+    if res:
+        user = User(
+            user_id=res["user_id"],
+            username=res["username"],
+            email=res["email"],
+            password_hash=res["password_hash"],
+            creation_date=res["creation_date"],
+            role=res["role"],
+        )
 
-        return player
+    return user
+
 
     @log
-    def find_all(self) -> list[Player]:
-        """List all players in the database.
+    def find_all(self) -> list[User]:
+        """List all users in the database.
         Returns:
-            list[Player] sorted by username
+            list[User] sorted by username
         """
 
         try:
@@ -93,7 +89,7 @@ class PlayerDao(metaclass=Singleton):
                 with connection.cursor() as cursor:
                     cursor.execute(
                         "SELECT *                                "
-                        "  FROM player                           "
+                        '  FROM "user"                           '
                         " ORDER BY username;                     "
                     )
                     res = cursor.fetchall()
@@ -101,28 +97,28 @@ class PlayerDao(metaclass=Singleton):
             logger.error(e)
             raise
 
-        players_list = []
+        users_list = []
 
         if res:
             for row in res:
-                player = Player(
-                    id_player=row["id_player"],
+                user = User(
+                    user_id=row["user_id"],
                     username=row["username"],
-                    password=row["password"],
-                    elo=row["elo"],
                     email=row["email"],
-                    pokemon_fan=row["pokemon_fan"],
+                    password_hash=row["password_hash"],
+                    creation_date=row["creation_date"],
+                    role=row["role"],
                 )
 
-                players_list.append(player)
+                users_list.append(user)
 
-        return players_list
+        return users_list
 
     @log
-    def update(self, player) -> bool:
-        """Update a player in the database.
+    def update(self, user: User) -> bool:
+        """Update a user in the database.
         Args:
-            Player to be updated
+            user (User): User to be updated 
         Returns:
             True if update is successful, False otherwise
         """
@@ -132,22 +128,18 @@ class PlayerDao(metaclass=Singleton):
             with DBConnection().connection as connection:
                 with connection.cursor() as cursor:
                     cursor.execute(
-                        "UPDATE player                                                  "
-                        "   SET username = %(username)s,                                "
-                        "       password = COALESCE(%(password)s, password),            "
-                        "       elo = %(elo)s,                                          "
-                        "       email = %(email)s,                                      "
-                        "       pokemon_fan = %(pokemon_fan)s,                          "
-                        "       access_token = COALESCE(%(access_token)s, access_token) "
-                        " WHERE id_player = %(id_player)s;                              ",
+                        'UPDATE "user"                                '
+                        "   SET username = %(username)s,              "
+                        "       email = %(email)s,                    "
+                        "       password_hash = %(password_hash)s,    "
+                        "       role = %(role)s                       "
+                        " WHERE user_id = %(user_id)s;                ",
                         {
-                            "username": player.username,
-                            "password": player.password,
-                            "elo": player.elo,
-                            "email": player.email,
-                            "pokemon_fan": player.pokemon_fan,
-                            "access_token": player.access_token,
-                            "id_player": player.id_player,
+                            "username": user.username,
+                            "email": user.email,
+                            "password_hash": user.password_hash,
+                            "role": user.role,
+                            "user_id": user.user_id,
                         },
                     )
                     nb_affected_rows = cursor.rowcount
