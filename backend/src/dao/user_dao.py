@@ -150,20 +150,21 @@ def find_by_id(self, user_id: int) -> User:
         return nb_affected_rows == 1
 
     @log
-    def delete(self, player) -> bool:
-        """Delete a player from the database.
+    def delete(self, user_id: int) -> bool:
+        """Delete a user from the database.
         Args:
-            Player to delete from the database
+            user_id (int): The id of the user to delete.
+
         Returns:
-            True if the player was successfully deleted, False otherwise
+            True if the user was successfully deleted, False otherwise
         """
         try:
             with DBConnection().connection as connection:
                 with connection.cursor() as cursor:
                     cursor.execute(
-                        "DELETE FROM player                               "
-                        " WHERE id_player = %(id_player)s                 ",
-                        {"id_player": player.id_player},
+                        'DELETE FROM "user"                               '
+                        " WHERE user_id = %(user_id)s                    ",
+                        {"user_id": user_id},
                     )
                     res = cursor.rowcount
         except Exception as e:
@@ -173,13 +174,16 @@ def find_by_id(self, user_id: int) -> User:
         return res > 0
 
     @log
-    def login(self, username: str, password: str) -> Player:
-        """Login using username and password.
+    def find_by_username(self, username: str) -> User:
+        """Find a user by their username.
+
+        Password verification is NOT done here: it is the service's job
+        (it compares the hashes with hmac.compare_digest).
+
         Args:
-            username (str)
-            password (str)
+            username (str): The username to look for.
         Returns:
-            Player or None
+            User matching the given username, or None if not found.
         """
         res = None
         try:
@@ -187,30 +191,28 @@ def find_by_id(self, user_id: int) -> User:
                 with connection.cursor() as cursor:
                     cursor.execute(
                         "SELECT *                               "
-                        "  FROM player                          "
-                        " WHERE username = %(username)s         "
-                        "   AND password = %(password)s;        ",
-                        {"username": username, "password": password},
+                        '  FROM "user"                          '
+                        " WHERE username = %(username)s;        ",
+                        {"username": username},
                     )
                     res = cursor.fetchone()
         except Exception as e:
             logger.error(e)
             raise
 
-        player = None
+        user = None
 
         if res:
-            player = Player(
+            user = User(
+                user_id=res["user_id"],
                 username=res["username"],
-                password=res["password"],
-                elo=res["elo"],
                 email=res["email"],
-                pokemon_fan=res["pokemon_fan"],
-                access_token=res["access_token"],
-                id_player=res["id_player"],
+                password_hash=res["password_hash"],
+                creation_date=res["creation_date"],
+                role=res["role"],
             )
 
-        return player
+        return user
 
     @log
     def find_by_token(self, access_token: str) -> Player:
