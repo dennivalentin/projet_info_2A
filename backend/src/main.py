@@ -9,7 +9,7 @@ from fastapi import FastAPI, Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse, RedirectResponse
 
-from controller import login_controller, neo_controller, user_controller
+from controller import login_controller, user_controller
 from utils.env_variables import display_values, load_environment_variables
 from utils.log_utils import LogMiddleware, get_logger, initialize_logs
 from utils.reset_database import ResetDatabase
@@ -43,8 +43,6 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
         content={"detail": exc.errors(), "body": body_str},
     )
 
-
-app.include_router(neo_controller.router, prefix="/neos", tags=["NEOs"])
 app.include_router(login_controller.router, prefix="/login", tags=["Login"])
 app.include_router(user_controller.router, prefix="/users", tags=["Users"])
 

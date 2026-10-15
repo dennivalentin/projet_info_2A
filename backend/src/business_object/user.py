@@ -16,11 +16,11 @@ class User:
 
     def __init__(
         self,
-        user_id: int,
+        user_id: int|None,
         username: str,
         email: str,
         password_hash: str,
-        creation_date: datetime,
+        creation_date: datetime|None,
         role: str,
     ):
         self._user_id = user_id
@@ -29,3 +29,29 @@ class User:
         self._password_hash = password_hash
         self._creation_date = creation_date
         self._role = role
+    
+    def __str__(self):
+        
+
+    @proprety
+    def username(self):
+        return self.username
+    @proprety
+    def user_id(self):
+        return self.user_id
+    @proprety
+        def email(self):
+            return self.email
+    @proprety
+        def password_hash(self):
+            return self.password_hash
+    @proprety
+        def creation_date(self):
+            return self.creation_date
+    @proprety
+        def role(self):
+            return self.role
+        
+    
+    
+
