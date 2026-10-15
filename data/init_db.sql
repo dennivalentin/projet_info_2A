@@ -36,6 +36,7 @@ CREATE TABLE neo (
     diameter_max NUMERIC(10, 2),
     hazardous BOOLEAN NOT NULL DEFAULT FALSE,
     url_nasa VARCHAR(500),
+    origin VARCHAR(12) NOT NULL DEFAULT 'nasa',
     date_update TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -61,8 +62,8 @@ CREATE TABLE approach (
 CREATE TABLE connection (
     connection_id SERIAL PRIMARY KEY,
     user_id INTEGER NOT NULL REFERENCES "user"(user_id) ON DELETE CASCADE,
-    connection_date TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
-    access_token VARCHAR(255) NOT NULL UNIQUE,
+    connection_date TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    access_token VARCHAR(64) UNIQUE  -- NULL once the user has logged out
 );
 
 -- ============================================================================
@@ -97,6 +98,7 @@ CREATE TABLE proposal (
     proposed_value VARCHAR(255),
     justification TEXT,
     submission_date TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    status VARCHAR(12) NOT NULL DEFAULT 'pending' -- then 'approved' or 'rejected'
 );
 
 -- ============================================================================
@@ -122,6 +124,8 @@ CREATE TABLE import (
     user_id INTEGER NOT NULL REFERENCES "user"(user_id) ON DELETE CASCADE,
     start_date DATE NOT NULL,
     end_date DATE NOT NULL,
+    trigger_type VARCHAR(10),  -- 'manual' or 'auto'
+    status VARCHAR(15) NOT NULL DEFAULT 'running',  -- then 'success' or 'failed'
     nb_calls INTEGER,  --number of API calls made
     nb_neo INTEGER,   -- number of NEO imported
     nb_approaches INTEGER,  
