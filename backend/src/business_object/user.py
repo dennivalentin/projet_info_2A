@@ -1,4 +1,4 @@
-from date import datetime
+from datetime import datetime
 
 
 class User:
@@ -11,7 +11,7 @@ class User:
         _email (str): The email address associated with the account.
         _password_hash (str): The hashed password.
         _creation_date (datetime): The date and time the account was created.
-        _role (str): The authorization level ('regular', 'admin').
+        _role (str): The authorization level ('user' or 'admin').
     """
 
     def __init__(

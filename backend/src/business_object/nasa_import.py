@@ -1,4 +1,4 @@
-from date import datetime
+from datetime import datetime
 
 
 class Import:
@@ -10,8 +10,8 @@ class Import:
         _user_id (int): The ID of the admin who triggered the import.
         _start_date (datetime): The start date/time of the data retrieval period.
         _end_date (datetime): The end date of the data/time retrieval period.
-        _trigger_type (str): How the import was triggered ('manual', 'automatic').
-        _status (str): The current status of the import ('ongoing', 'success', 'failed').
+        _trigger_type (str): How the import was triggered ('manual' or 'auto').
+        _status (str): The current status of the import ('running', 'success' or 'failed').
         _nb_calls (int): The number of API calls made during this import.
         _nb_neo (int): The number of Near-Earth Objects imported.
         _nb_approaches (int): The number of close approaches imported.
