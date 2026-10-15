@@ -177,9 +177,6 @@ def find_by_id(self, user_id: int) -> User:
     def find_by_username(self, username: str) -> User:
         """Find a user by their username.
 
-        Password verification is NOT done here: it is the service's job
-        (it compares the hashes with hmac.compare_digest).
-
         Args:
             username (str): The username to look for.
         Returns:
@@ -215,12 +212,13 @@ def find_by_id(self, user_id: int) -> User:
         return user
 
     @log
-    def find_by_token(self, access_token: str) -> Player:
-        """Find a player by their access token.
+    def find_by_token(self, access_token: str) -> User:
+        """Find the user owning an active connection token.
+
         Args:
             access_token (str): The token to search for.
         Returns:
-            Player object if found, otherwise None.
+            User object if the token is valid, otherwise None.
         """
         if not access_token:
             return None
@@ -230,26 +228,26 @@ def find_by_id(self, user_id: int) -> User:
             with DBConnection().connection as connection:
                 with connection.cursor() as cursor:
                     cursor.execute(
-                        "SELECT *                                "
-                        "  FROM player                           "
-                        " WHERE access_token = %(token)s;        ",
+                        'SELECT u.*                                          '
+                        '  FROM "user" u                                    '
+                        "  JOIN connection c ON c.user_id = u.user_id       "
+                        " WHERE c.access_token = %(token)s;                 ",
                         {"token": access_token},
                     )
                     res = cursor.fetchone()
         except Exception as e:
-            logger.error(f"Error finding player by token: {e}")
+            logger.error(f"Error finding user by token: {e}")
             raise
 
-        player = None
+        user = None
         if res:
-            player = Player(
-                id_player=res["id_player"],
+            user = User(
+                user_id=res["user_id"],
                 username=res["username"],
-                password=res["password"],
-                elo=res["elo"],
                 email=res["email"],
-                pokemon_fan=res["pokemon_fan"],
-                access_token=res["access_token"],
+                password_hash=res["password_hash"],
+                creation_date=res["creation_date"],
+                role=res["role"],
             )
 
-        return player
+        return user
