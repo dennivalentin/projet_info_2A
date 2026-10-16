@@ -23,8 +23,8 @@ class NeoDao(metaclass=Singleton):
             with DBConnection().connection as connection:
                 with connection.cursor() as cursor:
                     cursor.execute(
-                        "INSERT INTO neo(nasa_id, name, absolute_magnitude, diameter_min, diameter_max, hazardious, url_nasa, custom, date_update) VALUES "
-                        "(%(nasa_id)s, %(name)s, %(absolute_magnitude)s, %(diameter_min)s, %(diameter_max)s, %(hazardious)s, %(url_nasa)s, %(custom)s, %(date_update)s) "
+                        "INSERT INTO neo(nasa_id, name, absolute_magnitude, diameter_min, diameter_max, hazardous, url_nasa, origin, date_update) VALUES "
+                        "(%(nasa_id)s, %(name)s, %(absolute_magnitude)s, %(diameter_min)s, %(diameter_max)s, %(hazardous)s, %(url_nasa)s, %(origin)s, %(date_update)s) "
                         "ON CONFLICT (nasa_id) DO UPDATE SET name = EXCLUDED.name, date_update = EXCLUDED.date_update "
                         "RETURNING neo_id;",
                         {
@@ -34,9 +34,9 @@ class NeoDao(metaclass=Singleton):
                             "absolute_magnitude": neo._absolute_magnitude,
                             "diameter_min": neo._diameter_min,
                             "diameter_max": neo._diameter_max,
-                            "hazardious": neo._hazardious,
+                            "hazardous": neo._hazardous,
                             "url_nasa": neo._url_nasa,
-                            "custom": neo._custom,
+                            "origin": neo._origin,
                             "date_update": neo._date_update,
                         },
                     )

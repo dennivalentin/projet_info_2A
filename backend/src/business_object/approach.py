@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, date
 
 
 class Approach:
@@ -11,7 +11,7 @@ class Approach:
         _approach_date (datetime): The exact date and time of the close approach.
         _distance (float): The distance from the celestial body.
         _speed (float): The relative velocity during the approach.
-        _approach_day (datetime): The day of the approach (without specific time).
+        _approach_day (date): The day of the approach (without specific time).
         _body (str): The celestial body being approached (e.g., 'Earth', 'Mars').
     """
 
@@ -19,6 +19,7 @@ class Approach:
         self,
         neo_id: int,
         approach_date: datetime,
+        approach_day: date,
         distance: float,
         speed: float,
         body: str,
@@ -26,6 +27,7 @@ class Approach:
     ):
         self._approach_id = approach_id
         self._neo_id = neo_id
+        self._approach_day = approach_day
         self._approach_date = approach_date
         self._distance = distance
         self._speed = speed
