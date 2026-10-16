@@ -12,9 +12,9 @@ class Neo:
         _absolute_magnitude (float): The absolute magnitude of the NEO.
         _diameter_min (float): The estimated minimum diameter in kilometers.
         _diameter_max (float): The estimated maximum diameter in kilometers.
-        _hazardious (bool): Indicates if the NEO is considered potentially hazardous.
+        _hazardous (bool): Indicates if the NEO is considered potentially hazardous.
         _url_nasa (str): The URL to the NASA web page for this object.
-        _custom (bool): True if the NEO was created by a user, False if from NASA.
+        _origin (str): True if the NEO was created by a user, False if from NASA.
         _date_update (datetime): The date this record was last updated.
     """
 
@@ -25,9 +25,9 @@ class Neo:
         absolute_magnitude: float,
         diameter_min: float,
         diameter_max: float,
-        hazardious: bool,
+        hazardous: bool,
         url_nasa: str,
-        custom: bool,
+        origin: str,
         date_update: datetime,
         neo_id: int | None = None,
     ):
@@ -37,7 +37,7 @@ class Neo:
         self._absolute_magnitude = absolute_magnitude
         self._diameter_min = diameter_min
         self._diameter_max = diameter_max
-        self._hazardious = hazardious
+        self._hazardous = hazardous
         self._url_nasa = url_nasa
-        self._custom = custom
+        self._origin = origin
         self._date_update = date_update

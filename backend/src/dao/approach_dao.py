@@ -9,11 +9,11 @@ class ApproachDao:
         """
         query = """
             INSERT INTO approach (
-                neo_id, approach_date, body, distance, speed
+                neo_id, approach_day, approach_date, body, distance, speed
             ) VALUES (
-                %(neo_id)s, %(approach_date)s, %(body)s, %(distance)s, %(speed)s
+                %(neo_id)s, %(approach_day)s, %(approach_date)s, %(body)s, %(distance)s, %(speed)s
             )
-            ON CONFLICT (neo_id, approach_date, body) DO UPDATE SET
+            ON CONFLICT (neo_id, approach_day) DO UPDATE SET
                 distance = EXCLUDED.distance,
                 speed = EXCLUDED.speed
             RETURNING approach_id;
@@ -24,6 +24,7 @@ class ApproachDao:
                     query,
                     {
                         "neo_id": approach._neo_id,
+                        "approach_day": approach._approach_day,
                         "approach_date": approach._approach_date,
                         "body": approach._body,
                         "distance": approach._distance,
