@@ -17,7 +17,9 @@ def get_game_service():
 
 @router.post("/", response_model=GameResponse, tags=["Games"])
 def play_game(
-    req: GamePlayModel, game_service=Depends(get_game_service), current_player=Depends(verify_token)
+    req: GamePlayModel,
+    game_service=Depends(get_game_service),
+    current_player=Depends(verify_token),
 ):
     """Starts and executes a new game session.
     Args:

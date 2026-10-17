@@ -104,7 +104,9 @@ def test_update_ko():
     """Fail to update a Player (unknown id)"""
 
     # GIVEN
-    player = Player(id_player=8888, username="unknown id", elo=1000, email="no@mail.com")
+    player = Player(
+        id_player=8888, username="unknown id", elo=1000, email="no@mail.com"
+    )
 
     # WHEN
     update_ok = PlayerDao().update(player)
@@ -117,7 +119,9 @@ def test_delete_ok():
     """Successfully delete a Player"""
 
     # GIVEN
-    player = Player(id_player=995, username="miguel", elo=1000, email="miguel@project.io")
+    player = Player(
+        id_player=995, username="miguel", elo=1000, email="miguel@project.io"
+    )
 
     # WHEN
     delete_ok = PlayerDao().delete(player)

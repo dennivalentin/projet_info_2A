@@ -68,7 +68,9 @@ async def reset_database():
     logger.info("Database reset")
     success = ResetDatabase().run()
 
-    return {"message": f"Database re-initialization - {'SUCCESS' if success else 'FAILURE'}"}
+    return {
+        "message": f"Database re-initialization - {'SUCCESS' if success else 'FAILURE'}"
+    }
 
 
 # Run the FastAPI application
