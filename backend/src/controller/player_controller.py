@@ -42,7 +42,9 @@ async def player_by_id(id_player: int, player_service=Depends(get_player_service
     logger.info("Find a player by id")
     player = player_service.find_by_id(id_player)
     if not player:
-        raise HTTPException(status_code=404, detail="Player (id={id_player}) not found.")
+        raise HTTPException(
+            status_code=404, detail="Player (id={id_player}) not found."
+        )
     return player
 
 
@@ -62,7 +64,9 @@ async def create_player(p: PlayerModel, player_service=Depends(get_player_servic
     if player_service.username_already_used(p.username):
         raise HTTPException(status_code=400, detail="Username already used.")
 
-    player = player_service.create(p.username, p.password, p.elo, p.email, p.pokemon_fan)
+    player = player_service.create(
+        p.username, p.password, p.elo, p.email, p.pokemon_fan
+    )
     if not player:
         raise HTTPException(status_code=500, detail="Error while creating player.")
 
@@ -70,7 +74,9 @@ async def create_player(p: PlayerModel, player_service=Depends(get_player_servic
 
 
 @router.put("/{id_player}", response_model=PlayerReadModel, tags=["Players"])
-async def update_player(id_player: int, p: PlayerModel, player_service=Depends(get_player_service)):
+async def update_player(
+    id_player: int, p: PlayerModel, player_service=Depends(get_player_service)
+):
     """Update an existing player's information.
     Args:
         id_player (int)
@@ -85,7 +91,9 @@ async def update_player(id_player: int, p: PlayerModel, player_service=Depends(g
     logger.info("Update a player")
     player = player_service.find_by_id(id_player)
     if not player:
-        raise HTTPException(status_code=404, detail="Player (id={id_player}) not found.")
+        raise HTTPException(
+            status_code=404, detail="Player (id={id_player}) not found."
+        )
 
     player.username = p.username
     player.password = p.password
@@ -114,7 +122,9 @@ async def delete_player(id_player: int, player_service=Depends(get_player_servic
     logger.info("Delete a player")
     player = player_service.find_by_id(id_player)
     if not player:
-        raise HTTPException(status_code=404, detail="Player (id={id_player}) not found.")
+        raise HTTPException(
+            status_code=404, detail="Player (id={id_player}) not found."
+        )
 
     player_service.delete(player)
     return f"Player {player.username} deleted"

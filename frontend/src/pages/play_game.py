@@ -31,14 +31,18 @@ if response["status_code"] != 200:
 
 players = response["data"]
 opponents = [
-    j for j in players if j["id_player"] != player["id_player"] and j["username"] != "admin"
+    j
+    for j in players
+    if j["id_player"] != player["id_player"] and j["username"] != "admin"
 ]
 
 if not opponents:
     st.warning("No opponents available")
     st.stop()
 
-opponent = st.selectbox("Choose an opponent", opponents, format_func=lambda j: j["username"])
+opponent = st.selectbox(
+    "Choose an opponent", opponents, format_func=lambda j: j["username"]
+)
 
 bet = st.radio("Heads or Tails", ["heads", "tails"])
 

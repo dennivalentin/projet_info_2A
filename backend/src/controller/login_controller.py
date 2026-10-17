@@ -22,7 +22,8 @@ def login(credentials: PlayerLoginModel, service=Depends(get_player_service)):
     Returns:
         dict: containing id_player and username
     Raises:
-        HTTPException: 401 error if the credentials are invalid or the user does not exist."""
+        HTTPException: 401 error if the credentials are invalid or the user does not exist.
+    """
     logger.info("Login")
     player = service.login(credentials.username, credentials.password)
     if player:
