@@ -41,3 +41,9 @@ class Neo:
         self._url_nasa = url_nasa
         self._origin = origin
         self._date_update = date_update
+    
+    def __str__(self):
+        return f"Neo id : {self._neo_id}, NASA id : {self._nasa_id}"
+
+    def __repr__(self):
+        return f"Neo id : {self._neo_id}, NASA id : {self._nasa_id}"

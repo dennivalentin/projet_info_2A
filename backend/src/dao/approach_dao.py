@@ -39,3 +39,50 @@ class ApproachDao:
                     approach._approach_id = approach_id
                     return True
         return False
+    
+    def find_all_by_neo(self, neo_id : int) -> list[Approach]:
+        """ 
+        Finds all the approach avalaible for a precise Neo
+        
+        Parameters
+        ----------
+            neo_id : Id of the asked Neo
+
+        Return
+        ------
+            list[Approach] : list of all approaches
+        """
+
+        try:
+            with DBConnection().connection as connection:
+                with connection.cursor() as cursor:
+                    cursor.execute(
+                        "SELECT *                               "
+                        "  FROM approach                           "
+                        "WHERE neo_id = %(neo_id)s",
+                        {
+                            "neo_id": neo_id
+                        }
+                    )
+                    res = cursor.fetchall()
+        except Exception as e:
+            logger.error(e)
+            raise
+
+        list_approaches = []
+
+        if res:
+            for row in res:
+                approach = Approach(
+                    neo_id = row["neo_id"],
+                    approach_date= row["approach_date"],
+                    approach_day= row["approach_day"],
+                    distance= row["distance"],
+                    speed= row["speed"],
+                    body= row["body"],
+                    approach_id = row["approach_id"]
+                )
+
+                list_approaches.append(approach)
+
+        return list_approaches
