@@ -14,7 +14,7 @@ class Neo:
         _diameter_max (float): The estimated maximum diameter in kilometers.
         _hazardous (bool): Indicates if the NEO is considered potentially hazardous.
         _url_nasa (str): The URL to the NASA web page for this object.
-        _origin (str): True if the NEO was created by a user, False if from NASA.
+        _origin (str): either NASA for a NEO comming from the API or USER for a NEO created by a user.
         _date_update (datetime): The date this record was last updated.
     """
 
