@@ -35,6 +35,7 @@ class FavouriteService:
             print("Nothing deleted")
             return False
     
+    @log
     def list_all_favourite_by_user(self, user_id: int) -> list[Neo]:
         """
         list of all the favourite by user
@@ -55,6 +56,7 @@ class FavouriteService:
         
         return list_neo
     
+    @log
     def approches_favourite(self, user_id: int) -> dict[int, list[Approach]]:
         """
         list of all the approches by the favourites Neo of a user
@@ -74,6 +76,7 @@ class FavouriteService:
 
         return dict_approaches
     
+    @log
     def graph_favourite(self, user_id, neo_id) -> io.BytesIO:
         list_approaches = self.approches_favourite(user_id)[neo_id]
 
