@@ -20,7 +20,7 @@ class Neo:
 
     def __init__(
         self,
-        nasa_id: str,
+        nasa_id: str | None,
         name: str,
         absolute_magnitude: float,
         diameter_min: float,
