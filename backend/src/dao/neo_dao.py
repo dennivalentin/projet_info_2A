@@ -7,13 +7,13 @@ logger = get_logger(__name__)
 
 
 class NeoDao(metaclass=Singleton):
-    """Class containing methods to access Players in the database."""
+    """Class containing methods to access NEOS in the database."""
 
     @log
     def create(self, neo) -> bool:
-        """Create a player in the database.
+        """Create a neo in the database.
         Args:
-            Player to create
+            Neo to create
         Returns:
             True if creation is successful, False otherwise
         """
@@ -52,3 +52,46 @@ class NeoDao(metaclass=Singleton):
             created = True
 
         return created
+
+    @log
+    def find(self, search_criteria : dict) -> list[Neo] | None:
+        """Seek a neo in the database.
+        Args:
+            search criterias
+        Returns:
+            NEOS corresponding to such criterias, None otherwise
+        """
+        res = None
+        query = "SELECT * FROM neo WHERE 1=1"
+        params = {}
+        for e in search_criteria:
+	        if search_criteria[e] is not None:
+		        query += f" AND neo.{e} = %({e})s"
+		        params[e] = search_criteria[e]
+        try:
+            with DBConnection().connection as connection:
+                with connection.cursor() as cursor:
+                    cursor.execute(
+                        query,
+                        params,
+                    )
+                    res = cursor.fetchall()
+        except Exception as e:
+            logger.error(e)
+            raise
+        NEOS = []
+
+        if res:
+            for e in res:
+                neo = Neo(neo_id = e["neo_id"],
+                        nasa_id=e["nasa_id"],
+                        name = e["name"],
+                        absolute_magnitude = e["absolute_magnitude"],
+                        diameter_min = e["diameter_min"],
+                        diameter_max = e["diameter_max"],
+                        hazardous = e["hazardous"],
+                        url_nasa = e["url_nasa"],
+                        origin = e["origin"],
+                        date_update = e["date_update"])
+                NEOS.append(neo)
+        return NEOS
