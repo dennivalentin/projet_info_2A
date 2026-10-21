@@ -53,78 +53,116 @@ class NeoDao(metaclass=Singleton):
 
         return created
 
-    
-    @log
-    def find(self, search_criteria: dict) -> list[Neo]:
-        """Search for NEOs matching the provided criteria.
 
-        Args:
-            search_criteria: Dictionary of search criteria and values.
+@log
+def find(self, search_criteria: dict) -> list[Neo]:
+    """Search for NEOs matching the provided criteria.
 
-        Returns:
-            A list of matching Neo objects, or an empty list if none match.
+    Args:
+        search_criteria: Dictionary of criteria and values.
 
-        Raises:
-            ValueError: If a criterion is unknown.
-        """
+    Returns:
+        A list of matching Neo objects, or an empty list.
 
-        # Criterion: (SQL condition, value transformation)
-        criteria_map = {
-            "name": ("neo.name ILIKE %(name)s", lambda value: f"%{value}%"),
-            "hazardous": ("neo.hazardous = %(hazardous)s", lambda value: value),
-            "diameter_min": (
-                "neo.diameter_min >= %(diameter_min)s",
-                lambda value: value,
-            ),
-            "diameter_max": (
-                "neo.diameter_min <= %(diameter_max)s",
-                lambda value: value,
-            ),
-        }
+    Raises:
+        ValueError: If a criterion is unknown.
+    """
 
-        query = "SELECT * FROM neo WHERE 1=1"
-        params = {}
+    criteria_map = {
+        "neo_id": (
+            "n.neo_id = %(neo_id)s",
+            lambda value: value,
+        ),
+        "nasa_id": (
+            "n.nasa_id = %(nasa_id)s",
+            lambda value: value,
+        ),
+        "name": (
+            "n.name ILIKE %(name)s",
+            lambda value: f"%{value}%",
+        ),
+        "hazardous": (
+            "n.hazardous = %(hazardous)s",
+            lambda value: value,
+        ),
+        "diameter_min": (
+            "n.diameter_min >= %(diameter_min)s",
+            lambda value: value,
+        ),
+        "diameter_max": (
+            "n.diameter_max <= %(diameter_max)s",
+            lambda value: value,
+        ),
+        "date_update": (
+            "n.date_update = %(date_update)s",
+            lambda value: value,
+        ),
+        "origin": (
+            "n.origin = %(origin)s",
+            lambda value: f"%{value}%",
+        ),
+        "absolute_magnitude": (
+            "n.absolute_magnitude = %(absolute_magnitude)s",
+            lambda value: value,
+        ),
+        "approach_day": (
+            "a.approach_day = %(approach_day)s",
+            lambda value: value,
+        ),
+    }
 
-        for criterion, value in search_criteria.items():
-            if criterion not in criteria_map:
-                raise ValueError(f"Unknown search criterion: {criterion}")
+    query = "SELECT DISTINCT n.* FROM neo n WHERE 1=1"
+    params = {}
+    needs_approach = False
 
-            if value is None:
-                continue
+    for criterion, value in search_criteria.items():
+        if criterion not in criteria_map:
+            raise ValueError(f"Unknown search criterion: {criterion}")
 
-            condition, transform_value = criteria_map[criterion]
-            query += f" AND {condition}"
-            params[criterion] = transform_value(value)
+        if value is None:
+            continue
 
-        try:
-            with DBConnection().connection as connection:
-                with connection.cursor() as cursor:
-                # Debug: print the generated SQL and parameters
+        condition, transform_value = criteria_map[criterion]
+        query += f" AND {condition}"
+        params[criterion] = transform_value(value)
+
+        if criterion == "approach_day":
+            needs_approach = True
+
+    if needs_approach:
+        query = query.replace(
+            "FROM neo n WHERE",
+            "FROM neo n " "JOIN approach a ON n.neo_id = a.neo_id WHERE",
+        )
+
+    try:
+        with DBConnection().connection as connection:
+            with connection.cursor() as cursor:
                 print("SQL:", query)
                 print("params:", params)
 
                 cursor.execute(query, params)
                 rows = cursor.fetchall()
 
-        except Exception as error:
-            logger.error(error)
-            raise
+    except Exception as error:
+        logger.error(error)
+        raise
 
-        neos = []
+    neos = []
 
-        for row in rows:
-            neo = Neo(
-                neo_id=row["neo_id"],
-                nasa_id=row["nasa_id"],
-                name=row["name"],
-                absolute_magnitude=row["absolute_magnitude"],
-                diameter_min=row["diameter_min"],
-                diameter_max=row["diameter_max"],
-                hazardous=row["hazardous"],
-                url_nasa=row["url_nasa"],
-                origin=row["origin"],
-                date_update=row["date_update"],
-            )
-            neos.append(neo)
+    for row in rows:
+        neo = Neo(
+            neo_id=row["neo_id"],
+            nasa_id=row["nasa_id"],
+            name=row["name"],
+            absolute_magnitude=row["absolute_magnitude"],
+            diameter_min=row["diameter_min"],
+            diameter_max=row["diameter_max"],
+            hazardous=row["hazardous"],
+            url_nasa=row["url_nasa"],
+            origin=row["origin"],
+            date_update=row["date_update"],
+        )
+        neos.append(neo)
 
-        return neos
+    return neos

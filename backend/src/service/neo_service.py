@@ -29,10 +29,6 @@ class NeoService:
             Neo object created or None if creation failed.
         """
 
-        if NeoDao().find({"absolute_magnitude":absolute_magnitude, "diameter_min":diameter_min, "diameter_max":diameter_max, "hazardous":hazardous, "date_update": date_update}):
-            return 
-
-
         new_neo = Neo(
             nasa_id = None,
             name = name,
