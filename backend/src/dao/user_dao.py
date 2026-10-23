@@ -1,4 +1,4 @@
-from business_object.user import User.py
+from business_object.user import User
 from dao.db_connection import DBConnection
 from utils.log_utils import get_logger, log
 from utils.singleton import Singleton
@@ -42,40 +42,39 @@ class UserDao(metaclass=Singleton):
         return nb_affected_rows == 1
 
     @log
-def find_by_id(self, user_id: int) -> User:
-    """Find a user by their id.
-    Args:
-        user_id (int): The ID of the user to find
-    Returns:
-        User matching the given id
-    """
-    try:
-        with DBConnection().connection as connection:
-            with connection.cursor() as cursor:
-                cursor.execute(
-                    "SELECT *                            "
-                    '  FROM "user" '
-                    " WHERE user_id = %(user_id)s;       ",
-                    {"user_id": user_id},
-                )
-                res = cursor.fetchone()
-    except Exception as e:
-        logger.error(e)
-        raise
+    def find_by_id(self, user_id: int) -> User:
+        """Find a user by their id.
+        Args:
+            user_id (int): The ID of the user to find
+        Returns:
+            User matching the given id
+        """
+        try:
+            with DBConnection().connection as connection:
+                with connection.cursor() as cursor:
+                    cursor.execute(
+                        "SELECT *                            "
+                        '  FROM "user"                       '
+                        " WHERE user_id = %(user_id)s;       ",
+                        {"user_id": user_id},
+                    )
+                    res = cursor.fetchone()
+        except Exception as e:
+            logger.error(e)
+            raise
 
-    user = None
-    if res:
-        user = User(
-            user_id=res["user_id"],
-            username=res["username"],
-            email=res["email"],
-            password_hash=res["password_hash"],
-            creation_date=res["creation_date"],
-            role=res["role"],
-        )
+        user = None
+        if res:
+            user = User(
+                user_id=res["user_id"],
+                username=res["username"],
+                email=res["email"],
+                password_hash=res["password_hash"],
+                creation_date=res["creation_date"],
+                role=res["role"],
+            )
 
-    return user
-
+        return user
 
     @log
     def find_all(self) -> list[User]:
