@@ -1,4 +1,4 @@
-from business_object.neo import Neo
+from datetime import datetime
 
 
 class Alert:
@@ -18,17 +18,36 @@ class Alert:
     def __init__(
         self,
         alert_id: int,
-        neo_id: int,
         user_id: int,
-        obj_neo: Neo,
-        min_diameter: float,
-        max_distance: float,
-        is_active: bool,
+        label: str,
+        diameter_min: float,
+        distance_max: float,
+        hazardous_only: bool,
+        active: bool,
+        creation_date: datetime,
+        last_eval_date: datetime
     ):
         self._alert_id = alert_id
-        self._neo_id = neo_id
         self._user_id = user_id
-        self._object = obj_neo
-        self._min_diameter = min_diameter
-        self._max_distance = max_distance
-        self._is_active = is_active
+        self._label = label
+        self._diameter_min = diameter_min
+        self._distance_max = distance_max
+        self._hazardous_only = hazardous_only
+        self._active = active
+        self._creation_date = creation_date
+        self._last_eval_date = last_eval_date
+    
+    def __repr__(self):
+        beg = f"""Alert n° : {self._alert_id} from user : {self._user_id}. Criteria :
+        {self._label}"""
+
+        if self._diameter_min is not None:
+            beg += f" | Minimum diameter : {self._diameter_min}"
+        
+        if self._distance_max is not None:
+            beg += f" | Maximum distance : {self._distance_max}"
+        
+        if self._hazardous_only is not None:
+            beg += f" | Hazardous : {self._hazardous_only}"
+        
+        beg += f" | Active = {self._active}"
