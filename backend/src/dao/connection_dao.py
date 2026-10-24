@@ -36,3 +36,40 @@ class ConnectionDao(metaclass=Singleton):
             user_id=res["user_id"],
             connection_date=res["connection_date"],
         )
+
+    @log
+    def find_by_user(self, user_id: int) -> list[Connection]:
+        """Find the connection history of a user.
+
+        Args:
+            user_id (int): The id of the user to look for.
+        Returns:
+            list[Connection]: The connections of the user (empty if none).
+        """
+        res = None
+        try:
+            with DBConnection().connection as connection:
+                with connection.cursor() as cursor:
+                    cursor.execute(
+                        "SELECT *                               "
+                        "  FROM connection                      "
+                        " WHERE user_id = %(user_id)s;          ",
+                        {"user_id": user_id},
+                    )
+                    res = cursor.fetchall()
+        except Exception as e:
+            logger.error(e)
+            raise
+
+        connection = []
+
+        for row in res:
+            connection.append(
+                Connection(
+                    user_id=row["user_id"],
+                    connection_id=row["connection_id"],
+                    connection_date=row["connection_date"],
+                )
+            )
+
+        return connection
