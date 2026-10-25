@@ -7,162 +7,233 @@ logger = get_logger(__name__)
 
 
 class NeoDao(metaclass=Singleton):
-    """Class containing methods to access NEOS in the database."""
+    """Class containing methods to access NEOs in the database."""
 
     @log
-    def create(self, neo) -> bool:
-        """Create a neo in the database.
+    def create(self, neo: Neo) -> bool:
+        """Create or update a NEO in the database.
+
         Args:
-            Neo to create
+            neo: Neo instance to persist.
+
         Returns:
-            True if creation is successful, False otherwise
+            True if creation was successful, False otherwise.
         """
         res = None
+        params = {
+            "nasa_id": neo.nasa_id,
+            "name": neo.name,
+            "absolute_magnitude": neo.absolute_magnitude,
+            "diameter_min": neo.diameter_min,
+            "diameter_max": neo.diameter_max,
+            "hazardous": neo.hazardous,
+            "url_nasa": neo.url_nasa,
+            "origin": neo.origin,
+            "date_update": neo.date_update,
+        }
+
+        if neo.nasa_id:
+            query = """
+                INSERT INTO neo (
+                    nasa_id, name, absolute_magnitude, diameter_min, diameter_max,
+                    hazardous, url_nasa, origin, date_update
+                ) VALUES (
+                    %(nasa_id)s, %(name)s, %(absolute_magnitude)s, %(diameter_min)s, %(diameter_max)s,
+                    %(hazardous)s, %(url_nasa)s, %(origin)s, %(date_update)s
+                )
+                ON CONFLICT (nasa_id) DO UPDATE SET
+                    name = EXCLUDED.name,
+                    absolute_magnitude = EXCLUDED.absolute_magnitude,
+                    diameter_min = EXCLUDED.diameter_min,
+                    diameter_max = EXCLUDED.diameter_max,
+                    hazardous = EXCLUDED.hazardous,
+                    url_nasa = EXCLUDED.url_nasa,
+                    date_update = EXCLUDED.date_update
+                RETURNING neo_id;
+            """
+        else:
+            query = """
+                INSERT INTO neo (
+                    nasa_id, name, absolute_magnitude, diameter_min, diameter_max,
+                    hazardous, url_nasa, origin, date_update
+                ) VALUES (
+                    %(nasa_id)s, %(name)s, %(absolute_magnitude)s, %(diameter_min)s, %(diameter_max)s,
+                    %(hazardous)s, %(url_nasa)s, %(origin)s, %(date_update)s
+                )
+                RETURNING neo_id;
+            """
 
         try:
             with DBConnection().connection as connection:
                 with connection.cursor() as cursor:
-                    cursor.execute(
-                        "INSERT INTO neo(nasa_id, name, absolute_magnitude, diameter_min, diameter_max, hazardous, url_nasa, origin, date_update) VALUES "
-                        "(%(nasa_id)s, %(name)s, %(absolute_magnitude)s, %(diameter_min)s, %(diameter_max)s, %(hazardous)s, %(url_nasa)s, %(origin)s, %(date_update)s) "
-                        "ON CONFLICT (nasa_id) DO UPDATE SET name = EXCLUDED.name, date_update = EXCLUDED.date_update "
-                        "RETURNING neo_id;",
-                        {
-                            "neo_id": neo._neo_id,
-                            "nasa_id": neo._nasa_id,
-                            "name": neo._name,
-                            "absolute_magnitude": neo._absolute_magnitude,
-                            "diameter_min": neo._diameter_min,
-                            "diameter_max": neo._diameter_max,
-                            "hazardous": neo._hazardous,
-                            "url_nasa": neo._url_nasa,
-                            "origin": neo._origin,
-                            "date_update": neo._date_update,
-                        },
-                    )
+                    cursor.execute(query, params)
                     res = cursor.fetchone()
         except Exception as e:
-            logger.error(e)
+            logger.error(f"Error in NeoDao.create: {e}")
             raise
 
-        created = False
-
         if res:
-            neo._neo_id = res["neo_id"] if isinstance(res, dict) else res[0]
-            created = True
+            neo.neo_id = res["neo_id"] if isinstance(res, dict) else res[0]
+            return True
 
-        return created
+        return False
 
+    @log
+    def find_by_id(self, neo_id: int) -> Neo | None:
+        """Find a single NEO by its internal ID.
 
-@log
-def find(self, search_criteria: dict) -> list[Neo]:
-    """Search for NEOs matching the provided criteria.
+        Args:
+            neo_id: The ID of the NEO.
 
-    Args:
-        search_criteria: Dictionary of criteria and values.
+        Returns:
+            The Neo object if found, None otherwise.
+        """
+        query = "SELECT * FROM neo WHERE neo_id = %(neo_id)s;"
+        try:
+            with DBConnection().connection as connection:
+                with connection.cursor() as cursor:
+                    cursor.execute(query, {"neo_id": neo_id})
+                    row = cursor.fetchone()
+                    if not row:
+                        return None
+                    return self._map_row_to_neo(row)
+        except Exception as e:
+            logger.error(f"Error in NeoDao.find_by_id: {e}")
+            raise
 
-    Returns:
-        A list of matching Neo objects, or an empty list.
+    @log
+    def find_all(self, limit: int = 100, offset: int = 0) -> list[Neo]:
+        """Fetch all NEOs with pagination.
 
-    Raises:
-        ValueError: If a criterion is unknown.
-    """
+        Args:
+            limit: Maximum records to return.
+            offset: Number of records to skip.
 
-    criteria_map = {
-        "neo_id": (
-            "n.neo_id = %(neo_id)s",
-            lambda value: value,
-        ),
-        "nasa_id": (
-            "n.nasa_id = %(nasa_id)s",
-            lambda value: value,
-        ),
-        "name": (
-            "n.name ILIKE %(name)s",
-            lambda value: f"%{value}%",
-        ),
-        "hazardous": (
-            "n.hazardous = %(hazardous)s",
-            lambda value: value,
-        ),
-        "diameter_min": (
-            "n.diameter_min >= %(diameter_min)s",
-            lambda value: value,
-        ),
-        "diameter_max": (
-            "n.diameter_max <= %(diameter_max)s",
-            lambda value: value,
-        ),
-        "date_update": (
-            "n.date_update = %(date_update)s",
-            lambda value: value,
-        ),
-        "origin": (
-            "n.origin = %(origin)s",
-            lambda value: f"%{value}%",
-        ),
-        "absolute_magnitude": (
-            "n.absolute_magnitude = %(absolute_magnitude)s",
-            lambda value: value,
-        ),
-        "approach_day": (
-            "a.approach_day = %(approach_day)s",
-            lambda value: value,
-        ),
-    }
+        Returns:
+            List of Neo objects.
+        """
+        query = "SELECT * FROM neo ORDER BY neo_id ASC LIMIT %(limit)s OFFSET %(offset)s;"
+        try:
+            with DBConnection().connection as connection:
+                with connection.cursor() as cursor:
+                    cursor.execute(query, {"limit": limit, "offset": offset})
+                    rows = cursor.fetchall() or []
+                    return [self._map_row_to_neo(r) for r in rows]
+        except Exception as e:
+            logger.error(f"Error in NeoDao.find_all: {e}")
+            raise
 
-    query = "SELECT DISTINCT n.* FROM neo n WHERE 1=1"
-    params = {}
-    needs_approach = False
+    @log
+    def find(self, search_criteria: dict) -> list[Neo]:
+        """Search for NEOs matching the provided criteria.
 
-    for criterion, value in search_criteria.items():
-        if criterion not in criteria_map:
-            raise ValueError(f"Unknown search criterion: {criterion}")
+        Args:
+            search_criteria: Dictionary of criteria and values.
 
-        if value is None:
-            continue
+        Returns:
+            A list of matching Neo objects, or an empty list.
+        """
+        criteria_map = {
+            "neo_id": ("n.neo_id = %(neo_id)s", lambda v: v),
+            "nasa_id": ("n.nasa_id = %(nasa_id)s", lambda v: v),
+            "name": ("n.name ILIKE %(name)s", lambda v: f"%{v}%"),
+            "hazardous": ("n.hazardous = %(hazardous)s", lambda v: v),
+            "diameter_min": ("n.diameter_min >= %(diameter_min)s", lambda v: float(v)),
+            "diameter_max": ("n.diameter_max <= %(diameter_max)s", lambda v: float(v)),
+            "origin": ("UPPER(n.origin) = UPPER(%(origin)s)", lambda v: v),
+            "approach_day": ("a.approach_day = %(approach_day)s", lambda v: v),
+            "start_date": ("a.approach_day >= %(start_date)s", lambda v: v),
+            "end_date": ("a.approach_day <= %(end_date)s", lambda v: v),
+        }
 
-        condition, transform_value = criteria_map[criterion]
-        query += f" AND {condition}"
-        params[criterion] = transform_value(value)
+        query = "SELECT DISTINCT n.* FROM neo n WHERE 1=1"
+        params = {}
+        needs_approach = False
 
-        if criterion == "approach_day":
-            needs_approach = True
+        for criterion, value in search_criteria.items():
+            if value is None or criterion in ("sort_by", "order", "limit", "offset"):
+                continue
 
-    if needs_approach:
-        query = query.replace(
-            "FROM neo n WHERE",
-            "FROM neo n " "JOIN approach a ON n.neo_id = a.neo_id WHERE",
-        )
+            if criterion not in criteria_map:
+                continue
 
-    try:
-        with DBConnection().connection as connection:
-            with connection.cursor() as cursor:
-                print("SQL:", query)
-                print("params:", params)
+            condition, transform_value = criteria_map[criterion]
+            query += f" AND {condition}"
+            params[criterion] = transform_value(value)
 
-                cursor.execute(query, params)
-                rows = cursor.fetchall()
+            if criterion in ("approach_day", "start_date", "end_date"):
+                needs_approach = True
 
-    except Exception as error:
-        logger.error(error)
-        raise
+        if needs_approach:
+            query = query.replace(
+                "FROM neo n WHERE",
+                "FROM neo n JOIN approach a ON n.neo_id = a.neo_id WHERE",
+            )
 
-    neos = []
+        # Ordering
+        sort_by = search_criteria.get("sort_by")
+        order = search_criteria.get("order", "ASC").upper()
+        if order not in ("ASC", "DESC"):
+            order = "ASC"
 
-    for row in rows:
-        neo = Neo(
+        valid_sort_columns = {
+            "neo_id": "n.neo_id",
+            "name": "n.name",
+            "diameter_min": "n.diameter_min",
+            "diameter_max": "n.diameter_max",
+            "hazardous": "n.hazardous",
+            "date_update": "n.date_update",
+        }
+        order_col = valid_sort_columns.get(sort_by, "n.neo_id")
+        query += f" ORDER BY {order_col} {order}"
+
+        # Pagination
+        limit = search_criteria.get("limit", 100)
+        offset = search_criteria.get("offset", 0)
+        query += " LIMIT %(limit)s OFFSET %(offset)s;"
+        params["limit"] = limit
+        params["offset"] = offset
+
+        try:
+            with DBConnection().connection as connection:
+                with connection.cursor() as cursor:
+                    cursor.execute(query, params)
+                    rows = cursor.fetchall() or []
+                    return [self._map_row_to_neo(row) for row in rows]
+        except Exception as error:
+            logger.error(f"Error in NeoDao.find: {error}")
+            raise
+
+    @log
+    def delete(self, neo_id: int) -> bool:
+        """Delete a NEO by ID.
+
+        Args:
+            neo_id: Internal ID of the NEO.
+
+        Returns:
+            True if deleted, False otherwise.
+        """
+        query = "DELETE FROM neo WHERE neo_id = %(neo_id)s;"
+        try:
+            with DBConnection().connection as connection:
+                with connection.cursor() as cursor:
+                    cursor.execute(query, {"neo_id": neo_id})
+                    return cursor.rowcount > 0
+        except Exception as e:
+            logger.error(f"Error in NeoDao.delete: {e}")
+            raise
+
+    def _map_row_to_neo(self, row: dict) -> Neo:
+        return Neo(
             neo_id=row["neo_id"],
-            nasa_id=row["nasa_id"],
+            nasa_id=row.get("nasa_id"),
             name=row["name"],
-            absolute_magnitude=row["absolute_magnitude"],
-            diameter_min=row["diameter_min"],
-            diameter_max=row["diameter_max"],
-            hazardous=row["hazardous"],
-            url_nasa=row["url_nasa"],
-            origin=row["origin"],
-            date_update=row["date_update"],
+            absolute_magnitude=row.get("absolute_magnitude"),
+            diameter_min=row.get("diameter_min"),
+            diameter_max=row.get("diameter_max"),
+            hazardous=row.get("hazardous", False),
+            url_nasa=row.get("url_nasa"),
+            origin=row.get("origin", "USER"),
+            date_update=row.get("date_update"),
         )
-        neos.append(neo)
-
-    return neos
