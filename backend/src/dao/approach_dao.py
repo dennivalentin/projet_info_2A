@@ -39,11 +39,11 @@ class ApproachDao:
                     approach._approach_id = approach_id
                     return True
         return False
-    
-    def find_all_by_neo(self, neo_id : int) -> list[Approach]:
-        """ 
+
+    def find_all_by_neo(self, neo_id: int) -> list[Approach]:
+        """
         Finds all the approach avalaible for a precise Neo
-        
+
         Parameters
         ----------
             neo_id : Id of the asked Neo
@@ -60,9 +60,7 @@ class ApproachDao:
                         "SELECT *                               "
                         "  FROM approach                           "
                         "WHERE neo_id = %(neo_id)s",
-                        {
-                            "neo_id": neo_id
-                        }
+                        {"neo_id": neo_id},
                     )
                     res = cursor.fetchall()
         except Exception as e:
@@ -74,13 +72,13 @@ class ApproachDao:
         if res:
             for row in res:
                 approach = Approach(
-                    neo_id = row["neo_id"],
-                    approach_date= row["approach_date"],
-                    approach_day= row["approach_day"],
-                    distance= row["distance"],
-                    speed= row["speed"],
-                    body= row["body"],
-                    approach_id = row["approach_id"]
+                    neo_id=row["neo_id"],
+                    approach_date=row["approach_date"],
+                    approach_day=row["approach_day"],
+                    distance=row["distance"],
+                    speed=row["speed"],
+                    body=row["body"],
+                    approach_id=row["approach_id"],
                 )
 
                 list_approaches.append(approach)

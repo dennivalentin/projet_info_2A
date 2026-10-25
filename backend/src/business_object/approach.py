@@ -32,6 +32,6 @@ class Approach:
         self._distance = distance
         self._speed = speed
         self._body = body
-    
+
     def __repr__(self):
         return f"Neo : {self._neo_id}, approach on {self._approach_day} by {self._body}"

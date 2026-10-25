@@ -52,7 +52,7 @@ class NeoDao(metaclass=Singleton):
             created = True
 
         return created
-    
+
     @log
     def find_by_id(self, neo_id: int) -> Neo:
         """Find a player by their id.
@@ -78,16 +78,16 @@ class NeoDao(metaclass=Singleton):
         neo = None
         if res:
             neo = Neo(
-                nasa_id= res["nasa_id"],
-                name= res["name"],
-                absolute_magnitude= res["absolute_magnitude"],
-                diameter_min= res["diameter_min"],
-                diameter_max= res["diameter_max"],
-                hazardous= res["hazardous"],
-                url_nasa= res["url_nasa"],
-                origin= res["origin"],
-                date_update= res["date_update"],
-                neo_id= res["neo_id"],
+                nasa_id=res["nasa_id"],
+                name=res["name"],
+                absolute_magnitude=res["absolute_magnitude"],
+                diameter_min=res["diameter_min"],
+                diameter_max=res["diameter_max"],
+                hazardous=res["hazardous"],
+                url_nasa=res["url_nasa"],
+                origin=res["origin"],
+                date_update=res["date_update"],
+                neo_id=res["neo_id"],
             )
 
         return neo

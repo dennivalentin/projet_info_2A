@@ -4,9 +4,9 @@ from utils.singleton import Singleton
 from datetime import datetime
 from dotenv import load_dotenv
 
-
 load_dotenv()
 logger = get_logger(__name__)
+
 
 class FavouriteDao(metaclass=Singleton):
     """Class containing methods to access Favourites in the database."""
@@ -49,7 +49,7 @@ class FavouriteDao(metaclass=Singleton):
             created = True
 
         return created
-    
+
     @log
     def delete(self, neo_id, user_id) -> bool:
         """Delete a favourite
@@ -75,9 +75,9 @@ class FavouriteDao(metaclass=Singleton):
             raise
 
         return res > 0
-    
+
     @log
-    def find_favourite_by_user(self, user_id : int) -> list[int]:
+    def find_favourite_by_user(self, user_id: int) -> list[int]:
         """List all favourite by user
         Returns:
             list[Neo] sorted by username
@@ -90,9 +90,7 @@ class FavouriteDao(metaclass=Singleton):
                         "SELECT neo_id                               "
                         "  FROM favourite                           "
                         "WHERE user_id = %(user_id)s",
-                        {
-                            "user_id": user_id
-                        }
+                        {"user_id": user_id},
                     )
                     res = cursor.fetchall()
         except Exception as e:
