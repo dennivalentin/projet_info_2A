@@ -10,19 +10,27 @@ from business_object.alert import Alert
 load_dotenv()
 logger = get_logger(__name__)
 
+
 class AlertDao(metaclass=Singleton):
     """Class containing methods to access Alerts in the database."""
 
     @log
-    def create(self, user_id: int, neo_id: int | None, diameter_min: float | None = None, distance_max: float | None = None, hazardous_only: bool = False) -> bool:
+    def create(
+        self,
+        user_id: int,
+        label: str,
+        diameter_min: float | None = None,
+        distance_max: float | None = None,
+        hazardous_only: bool = False,
+    ) -> bool:
         """Create an alert
         Parameters
         ----------
-            neo_id : Neo that the user wants to be notified about
             user_id : User associated with that alert
+            label : caption made by the user
             diameter_min : Diameter minimum, above it a notification will be sent
             distance_max : Distance maximum, below it a notification will be sent
-            hazardous_only : Does the user want to see only hazardous Neo's according to the critera 
+            hazardous_only : Does the user want to see only hazardous Neo's according to the critera
         Returns
         -------
             True if creation is successful, False otherwise
@@ -33,15 +41,22 @@ class AlertDao(metaclass=Singleton):
             with DBConnection().connection as connection:
                 with connection.cursor() as cursor:
                     cursor.execute(
-                        "INSERT INTO alert(user_id, neo_id, diameter_min, distance_max, hazardous_only, active) VALUES "
-                        "(%(user_id)s, %(neo_id)s, %(diameter_min)s, %(distance_max)s, %(hazardous_only)s, TRUE) "
-                        "RETURNING alert_id;",
+                        "INSERT INTO alert(user_id, label, diameter_min, distance_max, hazardous_only, active, last_eval_date) "
+                        "SELECT %(user_id)s, %(label)s, %(diameter_min)s, %(distance_max)s, %(hazardous_only)s, TRUE, NULL  "
+                        """WHERE NOT EXISTS (
+                            SELECT 1 FROM alert
+                            WHERE user_id = %(user_id)s
+                            AND diameter_min IS NOT DISTINCT FROM %(diameter_min)s
+                            AND distance_max IS NOT DISTINCT FROM %(distance_max)s
+                            AND hazardous_only = %(hazardous_only)s
+                        )
+                        RETURNING alert_id;""",
                         {
-                            "neo_id": neo_id,
                             "user_id": user_id,
+                            "label": label,
                             "diameter_min": diameter_min,
                             "distance_max": distance_max,
-                            "hazardous_only": hazardous_only
+                            "hazardous_only": hazardous_only,
                         },
                     )
                     res = cursor.fetchone()
@@ -54,7 +69,7 @@ class AlertDao(metaclass=Singleton):
             created = True
 
         return created
-    
+
     @log
     def delete(self, alert_id) -> bool:
         """Delete an alert
@@ -79,7 +94,7 @@ class AlertDao(metaclass=Singleton):
             raise
 
         return res > 0
-    
+
     @log
     def find_matching_approaches_for_user(self, user_id: int) -> list[dict]:
         """Find all upcoming approaches matching active alerts for a given user.
@@ -92,38 +107,38 @@ class AlertDao(metaclass=Singleton):
         -------
             list[dict] : list of matching events with NEO and approach details
         """
-    
+
         try:
             with DBConnection().connection as connection:
                 with connection.cursor() as cursor:
                     cursor.execute(
-                        "SELECT a.alert_id, a.distance_max, a.diameter_min, a.hazardous_only, n.neo_id, n.name AS neo_name, app.approach_date, app.distance, n.diameter_max   "
+                        "SELECT a.alert_id, a.label, a.distance_max, a.diameter_min, a.hazardous_only, n.neo_id, n.name AS neo_name, app.approach_date, app.distance, n.diameter_max   "
                         "FROM alert a "
-                        "JOIN neo n ON (a.neo_id IS NULL OR a.neo_id = n.neo_id) "
+                        "CROSS JOIN neo n "
                         "JOIN approach app ON app.neo_id = n.neo_id   "
                         "WHERE a.user_id = %(user_id)s  "
                         "AND a.active IS TRUE "
                         "AND (app.body = 'Earth' OR app.body IS NULL)  "
-                        "AND (a.hazardous_only IS FALSE OR n.is_potentially_hazardous IS TRUE)  "
+                        "AND (a.hazardous_only IS FALSE OR n.hazardous IS TRUE)  "
                         "AND (a.distance_max IS NULL OR app.distance <= a.distance_max)  "
                         "AND (a.diameter_min IS NULL OR n.diameter_max >= a.diameter_min)   "
                         "AND app.approach_date >= CURRENT_DATE  "
                         "ORDER BY app.approach_date ASC;",
-                        {"user_id": user_id})
+                        {"user_id": user_id},
+                    )
                     res = cursor.fetchall()
 
                     if res is not None:
                         return list(res)
-                    else: 
+                    else:
                         return []
 
         except Exception as e:
             logger.error(e)
             return []
-    
 
     @log
-    def update(self, alert) -> bool:
+    def update(self, alert: Alert) -> bool:
         """Update an alert in the database.
         Args:
             Alert to be updated
@@ -139,18 +154,22 @@ class AlertDao(metaclass=Singleton):
                         "UPDATE alert                                                  "
                         "   SET alert_id = %(alert_id)s,                                "
                         "       user_id = COALESCE(%(user_id)s, user_id),            "
-                        "       diameter_min = COALESCE(%(diameter_min)s, diameter_min),                                          "
+                        "       label = COALESCE(%(label)s, label), "
                         "       distance_max = COALESCE(%(distance_max)s, distance_max),                                      "
+                        "       diameter_min = COALESCE(%(diameter_min)s, diameter_min),                                          "
                         "       hazardous_only = COALESCE(%(hazardous_only)s, hazardous_only),"
-                        "       active = COALESCE(%(active)s, active)"
+                        "       active = COALESCE(%(active)s, active),  "
+                        "       last_eval_date= COALESCE(%(today)s, last_eval_date)"
                         " WHERE alert_id = %(alert_id)s;                              ",
                         {
-                            "alert_id" : alert_id,
-                            "user_id": user_id,
-                            "diameter_min": diameter_min,
-                            "distance_max": distance_max,
-                            "hazardous_only": hazardous_only,
-                            "active": active
+                            "alert_id": alert._alert_id,
+                            "user_id": alert._user_id,
+                            "label": alert._label,
+                            "diameter_min": alert._diameter_min,
+                            "distance_max": alert._distance_max,
+                            "hazardous_only": alert._hazardous_only,
+                            "active": alert._active,
+                            "today": alert._last_eval_date,
                         },
                     )
                     nb_affected_rows = cursor.rowcount
@@ -159,7 +178,7 @@ class AlertDao(metaclass=Singleton):
             raise
 
         return nb_affected_rows == 1
-    
+
     def find_by_user(self, user_id) -> list[Alert]:
         """find an alert of an user
         Parameters
@@ -173,12 +192,12 @@ class AlertDao(metaclass=Singleton):
             with DBConnection().connection as connection:
                 with connection.cursor() as cursor:
                     cursor.execute(
-                        "SELECT alert_id, user_id, label, distance_max, diameter_min, hazardous_only, creation_date, last_eval_date"
+                        "SELECT alert_id, user_id, label, distance_max, diameter_min, hazardous_only, active, creation_date, last_eval_date   "
                         "FROM alert                               "
                         " WHERE user_id = %(user_id)s                ",
                         {"user_id": user_id},
                     )
-                    res = cursor.fetchall
+                    res = cursor.fetchall()
         except Exception as e:
             logger.error(e)
             raise
@@ -188,18 +207,57 @@ class AlertDao(metaclass=Singleton):
         if res:
             for row in res:
                 alert = Alert(
-                    alert_id= row["alert_if"], 
-                    user_id = row["user_id"], 
-                    label = row["label"], 
-                    distance_max = row["distance_max"], 
-                    diameter_min = row["diameter_min"], 
-                    hazardous_only = row["diameter_min"], 
-                    creation_date = row["creation_date"], 
-                    last_eval_date = row["last_eval_date"]
+                    alert_id=row["alert_id"],
+                    user_id=row["user_id"],
+                    label=row["label"],
+                    distance_max=row["distance_max"],
+                    diameter_min=row["diameter_min"],
+                    hazardous_only=row["hazardous_only"],
+                    creation_date=row["creation_date"],
+                    active=row["active"],
+                    last_eval_date=row["last_eval_date"],
                 )
 
                 list_alert.append(alert)
 
         return list_alert
-    
-    def find_by_id(self, alert_id):
+
+    def find_by_id(self, alert_id) -> Alert:
+        """find an alert by its id
+        Parameters
+        ----------
+            alert_id : id of this alert
+        Returns
+        -------
+            Alert
+        """
+        try:
+            with DBConnection().connection as connection:
+                with connection.cursor() as cursor:
+                    cursor.execute(
+                        "SELECT alert_id, user_id, label, distance_max, diameter_min, hazardous_only, active, creation_date, last_eval_date   "
+                        "FROM alert                               "
+                        " WHERE alert_id = %(alert_id)s                ",
+                        {"alert_id": alert_id},
+                    )
+                    res = cursor.fetchone()
+        except Exception as e:
+            logger.error(e)
+            raise
+
+        if res:
+            alert = Alert(
+                alert_id=res["alert_id"],
+                user_id=res["user_id"],
+                label=res["label"],
+                distance_max=res["distance_max"],
+                diameter_min=res["diameter_min"],
+                hazardous_only=res["hazardous_only"],
+                creation_date=res["creation_date"],
+                active=res["active"],
+                last_eval_date=res["last_eval_date"],
+            )
+        else:
+            return None
+
+        return alert

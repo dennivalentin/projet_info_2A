@@ -14,6 +14,7 @@ from business_object.approach import Approach
 
 import matplotlib.pyplot as plt
 
+
 class FavouriteService:
     @log
     def add_favourite(self, neo_id: int, user_id: int) -> bool:
@@ -34,7 +35,7 @@ class FavouriteService:
         else:
             print("Nothing deleted")
             return False
-    
+
     @log
     def list_all_favourite_by_user(self, user_id: int) -> list[Neo]:
         """
@@ -53,9 +54,9 @@ class FavouriteService:
         for neo_id in list_fav:
             neo_fav = NeoDao().find_by_id(neo_id)
             list_neo.append(neo_fav)
-        
+
         return list_neo
-    
+
     @log
     def approches_favourite(self, user_id: int) -> dict[int, list[Approach]]:
         """
@@ -75,21 +76,21 @@ class FavouriteService:
             dict_approaches[item] = ApproachDao().find_all_by_neo(item)
 
         return dict_approaches
-    
+
     @log
     def graph_favourite(self, user_id, neo_id) -> io.BytesIO:
         list_approaches = self.approches_favourite(user_id)[neo_id]
 
         if not list_approaches:
             raise ValueError(f"No data available for Neo : {neo_id}.")
-        
+
         dates = []
         distances = []
 
         for item in list_approaches:
             dates.append(item._approach_date)
             distances.append(item._distance)
-        
+
         fig, ax = plt.subplots(figsize=(10, 5))
 
         ax.plot(
@@ -111,4 +112,3 @@ class FavouriteService:
         img_buffer.seek(0)
 
         return img_buffer
-
