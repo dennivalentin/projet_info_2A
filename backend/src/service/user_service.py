@@ -57,4 +57,19 @@ class UserService:
         ConnectionDao().create(user.user_id)
         return user
 
-    
+    @log
+    def make_admin(self, user_id: int) -> bool:
+        """change the role from "user" to "admin"
+        Args:
+          user_ind (int): The id of the user to promote
+        
+        Returns:
+           bool: True if the change was succesful
+        """
+        user = UserDao().find_by_id(user_id)
+        if user is None:
+            raise ValueError("The user could not be found")
+        
+        new_user = User(user_id=user.user_id, username=user.username, email=user.email, password_hash=user.password_hash, creation_date=user.creation_date, role="admin")
+
+        return UserDao().update(new_user)
