@@ -73,3 +73,19 @@ class UserService:
         new_user = User(user_id=user.user_id, username=user.username, email=user.email, password_hash=user.password_hash, creation_date=user.creation_date, role="admin")
 
         return UserDao().update(new_user)
+    
+    @log
+    def delete_account(self, user_id:int) -> bool:
+        """ delete a user accout 
+          Args:
+            user_id (int): The id of the user to delete
+        
+          Returns:
+            bool: True if the supression was succesful.
+        """
+
+        user = UserDao().find_by_id(user_id)
+        if user is None:
+            raise ValueError("The user could not be found")
+
+        return UserDao().delete(user.user_id)
