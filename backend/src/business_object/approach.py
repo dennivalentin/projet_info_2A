@@ -28,6 +28,7 @@ class Approach:
     ):
         self._approach_id = approach_id
         self._neo_id = neo_id
+        self._approach_day = None
         self._approach_date = approach_date
         self._distance = float(distance) if distance is not None else 0.0
         self._speed = float(speed) if speed is not None else 0.0
@@ -51,7 +52,7 @@ class Approach:
 
     @property
     def approach_day(self) -> date:
-	    return self._approach_date.date()  # noqa: W191
+        return self._approach_date.date()  # noqa: E101, W191
 
     @approach_day.setter
     def approach_day(self, value: date) -> None:

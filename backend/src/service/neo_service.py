@@ -128,3 +128,4 @@ class NeoService:
         data = neo.to_dict()
         data["approaches"] = [approach.to_dict() for approach in approaches]
         return data
+

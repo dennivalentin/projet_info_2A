@@ -1,4 +1,4 @@
-from date import datetime
+from datetime import datetime
 
 
 class Favourite:
@@ -17,7 +17,7 @@ class Favourite:
         self._date_added = date_added or datetime.now()
 
 
-  @property
+    @property
     def neo_id(self) -> int:
         return self._neo_id
     @neo_id.setter
