@@ -1,72 +1,130 @@
-import secrets
-
-from business_object.neo import Neo
-from dao.neo_dao import NeoDao
-from utils.log_utils import log
-from utils.security import hash_password
 from datetime import datetime
+from business_object.neo import Neo
+from dao.approach_dao import ApproachDao
+from dao.neo_dao import NeoDao
+from utils.log_utils import get_logger, log
+
+logger = get_logger(__name__)
+
 
 class NeoService:
-    """Service that handles business logic related to neos (creation, search, etc.)."""
+    """Service handling business logic for Near-Earth Objects (NEOs)."""
+
+    def __init__(self, neo_dao: NeoDao | None = None, approach_dao: ApproachDao | None = None):
+        self._neo_dao = neo_dao or NeoDao()
+        self._approach_dao = approach_dao or ApproachDao()
 
     @log
-    def create(self,
-        name: str,
-        absolute_magnitude: float,
-        diameter_min: float,
-        diameter_max: float,
-        hazardous: bool,
-        date_update : datetime) -> Neo:
-        """Creates a new neo in the system.
-        Args:
-            neo_id (int | None): The internal unique identifier for the NEO, by default None.
-            name (str): The name of the Near-Earth Object.
-            absolute_magnitude (float): The absolute magnitude of the NEO.
-            diameter_min (float): The estimated minimum diameter in kilometers.
-            diameter_max (float): The estimated maximum diameter in kilometers.
-            hazardous (bool): Indicates if the NEO is considered potentially hazardous.
-        Returns:
-            Neo object created or None if creation failed.
+    def create(
+        self,
+        first_arg: str | None = None,
+        name: str | None = None,
+        absolute_magnitude: float | None = None,
+        diameter_min: float | None = None,
+        diameter_max: float | None = None,
+        hazardous: bool = False,
+        url_nasa: str | None = None,
+        origin: str = "USER",
+        date_update: datetime | str | None = None,
+        neo_id: int | None = None,
+        nasa_id: str | None = None,
+    ) -> Neo | None:
+        """Creates a new NEO in the system.
+
+        Supports both positional signatures:
+          - create(name, absolute_magnitude, ...)
+          - create(nasa_id, name, absolute_magnitude, ...)
+          - create(name="...", ...)
         """
+        if name is not None:
+            resolved_name = name
+            resolved_nasa_id = first_arg if first_arg is not None else nasa_id
+        else:
+            resolved_name = first_arg
+            resolved_nasa_id = nasa_id
+
+        if not resolved_name or not str(resolved_name).strip():
+            raise ValueError("NEO name cannot be empty")
+
+        if isinstance(date_update, str):
+            try:
+                resolved_date = datetime.fromisoformat(date_update)
+            except Exception:
+                resolved_date = datetime.now()
+        elif isinstance(date_update, datetime):
+            resolved_date = date_update
+        else:
+            resolved_date = datetime.now()
 
         new_neo = Neo(
-            nasa_id = None,
-            name = name,
-            absolute_magnitude = absolute_magnitude,
-            diameter_min = diameter_min,
-            diameter_max = diameter_max,
-            hazardous = hazardous,
-            url_nasa = None,
-            origin = "USER",
-            date_update = date_update
+            nasa_id=resolved_nasa_id,
+            name=str(resolved_name).strip(),
+            absolute_magnitude=float(absolute_magnitude) if absolute_magnitude is not None else None,
+            diameter_min=float(diameter_min) if diameter_min is not None else None,
+            diameter_max=float(diameter_max) if diameter_max is not None else None,
+            hazardous=bool(hazardous),
+            url_nasa=url_nasa,
+            origin=origin,
+            date_update=resolved_date,
+            neo_id=neo_id,
         )
-        return new_neo if NeoDao().create(new_neo) else None
 
+        success = self._neo_dao.create(new_neo)
+        return new_neo if success else None
 
-    def search_neo(self,  nasa_id: str | None,
-                name: str | None,
-                absolute_magnitude: float | None,
-                diameter_min: float | None,
-                diameter_max: float | None,
-                hazardous: bool | None,
-                url_nasa: str | None,
-                origin: str | None,
-                date_update: datetime  | None,
-                neo_id: int | None):
-        """ Search neos corresping to specific criterias.
+    @log
+    def search(self, search_criteria: dict) -> list[Neo]:
+        """Search for NEOs matching criteria.
+
         Args:
-                neo_id (int | None): The internal unique identifier for the NEO, by default None.
-                nasa_id (str): The official identifier provided by NASA.
-                name (str): The name of the Near-Earth Object.
-                absolute_magnitude (float): The absolute magnitude of the NEO.
-                diameter_min (float): The estimated minimum diameter in kilometers.
-                diameter_max (float): The estimated maximum diameter in kilometers.
-                hazardous (bool): Indicates if the NEO is considered potentially hazardous.
-                url_nasa (str): The URL to the NASA web page for this object.
-                origin (str): either NASA for a NEO comming from the API or USER for a NEO created by a user.
-                date_update (datetime): The date this record was last updated.
-        Return:
-                List of Neos
+            search_criteria: Dictionary containing filter parameters.
+
+        Returns:
+            List of matching Neo objects.
         """
+        return self._neo_dao.find(search_criteria)
 
+    @log
+    def find_by_id(self, neo_id: int) -> Neo | None:
+        """Retrieve a NEO by its internal ID.
 
+        Args:
+            neo_id: Internal ID.
+
+        Returns:
+            Neo if found, None otherwise.
+        """
+        return self._neo_dao.find_by_id(neo_id)
+
+    @log
+    def list_all(self, limit: int = 100, offset: int = 0) -> list[Neo]:
+        """Retrieve all NEOs with pagination.
+
+        Args:
+            limit: Maximum items to return.
+            offset: Items to skip.
+
+        Returns:
+            List of Neo objects.
+        """
+        return self._neo_dao.find_all(limit=limit, offset=offset)
+
+    @log
+    def get_neo_details(self, neo_id: int) -> dict | None:
+        """Retrieve full details of a NEO along with its close approaches.
+
+        Args:
+            neo_id: Internal ID of the NEO.
+
+        Returns:
+            Dictionary containing NEO details and close approaches list, or None if not found.
+        """
+        neo = self._neo_dao.find_by_id(neo_id)
+        if not neo:
+            return None
+
+        approaches = self._approach_dao.find_by_neo_id(neo_id)
+
+        data = neo.to_dict()
+        data["approaches"] = [approach.to_dict() for approach in approaches]
+        return data
