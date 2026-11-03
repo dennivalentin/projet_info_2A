@@ -118,34 +118,34 @@ class AlertService(metaclass=Singleton):
         alert = AlertDao().find_by_id(alert_id)
         if alert is None:
             return False
-        status = alert._active
+        status = alert.active
 
         if status:
             AlertDao().update(
                 Alert(
-                    alert_id=alert._alert_id,
-                    user_id=alert._user_id,
-                    label=alert._label,
-                    distance_max=alert._distance_max,
-                    diameter_min=alert._diameter_min,
-                    hazardous_only=alert._hazardous_only,
+                    alert_id=alert.alert_id,
+                    user_id=alert.user_id,
+                    label=alert.label,
+                    distance_max=alert.distance_max,
+                    diameter_min=alert.diameter_min,
+                    hazardous_only=alert.hazardous_only,
                     active=False,
-                    creation_date=alert._creation_date,
-                    last_eval_date=alert._last_eval_date,
+                    creation_date=alert.creation_date,
+                    last_eval_date=alert.last_eval_date,
                 )
             )
         else:
             AlertDao().update(
                 Alert(
-                    alert_id=alert._alert_id,
-                    user_id=alert._user_id,
-                    label=alert._label,
-                    distance_max=alert._distance_max,
-                    diameter_min=alert._diameter_min,
-                    hazardous_only=alert._hazardous_only,
+                    alert_id=alert.alert_id,
+                    user_id=alert.user_id,
+                    label=alert.label,
+                    distance_max=alert.distance_max,
+                    diameter_min=alert.diameter_min,
+                    hazardous_only=alert.hazardous_only,
                     active=True,
-                    creation_date=alert._creation_date,
-                    last_eval_date=alert._last_eval_date,
+                    creation_date=alert.creation_date,
+                    last_eval_date=alert.last_eval_date,
                 )
             )
 
@@ -168,14 +168,14 @@ class AlertService(metaclass=Singleton):
 
         AlertDao().update(
             Alert(
-                alert_id=alert._alert_id,
-                user_id=alert._user_id,
-                label=alert._label,
-                distance_max=alert._distance_max,
-                diameter_min=alert._diameter_min,
-                hazardous_only=alert._hazardous_only,
-                active=alert._active,
-                creation_date=alert._creation_date,
+                alert_id=alert.alert_id,
+                user_id=alert.user_id,
+                label=alert.label,
+                distance_max=alert.distance_max,
+                diameter_min=alert.diameter_min,
+                hazardous_only=alert.hazardous_only,
+                active=alert.active,
+                creation_date=alert.creation_date,
                 last_eval_date=datetime.today(),
             )
         )

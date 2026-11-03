@@ -162,14 +162,14 @@ class AlertDao(metaclass=Singleton):
                         "       last_eval_date= COALESCE(%(today)s, last_eval_date)"
                         " WHERE alert_id = %(alert_id)s;                              ",
                         {
-                            "alert_id": alert._alert_id,
-                            "user_id": alert._user_id,
-                            "label": alert._label,
-                            "diameter_min": alert._diameter_min,
-                            "distance_max": alert._distance_max,
-                            "hazardous_only": alert._hazardous_only,
-                            "active": alert._active,
-                            "today": alert._last_eval_date,
+                            "alert_id": alert.alert_id,
+                            "user_id": alert.user_id,
+                            "label": alert.label,
+                            "diameter_min": alert.diameter_min,
+                            "distance_max": alert.distance_max,
+                            "hazardous_only": alert.hazardous_only,
+                            "active": alert.active,
+                            "today": alert.last_eval_date,
                         },
                     )
                     nb_affected_rows = cursor.rowcount
@@ -202,9 +202,10 @@ class AlertDao(metaclass=Singleton):
             logger.error(e)
             raise
 
-        list_alert = []
+        list_alert = None
 
         if res:
+            list_alert = []
             for row in res:
                 alert = Alert(
                     alert_id=row["alert_id"],
