@@ -26,6 +26,8 @@ if st.button(label="Play"):
     st.switch_page("pages/play_game.py")
 if st.button("☄️ My Dashboard"):
     st.switch_page("pages/dashboard.py")
+if st.button("📊 Statistics"):
+    st.switch_page("pages/statistics.py")
 if st.button(label="Log out", type="primary"):
     logger.info("Log out")
     del st.session_state["player"]
