@@ -155,7 +155,7 @@ class NeoDao(metaclass=Singleton):
                 continue
 
             if criterion not in criteria_map:
-                continue
+                raise ValueError("Unknown search criterion")
 
             condition, transform_value = criteria_map[criterion]
             query += f" AND {condition}"

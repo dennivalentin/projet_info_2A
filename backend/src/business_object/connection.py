@@ -1,4 +1,4 @@
-from date import datetime
+from datetime import datetime
 
 
 class Connection:
@@ -17,7 +17,7 @@ class Connection:
         self._user_id = user_id
         self._date = date or datetime.now()
 
-   @property
+    @property
     def connection_id(self) -> int | None:
         return self._connection_id
     @connection_id.setter
@@ -35,8 +35,10 @@ class Connection:
     @date.setter
     def date(self, value: datetime) -> None:
         self._date = value
+    
     def to_dict(self) -> dict:
         return {
             "connection_id": self._connection_id,
             "user_id": self._user_id,
             "date": self._date.isoformat() if hasattr(self._date, "isoformat") else str(self._date),
+        }

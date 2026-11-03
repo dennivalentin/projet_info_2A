@@ -7,7 +7,6 @@ from business_object.connection import Connection
 from business_object.favourite import Favourite
 from business_object.import_bo import Import
 from business_object.neo import Neo
-from business_object.player import Player
 from business_object.proposal import Proposal
 from business_object.search import Search
 from business_object.user import User
@@ -63,12 +62,10 @@ def test_neo_getters_and_setters():
 
 def test_approach_getters_and_setters():
     """Verify Approach properties, getters, setters, AU conversion, and to_dict."""
-    app_day = date(2029, 4, 13)
     app_date = datetime(2029, 4, 13, 21, 46)
     approach = Approach(
         approach_id=10,
         neo_id=1,
-        approach_day=app_day,
         approach_date=app_date,
         distance=38000.0,
         speed=74300.0,
@@ -77,7 +74,7 @@ def test_approach_getters_and_setters():
 
     assert approach.approach_id == 10
     assert approach.neo_id == 1
-    assert approach.approach_day == app_day
+    assert approach.approach_day == approach.approach_date.date()
     assert approach.approach_date == app_date
     assert approach.distance == 38000.0
     assert approach.speed == 74300.0
@@ -100,6 +97,7 @@ def test_approach_getters_and_setters():
 
 def test_alert_getters_and_setters():
     """Verify Alert properties, getters, setters, and to_dict."""
+    day = date(2020, 8, 29)
     alert = Alert(
         alert_id=1,
         user_id=42,
@@ -108,6 +106,7 @@ def test_alert_getters_and_setters():
         diameter_min=1.0,
         hazardous_only=True,
         active=True,
+        creation_date=day
     )
 
     assert alert.alert_id == 1
@@ -117,6 +116,7 @@ def test_alert_getters_and_setters():
     assert alert.diameter_min == 1.0
     assert alert.hazardous_only is True
     assert alert.active is True
+    assert alert.creation_date == date(2020, 8, 29)
 
     # Setters
     alert.label = "Close Approaches"
@@ -131,18 +131,21 @@ def test_alert_getters_and_setters():
 
 def test_user_getters_and_setters():
     """Verify User properties, getters, setters, and to_dict."""
+    day = date(2001, 9, 11)
     user = User(
         user_id=1,
         username="astronomer",
         email="astro@ensai.fr",
         password_hash="secret_hash",
         role="user",
+        creation_date=day
     )
 
     assert user.user_id == 1
     assert user.username == "astronomer"
     assert user.email == "astro@ensai.fr"
     assert user.role == "user"
+    assert user.creation_date == date(2001, 9, 11)
 
     user.role = "admin"
     user.username = "head_astronomer"
@@ -156,6 +159,8 @@ def test_user_getters_and_setters():
 
 def test_proposal_getters_and_setters():
     """Verify Proposal properties, getters, setters, and to_dict."""
+    subd = date(2005, 7, 29)
+    
     proposal = Proposal(
         proposal_id=5,
         user_id=12,
@@ -164,6 +169,7 @@ def test_proposal_getters_and_setters():
         proposed_value="0.45",
         justification="New observation from Paris observatory",
         status="WAITING",
+        submission_date=subd
     )
 
     assert proposal.proposal_id == 5
@@ -172,13 +178,14 @@ def test_proposal_getters_and_setters():
     assert proposal.field_name == "diameter_min"
     assert proposal.proposed_value == "0.45"
     assert proposal.status == "WAITING"
+    assert proposal.submission_date == subd
 
     proposal.status = "ACCEPTED"
     assert proposal.status == "ACCEPTED"
 
 
 def test_other_bos_getters_and_setters():
-    """Verify ApodData, Connection, Favourite, Import, and Player."""
+    """Verify ApodData, Connection, Favourite, Import"""
     now = datetime(2026, 10, 25, 12, 0)
 
     # ApodData
@@ -206,3 +213,18 @@ def test_other_bos_getters_and_setters():
     assert imp.nb_neo == 30
     imp.status = "DONE"
     assert imp.status == "DONE"
+
+    def test_search_getters_and_setters():
+        sch = Search(
+            search_id=123856,
+            user_id=456892,
+            search_date=datetime.now(),
+            criteria="EROS",
+            neo_id=4586333,
+        )
+        assert sch.search_id == 123856
+        assert sch.user_id == 456892
+        assert sch.search_date == datetime.now()
+        assert sch.criteria == "EROS"
+        sch.neo_id = 475823
+        assert sch.neo_id == 475823

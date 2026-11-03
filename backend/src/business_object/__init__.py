@@ -5,7 +5,6 @@ from business_object.connection import Connection
 from business_object.favourite import Favourite
 from business_object.import_bo import Import
 from business_object.neo import Neo
-from business_object.player import Player
 from business_object.proposal import Proposal
 from business_object.search import Search
 from business_object.user import User
@@ -17,7 +16,6 @@ __all__ = [
     "Favourite",
     "Import",
     "Neo",
-    "Player",
     "Proposal",
     "Search",
     "User",
