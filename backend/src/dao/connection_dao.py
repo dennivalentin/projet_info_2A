@@ -10,11 +10,12 @@ class ConnectionDao(metaclass=Singleton):
     """Class containing methods to access the connection history in the database."""
 
     @log
-    def create(self, user_id: int) -> Connection:
+    def create(self, user_id: int, access_token: str | None = None) -> Connection:
         """Records a login of a user (the date is set by the database).
 
         Args:
             user_id (int): The id of the user who logged in.
+            access_token (str, optional): The authentication token.
 
         Returns:
             Connection: The recorded connection.
@@ -23,8 +24,8 @@ class ConnectionDao(metaclass=Singleton):
             with DBConnection().connection as connection:
                 with connection.cursor() as cursor:
                     cursor.execute(
-                        "INSERT INTO connection (user_id) VALUES (%(user_id)s) RETURNING *;",
-                        {"user_id": user_id},
+                        "INSERT INTO connection (user_id, access_token) VALUES (%(user_id)s, %(token)s) RETURNING *;",
+                        {"user_id": user_id, "token": access_token},
                     )
                     res = cursor.fetchone()
         except Exception as e:
@@ -34,7 +35,7 @@ class ConnectionDao(metaclass=Singleton):
         return Connection(
             connection_id=res["connection_id"],
             user_id=res["user_id"],
-            connection_date=res["connection_date"],
+            date=res.get("connection_date"),
         )
 
     @log
@@ -62,14 +63,14 @@ class ConnectionDao(metaclass=Singleton):
             raise
 
         connection = []
-
-        for row in res:
-            connection.append(
-                Connection(
-                    user_id=row["user_id"],
-                    connection_id=row["connection_id"],
-                    connection_date=row["connection_date"],
+        if res:
+            for row in res:
+                connection.append(
+                    Connection(
+                        user_id=row["user_id"],
+                        connection_id=row["connection_id"],
+                        date=row.get("connection_date"),
+                    )
                 )
-            )
 
         return connection

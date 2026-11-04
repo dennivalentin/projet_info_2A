@@ -17,12 +17,13 @@ from utils.log_init import get_page_logger
 if "player" in st.session_state:
     st.switch_page("pages/player_menu.py")
 
-st.set_page_config(page_title="Coin flip game", page_icon="🪙", layout="centered")
+st.set_page_config(page_title="NEO-Watch", page_icon="🔭", layout="centered")
 
 st.markdown(
     f"""
     <div style="text-align:center">
-        <h1 style="color:{config.get_option("theme.primaryColor")}">Coin flip game</h1>
+        <h1 style="color:{config.get_option('theme.primaryColor')}; margin-bottom: 0.2rem;">🔭 NEO-Watch</h1>
+        <p style="font-size: 1.05rem; opacity: 0.85;">Plateforme d'exploration et de surveillance des astéroïdes</p>
     </div>
     """,
     unsafe_allow_html=True,
@@ -37,7 +38,9 @@ with st.container(horizontal_alignment="center"):
         logger.info(f"Attempting login for user: {username}")
 
         try:
-            response = api_client.post("/login", json={"username": username, "password": password})
+            response = api_client.post(
+                "/login", json={"username": username, "password": password}
+            )
 
             if response:
                 status_code = response.get("status_code")
@@ -51,7 +54,9 @@ with st.container(horizontal_alignment="center"):
                     st.success(f"Welcome {player['username']} ! 🎉")
                     st.switch_page("pages/player_menu.py")
                 elif status_code == 401:
-                    logger.warning(f"Login failed: 401 Unauthorized for user {username}.")
+                    logger.warning(
+                        f"Login failed: 401 Unauthorized for user {username}."
+                    )
                     st.error("Invalid credentials")
                 else:
                     logger.error(f"Login failed: Status {status_code}, Data: {data}")
