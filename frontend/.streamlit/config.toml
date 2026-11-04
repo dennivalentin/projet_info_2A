@@ -1,20 +1,34 @@
 [server]
 port = 8000
+headless = true
+
+[browser]
+gatherUsageStats = false
+
+[client]
+# Masque la barre d'outils encombrante de Streamlit
+toolbarMode = "minimal"
+showErrorDetails = true
+
 [theme]
-textColor="#1a1a1a"
-font="Comic sans ms"
+# ==============================================================================
+# Thème "Deep Cosmos & Modern Observatory" (Idéal pour NEO-Watch / NASA)
+# ==============================================================================
+base = "dark"
+primaryColor = "#38bdf8"             # Cyan céleste lumineux (boutons, badges, focus)
+backgroundColor = "#0b0f19"          # Noir cosmos profond (élégant, immersif et contrasté)
+secondaryBackgroundColor = "#161f30" # Cartes de contenu, formulaires, filtres et sidebar
+textColor = "#f8fafc"                # Blanc éclatant pour une lisibilité parfaite des données
+font = "sans serif"                  # Typographie épurée et moderne
 
-primaryColor="#0df0e5"
-backgroundColor="#fb09c6"
-secondaryBackgroundColor="#f0eff8"
+# Couleurs de statut harmonisées
+redTextColor = "#fca5a5"
+redBackgroundColor = "#450a0a"
+greenTextColor = "#86efac"
+greenBackgroundColor = "#052e16"
+yellowTextColor = "#fde047"
+yellowBackgroundColor = "#422006"
 
-redTextColor="#8b0303"
-redBackgroundColor="#ff5f5f"
-greenTextColor="#016806"
-greenBackgroundColor="#9cd1b7"
-yellowTextColor="#bd7f0c"
-yellowBackgroundColor="#f7bd53"
-
-
-dataframeBorderColor="#976a09"
-dataframeHeaderBackgroundColor="#eea73d"
+# Bordures et en-têtes de tableaux
+dataframeBorderColor = "#1e293b"
+dataframeHeaderBackgroundColor = "#1e293b"
