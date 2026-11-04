@@ -1,15 +1,19 @@
-"""
-Main entry point for the FastAPI web service.
+"""Main entry point for the NEO-Watch FastAPI web service.
 
 Initializes logging, loads environment variables, and sets up API routers
-for players, login, and games.
+for NEOs, Dashboard, Statistics, and Authentication.
 """
 
 from fastapi import FastAPI, Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse, RedirectResponse
 
-from controller import login_controller, user_controller
+from controller import (
+    dashboard_controller,
+    login_controller,
+    neo_controller,
+    statistics_controller,
+)
 from utils.env_variables import display_values, load_environment_variables
 from utils.log_utils import LogMiddleware, get_logger, initialize_logs
 from utils.reset_database import ResetDatabase
@@ -17,22 +21,20 @@ from utils.reset_database import ResetDatabase
 logger = get_logger(__name__)
 
 # Initialization
-initialize_logs("NEO-Watch")
+initialize_logs("Webservice")
 
 load_environment_variables()
 display_values()
 
 
-app = FastAPI(title="NEO-Watch")
+app = FastAPI(title="NEO-Watch Webservice")
 
 app.add_middleware(LogMiddleware)
 
 
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
-    """
-    Intercepts Pydantic 422 errors to log them.
-    """
+    """Intercepts Pydantic 422 errors to log them."""
     body = await request.body()
     body_str = body.decode() if body else "empty body"
 
@@ -43,8 +45,12 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
         content={"detail": exc.errors(), "body": body_str},
     )
 
+
+# API Routers
+app.include_router(neo_controller.router, prefix="/neo", tags=["NEOs"])
+app.include_router(dashboard_controller.router, prefix="/dashboard", tags=["Dashboard"])
+app.include_router(statistics_controller.router, prefix="/statistics", tags=["Statistics"])
 app.include_router(login_controller.router, prefix="/login", tags=["Login"])
-app.include_router(user_controller.router, prefix="/users", tags=["Users"])
 
 
 @app.get("/", include_in_schema=False)
@@ -66,7 +72,9 @@ async def reset_database():
     logger.info("Database reset")
     success = ResetDatabase().run()
 
-    return {"message": f"Database re-initialization - {'SUCCESS' if success else 'FAILURE'}"}
+    return {
+        "message": f"Database re-initialization - {'SUCCESS' if success else 'FAILURE'}"
+    }
 
 
 # Run the FastAPI application
@@ -81,4 +89,4 @@ if __name__ == "__main__":
         port=int(os.getenv("UVICORN_PORT", "5000")),
     )
 
-    logger.info("NEO-Watch stopped")
+    logger.info("Webservice stopped")
