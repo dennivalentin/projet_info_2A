@@ -17,12 +17,13 @@ from utils.log_init import get_page_logger
 if "player" in st.session_state:
     st.switch_page("pages/player_menu.py")
 
-st.set_page_config(page_title="Coin flip game", page_icon="🪙", layout="centered")
+st.set_page_config(page_title="NEO-Watch", page_icon="🔭", layout="centered")
 
 st.markdown(
     f"""
     <div style="text-align:center">
-        <h1 style="color:{config.get_option("theme.primaryColor")}">Coin flip game</h1>
+        <h1 style="color:{config.get_option('theme.primaryColor')}; margin-bottom: 0.2rem;">🔭 NEO-Watch</h1>
+        <p style="font-size: 1.05rem; opacity: 0.85;">Plateforme d'exploration et de surveillance des astéroïdes</p>
     </div>
     """,
     unsafe_allow_html=True,
