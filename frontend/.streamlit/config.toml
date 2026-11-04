@@ -1,13 +1,12 @@
 [server]
 port = 8000
-
 [theme]
 textColor="#1a1a1a"
-font="Calibri"
+font="Comic sans ms"
 
-primaryColor="#1963a0"
-backgroundColor="#90C090"
-secondaryBackgroundColor="#ffffff"
+primaryColor="#0df0e5"
+backgroundColor="#fb09c6"
+secondaryBackgroundColor="#f0eff8"
 
 redTextColor="#8b0303"
 redBackgroundColor="#ff5f5f"

@@ -1,5 +1,6 @@
 \section{Components to implement and estimated durations}
 
+
 \begin{figure}[H]
   \centering
   \includegraphics[width=0.8\textwidth]{figures/NEO-Watch_gantt_phase1.png}
@@ -15,8 +16,8 @@
 \end{figure}
 
 
-The two Gantt charts reflect the project's two official phases, separated by the submission of this analysis dossier on 17 September.
-Phase 1 lasted only three weeks, so tasks overlap heavily. Their order follows the dependencies between them: we explored the NASA NeoWs API before setting the scope, and the design deliverables were produced in sequence, from the physical data model to the class diagram, then the endpoints and the sequence diagram.
+The two Gantt charts reflect the project's two official phases, separated by the submission of this analysis dossier on 17 September. \medskip
+Phase 1 lasted only three weeks, so tasks overlap heavily. Their order follows the dependencies between them: we explored the NASA NeoWs API before setting the scope, and the design deliverables were produced in sequence, from the physical data model to the class diagram, then the endpoints and the sequence diagram.\medskip
 
 Phase 2 is shaped mainly by the academic calendar. 
 The database is built first, because every other component depends on it, and its duration is extended to absorb revision for the 28 September exam. All required features (F1 to F6) are scheduled before the autumn break. The break is followed directly by the 2 November exam, so no new component starts during it, and it serves only as catch-up time. The optional features and the Streamlit frontend come after, since they rely on a backend API that is already stable and testable through Swagger. FO8 is placed last because it has no dependencies and is the easiest to drop if we fall behind. Finally, the code freeze on 19 November leaves two days of review before the final submission. 
