@@ -1,8 +1,13 @@
 from dao.db_connection import DBConnection
 from business_object.approach import Approach
+from utils.log_utils import get_logger, log
+
+logger = get_logger(__name__)
 
 
 class ApproachDao:
+    
+    @log
     def create(self, approach: Approach) -> bool:
         """
         Create a NEO's approach in the approach table
@@ -39,48 +44,37 @@ class ApproachDao:
                     approach._approach_id = approach_id
                     return True
         return False
-
-    def find_all_by_neo(self, neo_id: int) -> list[Approach]:
+    
+    @log
+    def find_by_neo_id(self, neo_id: int) -> list[Approach]:
+        """Fetch all close approaches for a given NEO ordered by date.
+        Args:
+            neo_id: Internal ID of the NEO.
+        Returns:
+            List of Approach objects.
         """
-        Finds all the approach avalaible for a precise Neo
-
-        Parameters
-        ----------
-            neo_id : Id of the asked Neo
-
-        Return
-        ------
-            list[Approach] : list of all approaches
+        query = """
+            SELECT * FROM approach
+            WHERE neo_id = %(neo_id)s
+            ORDER BY approach_day ASC;
         """
-
         try:
-            with DBConnection().connection as connection:
-                with connection.cursor() as cursor:
-                    cursor.execute(
-                        "SELECT *                               "
-                        "  FROM approach                           "
-                        "WHERE neo_id = %(neo_id)s",
-                        {"neo_id": neo_id},
-                    )
-                    res = cursor.fetchall()
+            with DBConnection().connection as conn:
+                with conn.cursor() as cur:
+                    cur.execute(query, {"neo_id": neo_id})
+                    rows = cur.fetchall() or []
+                    return [self._map_row_to_approach(row) for row in rows]
         except Exception as e:
-            logger.error(e)
+            logger.error(f"Error in ApproachDao.find_by_neo_id: {e}")
             raise
-
-        list_approaches = []
-
-        if res:
-            for row in res:
-                approach = Approach(
-                    neo_id=row["neo_id"],
-                    approach_date=row["approach_date"],
-                    approach_day=row["approach_day"],
-                    distance=row["distance"],
-                    speed=row["speed"],
-                    body=row["body"],
-                    approach_id=row["approach_id"],
-                )
-
-                list_approaches.append(approach)
-
-        return list_approaches
+    
+    def _map_row_to_approach(self, row: dict) -> Approach:
+        return Approach(
+            approach_id=row["approach_id"],
+            neo_id=row["neo_id"],
+            approach_day=row["approach_day"],
+            approach_date=row["approach_date"],
+            distance=row["distance"],
+            speed=row["speed"],
+            body=row["body"],
+        )

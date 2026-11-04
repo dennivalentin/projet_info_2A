@@ -1,5 +1,5 @@
-from datetime import datetime
 
+from datetime import datetime
 from business_object.neo import Neo
 
 
@@ -20,8 +20,8 @@ class Alert:
 
     def __init__(
         self,
-        user_id: int,
         alert_id: int | None = None,
+        user_id: int = 1,
         label: str | None = None,
         distance_max: float | None = None,
         diameter_min: float | None = None,
@@ -29,16 +29,24 @@ class Alert:
         active: bool = True,
         creation_date: datetime | None = None,
         last_eval_date: datetime | None = None,
+        # Backward-compatibility aliases
+        neo_id: int | None = None,
+        obj_neo: Neo | None = None,
+        min_diameter: float | None = None,
+        max_distance: float | None = None,
+        is_active: bool | None = None,
     ):
         self._alert_id = alert_id
         self._user_id = user_id
-        self._label = label
-        self._distance_max = distance_max
-        self._diameter_min = diameter_min
+        self._label = label or (f"NEO-{neo_id}" if neo_id is not None else "Alert")
+        self._distance_max = distance_max if distance_max is not None else max_distance
+        self._diameter_min = diameter_min if diameter_min is not None else min_diameter
         self._hazardous_only = bool(hazardous_only)
-        self._active = active
+        self._active = active if is_active is None else is_active
         self._creation_date = creation_date or datetime.now()
         self._last_eval_date = last_eval_date
+        self._neo_id = neo_id
+        self._object = obj_neo
 
     @property
     def alert_id(self) -> int | None:
@@ -136,6 +144,22 @@ class Alert:
     def last_eval_date(self, value: datetime | None) -> None:
         self._last_eval_date = value
 
+    @property
+    def neo_id(self) -> int | None:
+        return self._neo_id
+
+    @neo_id.setter
+    def neo_id(self, value: int | None) -> None:
+        self._neo_id = value
+
+    @property
+    def obj_neo(self) -> Neo | None:
+        return self._object
+
+    @obj_neo.setter
+    def obj_neo(self, value: Neo | None) -> None:
+        self._object = value
+
     def to_dict(self) -> dict:
         return {
             "alert_id": self._alert_id,
@@ -145,16 +169,9 @@ class Alert:
             "diameter_min": self._diameter_min,
             "hazardous_only": self._hazardous_only,
             "active": self._active,
-            "creation_date": (
-                self._creation_date.isoformat()
-                if hasattr(self._creation_date, "isoformat")
-                else str(self._creation_date)
-            ),
-            "last_eval_date": (
-                self._last_eval_date.isoformat()
-                if self._last_eval_date and hasattr(self._last_eval_date, "isoformat")
-                else (str(self._last_eval_date) if self._last_eval_date else None)
-            ),
+            "creation_date": self._creation_date.isoformat() if hasattr(self._creation_date, "isoformat") else str(self._creation_date),
+            "last_eval_date": self._last_eval_date.isoformat() if self._last_eval_date and hasattr(self._last_eval_date, "isoformat") else (str(self._last_eval_date) if self._last_eval_date else None),
+            "neo_id": self._neo_id,
         }
 
     def __repr__(self) -> str:
@@ -162,81 +179,3 @@ class Alert:
 
     def __str__(self) -> str:
         return f"Alert #{self._alert_id} (User: {self._user_id}) - {self._label} [Active: {self._active}]"
-
-
-'''
-from datetime import datetime
-
-
-class Alert:
-    """
-    Class describing the alert that could be send to the user
-
-    Attributes:
-        _alert_id (int): The unique identifier of the alert.
-        _user_id (int): The ID of the user who created the alert.
-        _label (str): Description of the alert
-        _diameter_min (float): The minimum diameter threshold to trigger the alert.
-        _distance_max (float): The maximum approach distance threshold.
-        _hazardous_only(bool): Allows to filter the neo in the alert by only hazardous one
-        _active (bool): Indicates whether the alert is currently active or dismissed.
-        _creation_date: The moment when the alert has been created
-        _last_eval_date: The last time when the alert hasbeen checked
-    """
-
-    def __init__(
-        self,
-        alert_id: int,
-        user_id: int = None,
-        label: str = None,
-        diameter_min: float = None,
-        distance_max: float = None,
-        hazardous_only: bool = None,
-        active: bool = None,
-        creation_date: datetime = None,
-        last_eval_date: datetime = None,
-    ):
-        self._alert_id = alert_id
-        self._user_id = user_id
-        self._label = label
-        self._distance_max = distance_max
-        self._diameter_min = diameter_min
-        self._hazardous_only = hazardous_only
-        self._active = active
-        self._creation_date = creation_date
-        self._last_eval_date = last_eval_date
-
-    def __repr__(self):
-        beg = f"""Alert n° {self._alert_id} from user : {self._user_id}. Criteria :
-        {self._label}"""
-
-        if self._diameter_min is not None:
-            beg += f" | Minimum diameter : {self._diameter_min}"
-
-        if self._distance_max is not None:
-            beg += f" | Maximum distance : {self._distance_max}"
-
-        if self._hazardous_only is not None:
-            beg += f" | Hazardous : {self._hazardous_only}"
-
-        beg += f" | Active = {self._active}"
-
-        return beg
-
-    def __str__(self):
-        beg = f"""Alert n° {self._alert_id} from user : {self._user_id}. Criteria :
-        {self._label}"""
-
-        if self._diameter_min is not None:
-            beg += f" | Minimum diameter : {self._diameter_min}"
-
-        if self._distance_max is not None:
-            beg += f" | Maximum distance : {self._distance_max}"
-
-        if self._hazardous_only is not None:
-            beg += f" | Hazardous : {self._hazardous_only}"
-
-        beg += f" | Active = {self._active}"
-
-        return beg
-'''

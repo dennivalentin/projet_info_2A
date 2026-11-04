@@ -1,4 +1,4 @@
-from date import datetime
+from datetime import datetime
 
 
 class ApodData:
@@ -17,3 +17,39 @@ class ApodData:
         self.date = date
         self.caption = caption
         self.url = url
+
+
+
+    @property
+    def title(self) -> str:
+        return self._title
+    @title.setter
+    def title(self, value: str) -> None:
+        self._title = value
+    @property
+    def date(self) -> datetime:
+        return self._date
+    @date.setter
+    def date(self, value: datetime) -> None:
+        self._date = value
+    @property
+    def caption(self) -> str:
+        return self._caption
+    @caption.setter
+    def caption(self, value: str) -> None:
+        self._caption = value
+    @property
+    def url(self) -> str:
+        return self._url
+    @url.setter
+    def url(self, value: str) -> None:
+        self._url = value
+    def to_dict(self) -> dict:
+        return {
+            "title": self._title,
+            "date": self._date.isoformat() if hasattr(self._date, "isoformat") else str(self._date),
+            "caption": self._caption,
+            "url": self._url,
+        }
+    def __repr__(self) -> str:
+        return f"<ApodData title='{self._title}' date='{self._date}'>"
