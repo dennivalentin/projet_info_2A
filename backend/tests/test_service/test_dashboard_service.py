@@ -11,14 +11,22 @@ from service.dashboard_service import DashboardService
 @pytest.fixture
 def fake_dao(monkeypatch):
     """Replaces the 4 DAO queries by fixed answers (restored after each test)."""
-    monkeypatch.setattr(DashboardDao, "count_upcoming",
-                        lambda self, start, end: {"nb_neos": 4, "nb_hazardous": 1})
-    monkeypatch.setattr(DashboardDao, "find_upcoming_approaches",
-                        lambda self, start, end: [{"name": "NEO A"}])
-    monkeypatch.setattr(DashboardDao, "find_closest_approach",
-                        lambda self, start, end: {"name": "NEO A", "distance": 1000})
-    monkeypatch.setattr(DashboardDao, "find_favourites",
-                        lambda self, user_id: [])
+    monkeypatch.setattr(
+        DashboardDao,
+        "count_upcoming",
+        lambda self, start, end: {"nb_neos": 4, "nb_hazardous": 1},
+    )
+    monkeypatch.setattr(
+        DashboardDao,
+        "find_upcoming_approaches",
+        lambda self, start, end: [{"name": "NEO A"}],
+    )
+    monkeypatch.setattr(
+        DashboardDao,
+        "find_closest_approach",
+        lambda self, start, end: {"name": "NEO A", "distance": 1000},
+    )
+    monkeypatch.setattr(DashboardDao, "find_favourites", lambda self, user_id: [])
 
 
 def test_default_period_is_next_7_days():
@@ -43,7 +51,10 @@ def test_hazardous_share(fake_dao):
 
 def test_no_neo_no_division_by_zero(fake_dao, monkeypatch):
     # GIVEN an empty period
-    monkeypatch.setattr(DashboardDao, "count_upcoming",
-                        lambda self, start, end: {"nb_neos": 0, "nb_hazardous": 0})
+    monkeypatch.setattr(
+        DashboardDao,
+        "count_upcoming",
+        lambda self, start, end: {"nb_neos": 0, "nb_hazardous": 0},
+    )
     # WHEN / THEN: 0 %, no crash
     assert DashboardService().get_dashboard(user_id=2)["hazardous_share_pct"] == 0.0

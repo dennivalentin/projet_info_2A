@@ -19,7 +19,9 @@ def _has_data() -> bool:
 
 
 # Skip all the tests of this file if there is no data (e.g. on a teammate's empty DB, or in CI)
-pytestmark = pytest.mark.skipif(not _has_data(), reason="No approach data in the database")
+pytestmark = pytest.mark.skipif(
+    not _has_data(), reason="No approach data in the database"
+)
 
 
 def test_upcoming_approaches_are_sorted():
@@ -53,7 +55,9 @@ def test_closest_approach_is_the_minimum():
 
 def test_closest_approach_empty_period():
     # A period with no data -> None, not a crash
-    assert DashboardDao().find_closest_approach(date(1900, 1, 1), date(1900, 1, 2)) is None
+    assert (
+        DashboardDao().find_closest_approach(date(1900, 1, 1), date(1900, 1, 2)) is None
+    )
 
 
 def test_favourites_unknown_user():

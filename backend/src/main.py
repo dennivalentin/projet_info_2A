@@ -54,7 +54,10 @@ app.include_router(player_controller.router, prefix="/player", tags=["Players"])
 app.include_router(login_controller.router, prefix="/login", tags=["Login"])
 app.include_router(game_controller.router, prefix="/game", tags=["Games"])
 app.include_router(dashboard_controller.router, prefix="/dashboard", tags=["Dashboard"])
-app.include_router(statistics_controller.router, prefix="/statistics", tags=["Statistics"])
+app.include_router(
+    statistics_controller.router, prefix="/statistics", tags=["Statistics"]
+)
+
 
 @app.get("/", include_in_schema=False)
 async def redirect_to_docs():

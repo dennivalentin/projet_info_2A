@@ -11,16 +11,16 @@ from utils.log_init import get_page_logger
 
 logger = get_page_logger("create_neo")
 
-st.set_page_config(page_title="NEO-Watch | Create NEO", page_icon="➕", layout="centered")
+st.set_page_config(
+    page_title="NEO-Watch | Create NEO", page_icon="➕", layout="centered"
+)
 
 st.title("➕ Register a New NEO (F4)")
-st.markdown(
-    """
+st.markdown("""
     Log an amateur observation or hypothetical Near-Earth Object into NEO-Watch.
     User-created objects are saved with **Origin: USER**, ensuring they remain preserved
     and distinct from official NASA data synchronizations.
-    """
-)
+    """)
 
 # Navigation
 if st.button("⬅ Back to Explorer (F3)"):
@@ -84,7 +84,9 @@ if submitted:
 
             if response and response.get("status_code") == 201:
                 created_data = response.get("data", {})
-                st.success(f"🎉 NEO **{created_data.get('name')}** created successfully! (ID: {created_data.get('neo_id')})")
+                st.success(
+                    f"🎉 NEO **{created_data.get('name')}** created successfully! (ID: {created_data.get('neo_id')})"
+                )
                 st.json(created_data)
 
                 if st.button("🔍 View in Explorer"):

@@ -2,6 +2,7 @@ import pytest
 from dao.neo_dao import NeoDao
 from unittest.mock import MagicMock, patch
 
+
 @patch("dao.neo_dao.DBConnection")
 def test_find_un_critere(mock_db):
     donnees_simulees = [
@@ -45,9 +46,7 @@ def test_find_un_critere(mock_db):
 
     assert "n.name ILIKE %(name)s" in query
     assert "hazardous" not in params
-    assert params == {"name": "%Eros%",
-                      "limit": 100,
-                      "offset": 0}
+    assert params == {"name": "%Eros%", "limit": 100, "offset": 0}
 
 
 def test_find_critere_inconnu():
