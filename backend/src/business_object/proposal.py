@@ -77,7 +77,11 @@ class Proposal:
             "proposal_id": self._proposal_id,
             "neo_id": self._neo_id,
             "user_id": self._user_id,
-            "submission_date": self._submission_date.isoformat() if hasattr(self._submission_date, "isoformat") else str(self._submission_date),
+            "submission_date": (
+                self._submission_date.isoformat()
+                if hasattr(self._submission_date, "isoformat")
+                else str(self._submission_date)
+            ),
             "field_name": self._field_name,
             "proposed_value": self._proposed_value,
             "justification": self._justification,

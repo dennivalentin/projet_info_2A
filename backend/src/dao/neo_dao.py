@@ -112,7 +112,9 @@ class NeoDao(metaclass=Singleton):
         Returns:
             List of Neo objects.
         """
-        query = "SELECT * FROM neo ORDER BY neo_id ASC LIMIT %(limit)s OFFSET %(offset)s;"
+        query = (
+            "SELECT * FROM neo ORDER BY neo_id ASC LIMIT %(limit)s OFFSET %(offset)s;"
+        )
         try:
             with DBConnection().connection as connection:
                 with connection.cursor() as cursor:

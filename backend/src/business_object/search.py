@@ -72,7 +72,11 @@ class Search:
         return {
             "search_id": self._search_id,
             "user_id": self._user_id,
-            "search_date": self._search_date.isoformat() if hasattr(self._search_date, "isoformat") else str(self._search_date),
+            "search_date": (
+                self._search_date.isoformat()
+                if hasattr(self._search_date, "isoformat")
+                else str(self._search_date)
+            ),
             "criteria": self._criteria,
             "neo_id": self._neo_id,
         }

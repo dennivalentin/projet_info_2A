@@ -116,8 +116,16 @@ class Import:
         return {
             "import_id": self._import_id,
             "user_id": self._user_id,
-            "start_date": self._start_date.isoformat() if hasattr(self._start_date, "isoformat") else str(self._start_date),
-            "end_date": self._end_date.isoformat() if hasattr(self._end_date, "isoformat") else str(self._end_date),
+            "start_date": (
+                self._start_date.isoformat()
+                if hasattr(self._start_date, "isoformat")
+                else str(self._start_date)
+            ),
+            "end_date": (
+                self._end_date.isoformat()
+                if hasattr(self._end_date, "isoformat")
+                else str(self._end_date)
+            ),
             "trigger_type": self._trigger_type,
             "status": self._status,
             "nb_calls": self._nb_calls,

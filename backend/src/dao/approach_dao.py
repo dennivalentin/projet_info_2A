@@ -6,7 +6,7 @@ logger = get_logger(__name__)
 
 
 class ApproachDao:
-    
+
     @log
     def create(self, approach: Approach) -> bool:
         """
@@ -44,7 +44,7 @@ class ApproachDao:
                     approach._approach_id = approach_id
                     return True
         return False
-    
+
     @log
     def find_by_neo_id(self, neo_id: int) -> list[Approach]:
         """Fetch all close approaches for a given NEO ordered by date.
@@ -67,7 +67,7 @@ class ApproachDao:
         except Exception as e:
             logger.error(f"Error in ApproachDao.find_by_neo_id: {e}")
             raise
-    
+
     def _map_row_to_approach(self, row: dict) -> Approach:
         return Approach(
             approach_id=row["approach_id"],

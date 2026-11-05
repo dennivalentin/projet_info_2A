@@ -10,6 +10,7 @@ class ApproachIn(BaseModel):
 
 class NeoIn(BaseModel):
     """Un NEO tel qu'on l'importe depuis la NASA."""
+
     id: str
     name: str
     diameter_min_m: float
@@ -21,6 +22,7 @@ class NeoIn(BaseModel):
 
 class NeoOut(BaseModel):
     """Un NEO tel qu'on le renvoie au frontend."""
+
     model_config = ConfigDict(from_attributes=True)
 
     id: str

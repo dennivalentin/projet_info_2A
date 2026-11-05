@@ -10,7 +10,9 @@ logger = get_logger(__name__)
 class NeoService:
     """Service handling business logic for Near-Earth Objects (NEOs)."""
 
-    def __init__(self, neo_dao: NeoDao | None = None, approach_dao: ApproachDao | None = None):
+    def __init__(
+        self, neo_dao: NeoDao | None = None, approach_dao: ApproachDao | None = None
+    ):
         self._neo_dao = neo_dao or NeoDao()
         self._approach_dao = approach_dao or ApproachDao()
 
@@ -59,7 +61,9 @@ class NeoService:
         new_neo = Neo(
             nasa_id=resolved_nasa_id,
             name=str(resolved_name).strip(),
-            absolute_magnitude=float(absolute_magnitude) if absolute_magnitude is not None else None,
+            absolute_magnitude=(
+                float(absolute_magnitude) if absolute_magnitude is not None else None
+            ),
             diameter_min=float(diameter_min) if diameter_min is not None else None,
             diameter_max=float(diameter_max) if diameter_max is not None else None,
             hazardous=bool(hazardous),
@@ -128,4 +132,3 @@ class NeoService:
         data = neo.to_dict()
         data["approaches"] = [approach.to_dict() for approach in approaches]
         return data
-

@@ -106,7 +106,7 @@ def test_alert_getters_and_setters():
         diameter_min=1.0,
         hazardous_only=True,
         active=True,
-        creation_date=day
+        creation_date=day,
     )
 
     assert alert.alert_id == 1
@@ -138,7 +138,7 @@ def test_user_getters_and_setters():
         email="astro@ensai.fr",
         password_hash="secret_hash",
         role="user",
-        creation_date=day
+        creation_date=day,
     )
 
     assert user.user_id == 1
@@ -160,7 +160,7 @@ def test_user_getters_and_setters():
 def test_proposal_getters_and_setters():
     """Verify Proposal properties, getters, setters, and to_dict."""
     subd = date(2005, 7, 29)
-    
+
     proposal = Proposal(
         proposal_id=5,
         user_id=12,
@@ -169,7 +169,7 @@ def test_proposal_getters_and_setters():
         proposed_value="0.45",
         justification="New observation from Paris observatory",
         status="WAITING",
-        submission_date=subd
+        submission_date=subd,
     )
 
     assert proposal.proposal_id == 5
@@ -189,7 +189,9 @@ def test_other_bos_getters_and_setters():
     now = datetime(2026, 10, 25, 12, 0)
 
     # ApodData
-    apod = ApodData("Pillars of Creation", now, "Hubble picture", "https://nasa.gov/img.jpg")
+    apod = ApodData(
+        "Pillars of Creation", now, "Hubble picture", "https://nasa.gov/img.jpg"
+    )
     assert apod.title == "Pillars of Creation"
     apod.title = "James Webb Deep Field"
     assert apod.title == "James Webb Deep Field"

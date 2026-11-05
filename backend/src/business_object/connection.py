@@ -20,25 +20,34 @@ class Connection:
     @property
     def connection_id(self) -> int | None:
         return self._connection_id
+
     @connection_id.setter
     def connection_id(self, value: int | None) -> None:
         self._connection_id = value
+
     @property
     def user_id(self) -> int:
         return self._user_id
+
     @user_id.setter
     def user_id(self, value: int) -> None:
         self._user_id = value
+
     @property
     def date(self) -> datetime:
         return self._date
+
     @date.setter
     def date(self, value: datetime) -> None:
         self._date = value
-    
+
     def to_dict(self) -> dict:
         return {
             "connection_id": self._connection_id,
             "user_id": self._user_id,
-            "date": self._date.isoformat() if hasattr(self._date, "isoformat") else str(self._date),
+            "date": (
+                self._date.isoformat()
+                if hasattr(self._date, "isoformat")
+                else str(self._date)
+            ),
         }

@@ -18,7 +18,10 @@ def _fake_db(rows):
 
 def test_approaches_per_month():
     # GIVEN a fake database returning 2 months
-    rows = [{"month": "2026-10", "nb_approaches": 31}, {"month": "2026-11", "nb_approaches": 30}]
+    rows = [
+        {"month": "2026-10", "nb_approaches": 31},
+        {"month": "2026-11", "nb_approaches": 30},
+    ]
     db, cursor = _fake_db(rows)
 
     # WHEN

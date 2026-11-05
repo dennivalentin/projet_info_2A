@@ -1,4 +1,3 @@
-
 from datetime import datetime
 from business_object.neo import Neo
 
@@ -169,8 +168,16 @@ class Alert:
             "diameter_min": self._diameter_min,
             "hazardous_only": self._hazardous_only,
             "active": self._active,
-            "creation_date": self._creation_date.isoformat() if hasattr(self._creation_date, "isoformat") else str(self._creation_date),
-            "last_eval_date": self._last_eval_date.isoformat() if self._last_eval_date and hasattr(self._last_eval_date, "isoformat") else (str(self._last_eval_date) if self._last_eval_date else None),
+            "creation_date": (
+                self._creation_date.isoformat()
+                if hasattr(self._creation_date, "isoformat")
+                else str(self._creation_date)
+            ),
+            "last_eval_date": (
+                self._last_eval_date.isoformat()
+                if self._last_eval_date and hasattr(self._last_eval_date, "isoformat")
+                else (str(self._last_eval_date) if self._last_eval_date else None)
+            ),
             "neo_id": self._neo_id,
         }
 

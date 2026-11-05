@@ -8,6 +8,7 @@ from business_object.neo import Neo
 from business_object.proposal import Proposal
 from business_object.search import Search
 from business_object.user import User
+
 __all__ = [
     "Alert",
     "ApodData",
