@@ -8,12 +8,16 @@ import streamlit as st
 
 from utils.api_client import api_client
 from utils.log_init import get_page_logger
+from utils.auth_guard import check_authentification
 
 logger = get_page_logger("create_neo")
 
 st.set_page_config(
     page_title="NEO-Watch | Create NEO", page_icon="➕", layout="centered"
 )
+
+
+check_authentification()
 
 st.title("➕ Register a New NEO (F4)")
 st.markdown("""

@@ -5,6 +5,7 @@ import streamlit as st
 
 from utils.api_client import api_client
 from utils.log_init import get_page_logger
+from utils.auth_guard import check_authentification
 
 logger = get_page_logger("statistics")
 
@@ -12,6 +13,8 @@ st.set_page_config(page_title="NEO-Watch | Statistics", page_icon="📊", layout
 
 st.title("📊 NEO Statistics")
 st.markdown("Key figures and distributions computed on all the NEOs in the database.")
+
+check_authentification()
 
 if st.button("⬅ Back to Menu"):
     st.switch_page("pages/player_menu.py")

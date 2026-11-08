@@ -10,6 +10,7 @@ import streamlit as st
 
 from utils.api_client import api_client
 from utils.log_init import get_page_logger
+from utils.auth_guard import check_authentification
 
 logger = get_page_logger("search_neo")
 
@@ -19,6 +20,8 @@ st.set_page_config(
 
 st.title("🔭 Near-Earth Objects (NEO) Explorer")
 st.markdown("Search, inspect, and analyze Near-Earth Objects in the database.")
+
+check_authentification()
 
 # Top Navigation
 col_nav1, col_nav2 = st.columns([1, 5])

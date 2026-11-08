@@ -23,7 +23,7 @@ st.markdown(
     f"""
     <div style="text-align:center">
         <h1 style="color:{config.get_option('theme.primaryColor')}; margin-bottom: 0.2rem;">🔭 NEO-Watch</h1>
-        <p style="font-size: 1.05rem; opacity: 0.85;">Plateforme d'exploration et de surveillance des astéroïdes</p>
+        <p style="font-size: 1.05rem; opacity: 0.85;">Asteroid Exploration and Monitoring Platform</p>
     </div>
     """,
     unsafe_allow_html=True,
