@@ -1,31 +1,30 @@
-import os
+"""import os
 from pathlib import Path
 from unittest import mock
 
 import dotenv
 
 from dao.db_connection import DBConnection
-from dao.player_dao import PlayerDao
 from utils.log_utils import get_logger, log
 from utils.security import hash_password
 from utils.singleton import Singleton
 
-logger = get_logger(__name__)
+logger = get_logger(__name__)"""
 
 
-class ResetDatabase(metaclass=Singleton):
-    """
+"""class ResetDatabase(metaclass=Singleton):
+    
     Database reset utility
-    """
+    
 
     def __init__(self):
         self.base_path = Path(__file__).resolve().parent.parent.parent.parent
 
     @log
     def run(self, test_dao=False):
-        """Run the database reset
+        Run the database reset
         If test_dao=True: reset test data
-        """
+    
         if test_dao:
             mock.patch.dict(os.environ, {"POSTGRES_SCHEMA": "project_test_dao"}).start()
             pop_data_path = self.base_path / "data" / "pop_db_test.sql"
@@ -74,4 +73,4 @@ class ResetDatabase(metaclass=Singleton):
 
 if __name__ == "__main__":
     ResetDatabase().run()
-    ResetDatabase().run(True)
+    ResetDatabase().run(True)"""

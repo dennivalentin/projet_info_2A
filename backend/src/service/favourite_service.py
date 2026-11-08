@@ -12,7 +12,7 @@ from dao.favourite_dao import FavouriteDao
 from business_object.neo import Neo
 from business_object.approach import Approach
 
-import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt 
 
 
 class FavouriteService:

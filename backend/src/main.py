@@ -12,7 +12,7 @@ from controller import (
 )
 from utils.env_variables import display_values, load_environment_variables
 from utils.log_utils import LogMiddleware, get_logger, initialize_logs
-from utils.reset_database import ResetDatabase
+#from utils.reset_database import ResetDatabase
 
 logger = get_logger(__name__)
 
@@ -38,12 +38,12 @@ async def redirect_to_docs():
     return RedirectResponse(url="/docs")
 
 
-@app.get("/reset_database", tags=["Misc"])
+"""@app.get("/reset_database", tags=["Misc"])
 async def reset_database():
-    """Reset the database"""
+    Reset the database
     logger.info("Database reset")
     res = ResetDatabase().run()
-    return {"message": f"Database reset: {'SUCCESS' if res else 'FAILURE'}"}
+    return {"message": f"Database reset: {'SUCCESS' if res else 'FAILURE'}"}"""
 
 
 if __name__ == "__main__":

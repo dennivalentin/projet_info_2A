@@ -6,11 +6,18 @@ import pandas as pd
 import streamlit as st
 
 from utils.api_client import api_client
+from utils.auth_guard import check_authentification
+from utils.log_init import get_page_logger
 
 st.set_page_config(page_title="NEO-Watch | Dashboard", page_icon="☄️", layout="wide")
 
 st.title("☄️ My Dashboard")
 st.markdown("What is coming close to Earth, and what happens to your favourite NEOs.")
+logger = get_page_logger("NEO-Watch | Dashboard")
+
+
+check_authentification()
+
 
 if st.button("⬅ Back to Menu"):
     st.switch_page("pages/player_menu.py")
