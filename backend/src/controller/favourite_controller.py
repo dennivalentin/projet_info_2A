@@ -36,7 +36,7 @@ def list_favourites_by_user(user_id: int):
     service = FavouriteService()
     logger.info(f"Listing favourites for user_id={user_id}")
     favourites = service.list_all_favourite_by_user(user_id)
-    return favourites
+    return [neo.to_dict() for neo in favourites]
 
 
 @router.get("/user/{user_id}/approaches")
@@ -44,8 +44,8 @@ def get_favourite_approaches(user_id: int):
     """Get the favourite approaches of a user"""
     service = FavouriteService()
     logger.info(f"Fetching approaches for user_id={user_id}")
-    approaches_dict = service.approches_favourite(user_id)
-    return approaches_dict
+    approaches.dict = service.approches_favourite(user_id)
+    return  {neo_id: [ approach.to_dict() for approach in approaches] for neo_id, approaches in approaches_dict.items()}
 
 
 @router.get("/user/{user_id}/neo/{neo_id}/graph")

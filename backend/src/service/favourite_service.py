@@ -73,7 +73,7 @@ class FavouriteService:
 
         list_fav = FavouriteDao().find_favourite_by_user(user_id)
         for item in list_fav:
-            dict_approaches[item] = ApproachDao().find_all_by_neo(item)
+            dict_approaches[item] = ApproachDao().find_by_neo_id(item)
 
         return dict_approaches
 

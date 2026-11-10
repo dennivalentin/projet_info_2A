@@ -10,6 +10,8 @@ from fastapi.responses import JSONResponse, RedirectResponse
 
 from controller import (
     dashboard_controller,
+    favourite_controller,
+    alert_controller,
     login_controller,
     neo_controller,
     statistics_controller,
@@ -51,6 +53,8 @@ app.include_router(neo_controller.router, prefix="/neo", tags=["NEOs"])
 app.include_router(dashboard_controller.router, prefix="/dashboard", tags=["Dashboard"])
 app.include_router(statistics_controller.router, prefix="/statistics", tags=["Statistics"])
 app.include_router(login_controller.router, prefix="/login", tags=["Login"])
+app.include_router(alert_controller.router)
+app.include_router(favourite_controller.router)
 
 
 @app.get("/", include_in_schema=False)
