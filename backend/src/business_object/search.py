@@ -2,6 +2,17 @@ from datetime import datetime
 
 
 class Search:
+<<<<<<< HEAD
+    """
+    Stores criteria for a search.
+
+    Attributes:
+        _search_id (int): The unique identifier of the search record.
+        _user_id (int): The ID of the user who performed the search.
+        _search_date (datetime): The date and time of the search.
+        _criteria (str): The search parameters or keywords used.
+        _neo_id (int): The ID of the NEO selected from the search results (if any).
+=======
     """Stores criteria and history for a user search.
 
     Kept for thirty days in the database to allow activity tracking.
@@ -12,10 +23,24 @@ class Search:
         _search_date (datetime): The date and time of the search.
         _criteria (str): The search parameters or keywords used, as readable text.
         _neo_id (int | None): The ID of the NEO selected/viewed (if applicable).
+>>>>>>> main
     """
 
     def __init__(
         self,
+<<<<<<< HEAD
+        search_id: int,
+        user_id: int,
+        search_date: datetime,
+        criteria: str,
+        neo_id: int,
+    ):
+        self._search_id = search_id
+        self._user_id = user_id
+        self._search_date = search_date
+        self._criteria = criteria
+        self._neo_id = neo_id
+=======
         user_id: int = 1,
         criteria: str = "",
         search_date: datetime | None = None,
@@ -86,3 +111,4 @@ class Search:
 
     def __str__(self) -> str:
         return f"Search #{self._search_id} (User: {self._user_id}, Criteria: {self._criteria})"
+>>>>>>> main

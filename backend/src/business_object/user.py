@@ -41,7 +41,28 @@ class User:
     @property
     def user_id(self) -> int | None:
         return self._user_id
+<<<<<<< HEAD
 
+    @property
+    def username(self) -> str:
+        return self._username
+
+    @property
+    def email(self) -> str:
+        return self._email
+
+    @property
+    def password_hash(self) -> str:
+        return self._password_hash
+
+    @property
+    def creation_date(self) -> datetime | None:
+        return self._creation_date
+
+    @property
+    def role(self) -> str:
+        return self._role
+=======
     @user_id.setter
     def user_id(self, value: int | None) -> None:
         self._user_id = value
@@ -101,3 +122,4 @@ class User:
         if include_sensitive:
             data["password_hash"] = self._password_hash
         return data
+>>>>>>> main
