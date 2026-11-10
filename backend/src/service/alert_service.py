@@ -31,7 +31,7 @@ class AlertService(metaclass=Singleton):
             bool, True if well created, False otherwise
         """
 
-        if hazardous_only is None and diameter_min is None and distance_max is None:
+        if not hazardous_only and diameter_min is None and distance_max is None:
             raise ValueError(
                 "At least one criterion should be submitted to create an alert"
             )

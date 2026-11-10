@@ -1,4 +1,4 @@
-
+import base64
 import io
 from utils.log_utils import log
 
@@ -102,9 +102,10 @@ class FavouriteService:
         ax.set_ylabel("Distance (km)")
         ax.grid(True, linestyle=":", alpha=0.6)
 
-        img_buffer = io.BytesIO()
-        plt.savefig(img_buffer, format="png", dpi=200)
-        plt.close(fig)
-        img_buffer.seek(0)
+        buf = io.BytesIO()
+        plt.savefig(buf, format="png", bbox_inches="tight")
+        plt.close()
+        buf.seek(0)
 
-        return img_buffer
+        encoded = base64.b64encode(buf.getvalue()).decode("ascii")
+        return f"data:image/png;base64,{encoded}"
