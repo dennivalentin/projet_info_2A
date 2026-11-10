@@ -17,8 +17,6 @@ class ApodData:
         self.date = date
         self.caption = caption
         self.url = url
-<<<<<<< HEAD
-=======
 
     @property
     def title(self) -> str:
@@ -66,4 +64,3 @@ class ApodData:
 
     def __repr__(self) -> str:
         return f"<ApodData title='{self._title}' date='{self._date}'>"
->>>>>>> main

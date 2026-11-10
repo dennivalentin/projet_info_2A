@@ -2,8 +2,7 @@ from datetime import datetime
 
 
 class User:
-    """
-    Class describing a user of the app
+    """Class describing a user of the app.
 
     Attributes:
         _user_id (int): The unique identifier of the user.
@@ -16,12 +15,12 @@ class User:
 
     def __init__(
         self,
-        user_id: int | None,
-        username: str,
-        email: str,
-        password_hash: str,
-        creation_date: datetime | None,
-        role: str,
+        user_id: int | None = None,
+        username: str = "",
+        email: str = "",
+        password_hash: str = "",
+        creation_date: datetime | None = None,
+        role: str = "user",
     ):
         self._user_id = user_id
         self._username = username
@@ -31,7 +30,7 @@ class User:
         self._role = role
 
     def __str__(self) -> str:
-        """Readable representation of user
+        """Readable representation of user.
 
         Returns:
             str: the id, username and role of the user
@@ -41,28 +40,7 @@ class User:
     @property
     def user_id(self) -> int | None:
         return self._user_id
-<<<<<<< HEAD
 
-    @property
-    def username(self) -> str:
-        return self._username
-
-    @property
-    def email(self) -> str:
-        return self._email
-
-    @property
-    def password_hash(self) -> str:
-        return self._password_hash
-
-    @property
-    def creation_date(self) -> datetime | None:
-        return self._creation_date
-
-    @property
-    def role(self) -> str:
-        return self._role
-=======
     @user_id.setter
     def user_id(self, value: int | None) -> None:
         self._user_id = value
@@ -122,4 +100,3 @@ class User:
         if include_sensitive:
             data["password_hash"] = self._password_hash
         return data
->>>>>>> main

@@ -31,6 +31,7 @@ class APIClient:
         # Retrieve the token stored in Streamlit's session_state
         token = st.session_state.get("access_token")
         if token:
+            headers["Authorization"] = f"Bearer {token}"
             headers["X-Auth-Token"] = token
         return headers
 
