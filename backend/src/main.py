@@ -1,14 +1,19 @@
-import os
-from fastapi import FastAPI
-from fastapi.responses import RedirectResponse
+"""Main entry point for the NEO-Watch FastAPI web service.
+
+Initializes logging, loads environment variables, and sets up API routers
+for NEOs, Dashboard, Statistics, and Authentication.
+"""
+
+from fastapi import FastAPI, Request, status
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse, RedirectResponse
 
 from controller import (
-    alert_controller,
-    favourite_controller,
-    #login_controller,
-    neo_controller,
-    #statistics_controller,
-    #dashboard_controller
+    dashboard_controller,
+    game_controller,
+    login_controller,
+    player_controller,
+    statistics_controller,
 )
 from utils.env_variables import display_values, load_environment_variables
 from utils.log_utils import LogMiddleware, get_logger, initialize_logs
@@ -20,17 +25,33 @@ initialize_logs("Webservice")
 load_environment_variables()
 display_values()
 
-app = FastAPI(title="NEO Tracker Webservice")
+
+app = FastAPI(title="My Webservice")
 
 app.add_middleware(LogMiddleware)
 
-#app.include_router(login_controller.router, prefix="/login", tags=["Login"])
-app.include_router(favourite_controller.router)
-app.include_router(alert_controller.router)
-#app.include_router(dashboard_controller.router)
-app.include_router(neo_controller.router)
-#app.include_router(statistics_controller.router)
 
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    """
+    Intercepts Pydantic 422 errors to log them.
+    """
+    body = await request.body()
+    body_str = body.decode() if body else "empty body"
+
+    logger.error(f"Validation Error\nErrors: {exc.errors()}\nBody: {body_str}")
+
+    return JSONResponse(
+        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        content={"detail": exc.errors(), "body": body_str},
+    )
+
+
+app.include_router(player_controller.router, prefix="/player", tags=["Players"])
+app.include_router(login_controller.router, prefix="/login", tags=["Login"])
+app.include_router(game_controller.router, prefix="/game", tags=["Games"])
+app.include_router(dashboard_controller.router, prefix="/dashboard", tags=["Dashboard"])
+app.include_router(statistics_controller.router, prefix="/statistics", tags=["Statistics"])
 
 @app.get("/", include_in_schema=False)
 async def redirect_to_docs():

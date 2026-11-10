@@ -14,6 +14,9 @@ class Favourite:
     def __init__(self, neo_id: int, user_id: int, date_added: datetime):
         self._neo_id = neo_id
         self._user_id = user_id
+<<<<<<< HEAD
+        self._date_added = date_added
+=======
         self._date_added = date_added or datetime.now()
 
     @property
@@ -56,3 +59,4 @@ class Favourite:
 
     def __str__(self) -> str:
         return f"Favourite: User {self._user_id} -> NEO {self._neo_id}"
+>>>>>>> main

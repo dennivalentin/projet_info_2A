@@ -24,10 +24,6 @@ CREATE TABLE "user" (
     creation_date TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-INSERT INTO "user" (user_id, username, password_hash, email, role)
-VALUES (1, 'admin', 'admin_password_hash', 'admin@email.fr', 'admin')
-ON CONFLICT (user_id) DO NOTHING;
-
 -- ============================================================================
 -- 2. NEO
 -- ============================================================================
@@ -150,3 +146,4 @@ CREATE INDEX idx_proposal_neo ON proposal(neo_id);
 CREATE INDEX idx_alert_user ON alert(user_id);
 CREATE INDEX idx_alert_active ON alert(active);
 CREATE INDEX idx_import_user ON import(user_id);
+
