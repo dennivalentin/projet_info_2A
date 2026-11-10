@@ -51,16 +51,16 @@ else:
         table_data.append({
             "ID": neo_id,
             "Name": neo.get("name", "Inconnu"),
-            "Diametre Min (km)": neo.get("estimated_diameter_min", "-"),
-            "Diametre Max (km)": neo.get("estimated_diameter_max", "-"),
-            "Hazardous": "Yes" if neo.get("is_potentially_hazardous") else "No",
+            "Diametre Min (km)": neo.get("diameter_min", "-"),
+            "Diametre Max (km)": neo.get("diameter_max", "-"),
+            "Hazardous": "Yes" if neo.get("hazardous") else "No",
         })
     st.dataframe(table_data, use_container_width=True)
 
     st.divider()
 
     st.subheader("Approaches of your favourite")
-    if st.checkbox("Displaye the approaches", value=False):
+    if st.checkbox("Display the approaches", value=False):
         with st.spinner("Loading..."):
             appr_res = api_client.get(f"/favourites/user/{user_id}/approaches")
         
@@ -94,15 +94,14 @@ else:
     )
 
     if st.button("Display Neo infos"):
+        target_id = selected_fav.get("neo_id")
         logger.info(f"Displaying graph for neo_id={selected_fav['neo_id']}")
         with st.spinner("Generating plot..."):
-            graph_response = api_client.get(f"/favourites/graph/{selected_fav['neo_id']}")
+            graph_response = api_client.get(f"/favourites/user/{user_id}/neo/{target_id}/graph")
 
         if graph_response["status_code"] == 200:
-            st.image(
-                graph_response["data"],
-                caption=f"Graph for {selected_fav.get('name', 'NEO')}",
-            )
+            img_b64 = graph_response["data"]["image"]
+            st.image(img_b64, caption=f"Graph for {selected_fav.get('name', 'NEO')}")
         else:
             st.error("Unable to generate trajectory graph for this NEO.")
 
@@ -117,7 +116,7 @@ else:
 
         if col_del.button("Delete", key=f"del_fav_{f_neo_id}"):
             logger.info(f"Deleting favourite neo_id={f_neo_id}")
-            del_response = api_client.delete(f"/favourites/user/{user_id}/neo/{f_neo_id}")
+            del_response = api_client.delete(f"/favourites/{user_id}/{f_neo_id}")
             if del_response["status_code"] in (200, 204):
                 st.success("Favourite deleted")
                 st.rerun()
