@@ -8,6 +8,15 @@ from fastapi import FastAPI, Request, status, Depends
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse, RedirectResponse
 
+from utils.env_variables import display_values, load_environment_variables
+load_environment_variables()
+display_values()
+
+from utils.log_utils import LogMiddleware, get_logger, initialize_logs
+from utils.reset_database import ResetDatabase
+from utils.security import require_admin
+
+
 from controller import (
     dashboard_controller,
     favourite_controller,
@@ -16,18 +25,11 @@ from controller import (
     neo_controller,
     statistics_controller,
 )
-from utils.env_variables import display_values, load_environment_variables
-from utils.log_utils import LogMiddleware, get_logger, initialize_logs
-from utils.reset_database import ResetDatabase
-from utils.security import require_admin
 
 logger = get_logger(__name__)
 
 # Initialization
 initialize_logs("Webservice")
-
-load_environment_variables()
-display_values()
 
 
 app = FastAPI(title="NEO-Watch Webservice")

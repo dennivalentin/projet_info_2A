@@ -38,6 +38,8 @@ def list_alerts_by_user(user_id: int):
     service = AlertService()
     logger.info(f"Listing alerts for user_id={user_id}")
     alerts = service.list_alert_user(user_id)
+    if not alerts:
+        return []
     return [alert.to_dict() for alert in alerts]
 
 
@@ -50,7 +52,7 @@ def check_notifications(user_id: int):
     return {"notifications": notifications}
 
 
-@router.patch("/{alert_id}/toggle")
+@router.put("/{alert_id}/toggle")
 def alert_status(alert_id: int):
     """Turn on/off an alert"""
     service = AlertService()
