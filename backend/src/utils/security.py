@@ -12,11 +12,22 @@ import jwt
 
 from business_object.user import User
 
-#Configuration (loaded from .env via dotenv in main.py)
-SECRET_KEY = os.getenv("JWT_SECRET_KEY")
-ALGORITHM = "HS256"
+
+
+def _secret_key() -> str:
+    key = os.getenv("JWT_SECRET_KEY")
+    if not key:
+        raise RuntimeError("JWT_SECRET_KEY  missing in .env")
+    return key
+
+
+def _algorithm() -> str:
+    return os.getenv("JWT_ALGORITHM", "HS256")
+
+
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "30"))
 REFRESH_TOKEN_EXPIRE_DAYS = int(os.getenv("REFRESH_TOKEN_EXPIRE_DAYS", "7"))
+
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login/token", auto_error=False)
 
@@ -71,7 +82,7 @@ def create_access_token(data: dict[str, Any], expires_delta: timedelta | None = 
         "iat": datetime.now(timezone.utc),
         "type": "access",
     })
-    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    return jwt.encode(to_encode, _secret_key(), algorithm=_algorithm())
 
 
 def create_refresh_token(data: dict[str, Any], expires_delta: timedelta | None = None) -> str:
@@ -93,7 +104,7 @@ def create_refresh_token(data: dict[str, Any], expires_delta: timedelta | None =
         "iat": datetime.now(timezone.utc),
         "type": "refresh",
     })
-    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    return jwt.encode(to_encode, _secret_key(), algorithm=_algorithm())
 
 
 def decode_token(token: str) -> dict[str, Any]:
@@ -109,20 +120,18 @@ def decode_token(token: str) -> dict[str, Any]:
         HTTPException: 401 if token is expired or invalid.
     """
     try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        payload = jwt.decode(token, _secret_key(), algorithms=[_algorithm()])
         return payload
     except jwt.ExpiredSignatureError:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Token has expired",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
+            headers={"WWW-Authenticate": "Bearer"})
     except jwt.InvalidTokenError:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid token",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
+            headers={"WWW-Authenticate": "Bearer"})
 
 
 def get_current_user(

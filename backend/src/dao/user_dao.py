@@ -250,3 +250,40 @@ class UserDao(metaclass=Singleton):
             )
 
         return user
+    @log
+    def find_by_email(self, email: str) -> User:
+        """Find a user by their email.
+
+        Args:
+            email (str): The email to look for.
+        Returns:
+            User matching the given email, or None if not found.
+        """
+        res = None
+        try:
+            with DBConnection().connection as connection:
+                with connection.cursor() as cursor:
+                    cursor.execute(
+                        "SELECT *                               "
+                        '  FROM "user"                          '
+                        " WHERE email = %(email)s;        ",
+                        {"email": email},
+                    )
+                    res = cursor.fetchone()
+        except Exception as e:
+            logger.error(e)
+            raise
+
+        user = None
+
+        if res:
+            user = User(
+                user_id=res["user_id"],
+                email=res["email"],
+                username=res["username"],
+                password_hash=res["password_hash"],
+                creation_date=res["creation_date"],
+                role=res["role"],
+            )
+
+        return user
