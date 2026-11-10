@@ -62,7 +62,7 @@ BACKEND_TIMEOUT=5
 
 "auth jwt"
 
-JWT_SECRET_KEY=neo_watch_super_secret_jwt_key_2026_ensai
+JWT_SECRET_KEY="neo_watch_super_secret_jwt_key_2026_ensai"   <- use the key_generator function in key_generator_for_.env.py 
 ACCESS_TOKEN_EXPIRE_MINUTES=30
 REFRESH_TOKEN_EXPIRE_DAYS=7
 
