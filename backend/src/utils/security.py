@@ -12,9 +12,9 @@ import jwt
 
 from business_object.user import User
 
-# Configuration
-SECRET_KEY = os.getenv("JWT_SECRET_KEY", os.getenv("SECRET_KEY", "neo_watch_super_secret_jwt_key_2026_ensai"))
-ALGORITHM = os.getenv("JWT_ALGORITHM", os.getenv("ALGORITHM", "HS256"))
+#Configuration (loaded from .env via dotenv in main.py)
+SECRET_KEY = os.getenv("JWT_SECRET_KEY")
+ALGORITHM = os.getenv("JWT_ALGORITHM")
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "30"))
 REFRESH_TOKEN_EXPIRE_DAYS = int(os.getenv("REFRESH_TOKEN_EXPIRE_DAYS", "7"))
 

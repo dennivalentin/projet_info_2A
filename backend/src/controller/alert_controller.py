@@ -38,7 +38,7 @@ def list_alerts_by_user(user_id: int):
     service = AlertService()
     logger.info(f"Listing alerts for user_id={user_id}")
     alerts = service.list_alert_user(user_id)
-    return alerts
+    return [alert.to_dict() for alert in alerts]
 
 
 @router.get("/user/{user_id}/notifications")

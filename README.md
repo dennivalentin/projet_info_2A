@@ -60,6 +60,15 @@ UVICORN_PORT=5000
 BACKEND_URL=http://localhost:5000
 BACKEND_TIMEOUT=5
 
+"auth jwt"
+
+JWT_SECRET_KEY=neo_watch_super_secret_jwt_key_2026_ensai
+JWT_ALGORITHM=HS256
+ACCESS_TOKEN_EXPIRE_MINUTES=30
+REFRESH_TOKEN_EXPIRE_DAYS=7
+
+
+
 ```
 
 ### Launch applications
