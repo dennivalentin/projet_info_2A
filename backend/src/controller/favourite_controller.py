@@ -54,8 +54,8 @@ def get_favourite_graph(user_id: int, neo_id: int):
     service = FavouriteService()
     logger.info(f"Generating graph for neo_id={neo_id} of user_id={user_id}")
     try:
-        img_buffer = service.graph_favourite(user_id=user_id, neo_id=neo_id)
-        return Response(content=img_buffer.getvalue(), media_type="image/png")
+        image_base64 = service.graph_favourite(user_id=user_id, neo_id=neo_id)
+        return {"image": image_base64}
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
     except KeyError:
