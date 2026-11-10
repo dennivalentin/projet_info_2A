@@ -16,6 +16,8 @@ dependencies = [
     "regex",
     "uvicorn",
     "matplotlib>=3.11.2",
+    "pyjwt>=2.15.1",
+    "python-multipart>=0.0.33",
 ]
 
 # Dependencies used only for development, not for runtime
