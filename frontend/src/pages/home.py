@@ -9,8 +9,8 @@ from streamlit import config
 from utils.api_client import api_client
 from utils.log_init import get_page_logger
 
-if "user" in st.session_state or "player" in st.session_state:
-    st.switch_page("pages/player_menu.py")
+if "user" in st.session_state:
+    st.switch_page("pages/neo_menu.py")
 
 st.set_page_config(page_title="NEO-Watch", page_icon="🔭", layout="centered")
 
@@ -50,7 +50,7 @@ with tab_login:
                     if "refresh_token" in data:
                         st.session_state["refresh_token"] = data["refresh_token"]
                     st.success(f"Bienvenue {data['username']} ! 🎉")
-                    st.switch_page("pages/player_menu.py")
+                    st.switch_page("pages/neo_menu.py")
                 elif status_code == 401:
                     logger.warning(f"Login failed: 401 for user {username}.")
                     st.error("Identifiants incorrects.")

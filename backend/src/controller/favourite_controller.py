@@ -44,7 +44,7 @@ def get_favourite_approaches(user_id: int):
     """Get the favourite approaches of a user"""
     service = FavouriteService()
     logger.info(f"Fetching approaches for user_id={user_id}")
-    approaches.dict = service.approches_favourite(user_id)
+    approaches_dict = service.approches_favourite(user_id)
     return  {neo_id: [ approach.to_dict() for approach in approaches] for neo_id, approaches in approaches_dict.items()}
 
 
