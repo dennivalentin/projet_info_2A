@@ -62,6 +62,7 @@ jobs:
           POSTGRES_USER: postgres_user
           POSTGRES_PASSWORD: postgres_pwd
           POSTGRES_SCHEMA: project
+          JWT_SECRET_KEY : neo_watch_super_secret_jwt_key_2026_ensai
         run: |
           uv run --project backend coverage run -m pytest
           uv run --project backend coverage report
