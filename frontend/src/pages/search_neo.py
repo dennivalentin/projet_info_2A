@@ -27,7 +27,7 @@ check_authentification()
 col_nav1, col_nav2 = st.columns([1, 5])
 with col_nav1:
     if st.button("⬅ Back to Menu"):
-        st.switch_page("pages/player_menu.py")
+        st.switch_page("pages/neo_menu.py")
 with col_nav2:
     if st.button("➕ Create a New NEO (F4)"):
         st.switch_page("pages/create_neo.py")

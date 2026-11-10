@@ -17,7 +17,7 @@ st.markdown("Key figures and distributions computed on all the NEOs in the datab
 check_authentification()
 
 if st.button("⬅ Back to Menu"):
-    st.switch_page("pages/player_menu.py")
+    st.switch_page("pages/neo_menu.py")
 
 st.divider()
 

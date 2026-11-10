@@ -35,7 +35,7 @@ with tab_login:
         logger.info(f"Attempting login for user: {username}")
         try:
             response = api_client.post(
-                "/login", json={"username": username, "password": password}
+                "/login/", json={"username": username, "password": password}
             )
 
             if response:
@@ -45,11 +45,9 @@ with tab_login:
                 if status_code == 200:
                     logger.info(f"User {username} successfully logged in.")
                     st.session_state["user"] = data
-                    st.session_state["player"] = data  # Backward compatibility
                     st.session_state["access_token"] = data["access_token"]
                     if "refresh_token" in data:
                         st.session_state["refresh_token"] = data["refresh_token"]
-                    st.success(f"Bienvenue {data['username']} ! 🎉")
                     st.switch_page("pages/neo_menu.py")
                 elif status_code == 401:
                     logger.warning(f"Login failed: 401 for user {username}.")
@@ -91,14 +89,5 @@ with tab_register:
 
 st.divider()
 
-if st.button("🔄 Réinitialiser la base de données", type="secondary"):
-    logger.info("Reset the database")
-    response = api_client.get("/reset_database")
 
-    if response and response.get("status_code") == 200:
-        logger.info("Database successfully reset")
-        st.toast("Base de données réinitialisée avec succès ✅")
-    else:
-        logger.info("Error during database reset")
-        st.toast("Erreur lors de la réinitialisation ❌")
 

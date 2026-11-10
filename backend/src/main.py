@@ -4,7 +4,7 @@ Initializes logging, loads environment variables, and sets up API routers
 for NEOs, Dashboard, Statistics, and Authentication.
 """
 
-from fastapi import FastAPI, Request, status
+from fastapi import FastAPI, Request, status, Depends
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse, RedirectResponse
 
@@ -19,6 +19,7 @@ from controller import (
 from utils.env_variables import display_values, load_environment_variables
 from utils.log_utils import LogMiddleware, get_logger, initialize_logs
 from utils.reset_database import ResetDatabase
+from utils.security import require_admin
 
 logger = get_logger(__name__)
 
@@ -71,7 +72,7 @@ async def hello_name(name: str):
 
 
 @app.get("/reset_database", tags=["Misc"])
-async def reset_database():
+async def reset_database(admin=Depends(require_admin)):
     """Reset the database"""
     logger.info("Database reset")
     success = ResetDatabase().run()

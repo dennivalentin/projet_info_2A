@@ -125,4 +125,4 @@ else:
                 st.error(del_response.get("data", "Error deleting favourite"))
 
 if st.button("Back to menu", type="primary"):
-    st.switch_page("pages/player_menu.py")
+    st.switch_page("pages/neo_menu.py")
