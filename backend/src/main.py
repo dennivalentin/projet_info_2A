@@ -3,10 +3,13 @@
 Initializes logging, loads environment variables, and sets up API routers
 for NEOs, Dashboard, Statistics, and Authentication.
 """
+import os
+from dao.db_connection import DBConnection
 
 from fastapi import FastAPI, Request, status, Depends
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse, RedirectResponse
+from contextlib import asynccontextmanager
 
 from utils.env_variables import display_values, load_environment_variables
 load_environment_variables()
@@ -29,11 +32,40 @@ from controller import (
 
 logger = get_logger(__name__)
 
+def run_init_db():
+    sql_path = os.path.abspath("data/init_db.sql")
+    if not os.path.exists(sql_path):
+        return
+
+    try:
+        with DBConnection().connection as conn:
+            with conn.cursor() as cur: #check if there is already a db in cloudbeaver
+                cur.execute(
+                    "SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'user');"
+                )
+                already_initialized = cur.fetchone()[0]
+
+                if not already_initialized:
+                    logger.info("Table empty: initialization")
+                    with open(sql_path, "r", encoding="utf-8") as f:
+                        cur.execute(f.read())
+                    logger.info("Table initialized")
+                else:
+                    logger.info("Table already existing, nothing done")
+    except Exception as e:
+        logger.error(f"Error init db : {e}")
+
+
+@asynccontextmanager  #run code at the very beggining of the app
+async def lifespan(app: FastAPI):
+    run_init_db()
+    yield
+
+app = FastAPI(title="NEO-Watch Webservice", lifespan=lifespan)
+
 # Initialization
 initialize_logs("Webservice")
 
-
-app = FastAPI(title="NEO-Watch Webservice")
 
 app.add_middleware(LogMiddleware)
 
@@ -75,7 +107,7 @@ async def hello_name(name: str):
     return {"message": f"Hello {name}"}
 
 
-@app.get("/reset_database", tags=["Misc"])
+@app.post("/reset_database", tags=["Misc"])
 async def reset_database(admin=Depends(require_admin)):
     """Reset the database"""
     logger.info("Database reset")

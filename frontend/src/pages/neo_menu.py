@@ -87,7 +87,7 @@ if user.get("role") == "admin":
 
             if response.get("status_code") == 200:
                 logger.info("Database successfully reset")
-                st.session_state.pop("daily_sync_done", None)
+                st.session_state.pop("daily_update_done", None)
                 st.toast("Database succesfully reset ✅")
                 st.rerun()
             else:
