@@ -1,4 +1,5 @@
 from datetime import date
+
 from pydantic import BaseModel, ConfigDict
 
 
@@ -10,17 +11,19 @@ class Approach(BaseModel):
 
 class NeoIn(BaseModel):
     """A NEO as it is imported from NASA database."""
+
     id: str
     name: str
     diameter_min: float
     diameter_max: float
     hazardous: bool
-    url_nasa : str | None = None
+    url_nasa: str | None = None
     approaches: list[Approach] = []
 
 
 class NeoOut(BaseModel):
     """A NEO as we return it to the frontend."""
+
     model_config = ConfigDict(from_attributes=True)
 
     id: str

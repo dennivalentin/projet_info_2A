@@ -2,7 +2,6 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from business_object.alert import Alert
 from service.alert_service import AlertService
 
 

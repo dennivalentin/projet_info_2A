@@ -189,9 +189,7 @@ def test_other_bos_getters_and_setters():
     now = datetime(2026, 10, 25, 12, 0)
 
     # ApodData
-    apod = ApodData(
-        "Pillars of Creation", now, "Hubble picture", "https://nasa.gov/img.jpg"
-    )
+    apod = ApodData("Pillars of Creation", now, "Hubble picture", "https://nasa.gov/img.jpg")
     assert apod.title == "Pillars of Creation"
     apod.title = "James Webb Deep Field"
     assert apod.title == "James Webb Deep Field"

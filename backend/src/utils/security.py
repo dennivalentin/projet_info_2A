@@ -1,17 +1,16 @@
 """Security utilities: password hashing, JWT generation, decoding, and FastAPI dependencies."""
 
-from datetime import datetime, timedelta, timezone
 import hashlib
 import hmac
 import os
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
+import jwt
 from fastapi import Depends, Header, HTTPException, Request, status
 from fastapi.security import OAuth2PasswordBearer
-import jwt
 
 from business_object.user import User
-
 
 
 def _secret_key() -> str:
@@ -74,14 +73,18 @@ def create_access_token(data: dict[str, Any], expires_delta: timedelta | None = 
         str: Encoded JWT string.
     """
     to_encode = data.copy()
-    expire = datetime.now(timezone.utc) + (
-        expires_delta if expires_delta is not None else timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    expire = datetime.now(UTC) + (
+        expires_delta
+        if expires_delta is not None
+        else timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     )
-    to_encode.update({
-        "exp": expire,
-        "iat": datetime.now(timezone.utc),
-        "type": "access",
-    })
+    to_encode.update(
+        {
+            "exp": expire,
+            "iat": datetime.now(UTC),
+            "type": "access",
+        }
+    )
     return jwt.encode(to_encode, _secret_key(), algorithm=_algorithm())
 
 
@@ -96,14 +99,16 @@ def create_refresh_token(data: dict[str, Any], expires_delta: timedelta | None =
         str: Encoded JWT string.
     """
     to_encode = data.copy()
-    expire = datetime.now(timezone.utc) + (
+    expire = datetime.now(UTC) + (
         expires_delta if expires_delta is not None else timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
     )
-    to_encode.update({
-        "exp": expire,
-        "iat": datetime.now(timezone.utc),
-        "type": "refresh",
-    })
+    to_encode.update(
+        {
+            "exp": expire,
+            "iat": datetime.now(UTC),
+            "type": "refresh",
+        }
+    )
     return jwt.encode(to_encode, _secret_key(), algorithm=_algorithm())
 
 
@@ -126,12 +131,14 @@ def decode_token(token: str) -> dict[str, Any]:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Token has expired",
-            headers={"WWW-Authenticate": "Bearer"})
+            headers={"WWW-Authenticate": "Bearer"},
+        )
     except jwt.InvalidTokenError:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid token",
-            headers={"WWW-Authenticate": "Bearer"})
+            headers={"WWW-Authenticate": "Bearer"},
+        )
 
 
 def get_current_user(
@@ -161,7 +168,9 @@ def get_current_user(
     elif x_auth_token:
         token = x_auth_token
     elif isinstance(token_or_request, Request):
-        auth_header = token_or_request.headers.get("authorization") or token_or_request.headers.get("Authorization")
+        auth_header = token_or_request.headers.get("authorization") or token_or_request.headers.get(
+            "Authorization"
+        )
         if auth_header:
             parts = auth_header.split(" ")
             if len(parts) == 2 and parts[0].lower() == "bearer":
@@ -169,7 +178,9 @@ def get_current_user(
             elif len(parts) == 1:
                 token = parts[0]
         if not token:
-            token = token_or_request.headers.get("x-auth-token") or token_or_request.headers.get("X-Auth-Token")
+            token = token_or_request.headers.get("x-auth-token") or token_or_request.headers.get(
+                "X-Auth-Token"
+            )
 
     if not token:
         raise HTTPException(
@@ -223,6 +234,7 @@ def get_current_user(
     # Fallback for legacy opaque tokens stored in DB
     try:
         from dao.user_dao import UserDao
+
         user = UserDao().find_by_token(token)
         if user:
             return user

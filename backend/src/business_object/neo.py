@@ -1,5 +1,6 @@
 from datetime import datetime
 
+
 class Neo:
     """Class describing a Near-Earth Object (NEO) in the app.
 
@@ -125,13 +126,19 @@ class Neo:
             "neo_id": self._neo_id,
             "nasa_id": self._nasa_id,
             "name": self._name,
-            "absolute_magnitude": float(self._absolute_magnitude) if self._absolute_magnitude is not None else None,
-            "diameter_min": float(self._diameter_min) if self._diameter_min is not None else None,
-            "diameter_max": float(self._diameter_max) if self._diameter_max is not None else None,
+            "absolute_magnitude": (
+                float(self._absolute_magnitude) if self._absolute_magnitude is not None else None
+            ),
+            "diameter_min": (float(self._diameter_min) if self._diameter_min is not None else None),
+            "diameter_max": (float(self._diameter_max) if self._diameter_max is not None else None),
             "hazardous": self._hazardous,
             "url_nasa": self._url_nasa,
             "origin": self._origin,
-            "date_update": self._date_update.isoformat() if isinstance(self._date_update, datetime) else str(self._date_update),
+            "date_update": (
+                self._date_update.isoformat()
+                if isinstance(self._date_update, datetime)
+                else str(self._date_update)
+            ),
         }
 
     def __repr__(self) -> str:

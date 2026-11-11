@@ -1,15 +1,16 @@
-from datetime import datetime, timedelta, date
 import os
-from pathlib import Path
-from dao.db_connection import DBConnection
 import time
-from dotenv import load_dotenv
+from datetime import date, datetime, timedelta
+from pathlib import Path
+
 import requests
+from dotenv import load_dotenv
 
 from business_object.approach import Approach
 from business_object.import_bo import Import
 from business_object.neo import Neo
 from dao.approach_dao import ApproachDao
+from dao.db_connection import DBConnection
 from dao.import_dao import ImportDao
 from dao.neo_dao import NeoDao
 from utils.log_utils import get_logger, log
@@ -19,7 +20,6 @@ logger = get_logger(__name__)
 
 
 class ImportService:
-
     @log
     def import_neo_range(
         self,
@@ -76,10 +76,7 @@ class ImportService:
                     "api_key": api_key,
                 }
 
-                print(
-                    f"Importation from {params['start_date']} to"
-                    f" {params['end_date']}"
-                )
+                print(f"Importation from {params['start_date']} to {params['end_date']}")
 
                 import_task._nb_calls += 1
                 response = requests.get(base_url, params=params)
@@ -89,9 +86,7 @@ class ImportService:
                     time.sleep(60)
                     continue
                 elif response.status_code != 200:
-                    raise RuntimeError(
-                        f"Erreur API ({response.status_code}) : {response.text}"
-                    )
+                    raise RuntimeError(f"Erreur API ({response.status_code}) : {response.text}")
 
                 data = response.json()
                 near_earth_objects = data.get("near_earth_objects", {})
@@ -119,9 +114,7 @@ class ImportService:
                                 day_str = app_data["close_approach_date"]
                                 full_date_str = app_data.get("close_approach_date_full")
 
-                                approach_day = datetime.strptime(
-                                    day_str, "%Y-%m-%d"
-                                ).date()
+                                approach_day = datetime.strptime(day_str, "%Y-%m-%d").date()
 
                                 if full_date_str:
                                     try:
@@ -129,26 +122,18 @@ class ImportService:
                                             full_date_str, "%Y-%b-%d %H:%M"
                                         )
                                     except ValueError:
-                                        approach_date = datetime.strptime(
-                                            day_str, "%Y-%m-%d"
-                                        )
+                                        approach_date = datetime.strptime(day_str, "%Y-%m-%d")
                                 else:
-                                    approach_date = datetime.strptime(
-                                        day_str, "%Y-%m-%d"
-                                    )
+                                    approach_date = datetime.strptime(day_str, "%Y-%m-%d")
 
                                 approach = Approach(
                                     neo_id=neo_id,
                                     approach_day=approach_day,
                                     approach_date=approach_date,
                                     body=app_data["orbiting_body"],
-                                    distance=float(
-                                        app_data["miss_distance"]["kilometers"]
-                                    ),
+                                    distance=float(app_data["miss_distance"]["kilometers"]),
                                     speed=float(
-                                        app_data["relative_velocity"][
-                                            "kilometers_per_hour"
-                                        ]
+                                        app_data["relative_velocity"]["kilometers_per_hour"]
                                     ),
                                 )
 
@@ -201,8 +186,12 @@ class ImportService:
                 "nb_approaches": 0,
             }
 
-        return self.import_neo_range(last_end + timedelta(days=1), today + timedelta(days=365), user_id= user_id, trigger_type="USUAL")
-
+        return self.import_neo_range(
+            last_end + timedelta(days=1),
+            today + timedelta(days=365),
+            user_id=user_id,
+            trigger_type="USUAL",
+        )
 
     @log
     def reset_database(self) -> bool:
@@ -213,7 +202,7 @@ class ImportService:
         if not sql_path.exists():
             raise FileNotFoundError(f"init_db.sql not found at {sql_path.resolve()}")
 
-        with open(sql_path, "r", encoding="utf-8") as f:
+        with open(sql_path, encoding="utf-8") as f:
             sql_content = f.read()
 
         # Seed data (admin account, test users...): init_db.sql creates no user

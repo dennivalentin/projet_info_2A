@@ -16,7 +16,7 @@ def run_init_sql():
         print(f"File not found : {sql_path.resolve()}")
         return
 
-    with open(sql_path, "r", encoding="utf-8") as f:
+    with open(sql_path, encoding="utf-8") as f:
         sql_content = f.read()
 
     print("Connection to PostgreSQL...")

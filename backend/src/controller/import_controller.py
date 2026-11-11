@@ -1,10 +1,11 @@
 import threading
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from service.import_service import ImportService
+
 from dao.import_dao import ImportDao
-from utils.security import get_current_user, require_admin
+from service.import_service import ImportService
 from utils.log_utils import get_logger
+from utils.security import get_current_user, require_admin
 
 router = APIRouter(tags=["Database and Imports"])
 logger = get_logger(__name__)
@@ -19,7 +20,10 @@ def reset_database_endpoint(current_user=Depends(require_admin)):
         return {"status": "success", "message": "Database reset successfully"}
     except Exception as e:
         logger.error(f"Error during database reset: {e}")
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Reset failed: {str(e)}",)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Reset failed: {str(e)}",
+        )
 
 
 # Only one NASA import at a time: the first import covers 3 years

@@ -33,9 +33,7 @@ if end < start:
 
 # Call the API (trailing slash: the route is "/dashboard/", avoids a 307 redirect)
 with st.spinner("Loading dashboard..."):
-    res = api_client.get(
-        "/dashboard/", params={"start": start.isoformat(), "end": end.isoformat()}
-    )
+    res = api_client.get("/dashboard/", params={"start": start.isoformat(), "end": end.isoformat()})
 
 if not res or res.get("status_code") != 200:
     err = res.get("data") if res else "Connection failed"

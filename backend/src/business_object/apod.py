@@ -54,9 +54,7 @@ class ApodData:
         return {
             "title": self._title,
             "date": (
-                self._date.isoformat()
-                if hasattr(self._date, "isoformat")
-                else str(self._date)
+                self._date.isoformat() if hasattr(self._date, "isoformat") else str(self._date)
             ),
             "caption": self._caption,
             "url": self._url,

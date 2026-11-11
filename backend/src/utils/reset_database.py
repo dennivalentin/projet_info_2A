@@ -6,7 +6,6 @@ import dotenv
 
 from dao.db_connection import DBConnection
 from utils.log_utils import get_logger, log
-from utils.security import hash_password
 from utils.singleton import Singleton
 
 logger = get_logger(__name__)
@@ -34,9 +33,7 @@ class ResetDatabase(metaclass=Singleton):
         dotenv.load_dotenv()
 
         schema = os.environ.get("POSTGRES_SCHEMA", "project")
-        create_schema = (
-            f"DROP SCHEMA IF EXISTS {schema} CASCADE; CREATE SCHEMA {schema};"
-        )
+        create_schema = f"DROP SCHEMA IF EXISTS {schema} CASCADE; CREATE SCHEMA {schema};"
 
         try:
             with open(init_db_path, encoding="utf-8") as init_db_file:

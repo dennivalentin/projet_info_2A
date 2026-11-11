@@ -137,4 +137,6 @@ class Import:
         return f"<Import id={self._import_id} status='{self._status}' calls={self._nb_calls} neos={self._nb_neo}>"
 
     def __str__(self) -> str:
-        return f"Import #{self._import_id} [{self._status}] ({self._start_date} -> {self._end_date})"
+        return (
+            f"Import #{self._import_id} [{self._status}] ({self._start_date} -> {self._end_date})"
+        )

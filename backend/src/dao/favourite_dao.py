@@ -1,8 +1,10 @@
+from datetime import datetime
+
+from dotenv import load_dotenv
+
 from dao.db_connection import DBConnection
 from utils.log_utils import get_logger, log
 from utils.singleton import Singleton
-from datetime import datetime
-from dotenv import load_dotenv
 
 load_dotenv()
 logger = get_logger(__name__)

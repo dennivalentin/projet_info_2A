@@ -1,12 +1,12 @@
-from dao.alert_dao import AlertDao
+from datetime import datetime
+
 from business_object.alert import Alert
+from dao.alert_dao import AlertDao
 from utils.log_utils import log
 from utils.singleton import Singleton
-from datetime import datetime
 
 
 class AlertService(metaclass=Singleton):
-
     @log
     def create_alert(
         self,
@@ -32,9 +32,7 @@ class AlertService(metaclass=Singleton):
         """
 
         if not hazardous_only and diameter_min is None and distance_max is None:
-            raise ValueError(
-                "At least one criterion should be submitted to create an alert"
-            )
+            raise ValueError("At least one criterion should be submitted to create an alert")
 
         if (diameter_min is not None and diameter_min <= 0) or (
             distance_max is not None and distance_max <= 0

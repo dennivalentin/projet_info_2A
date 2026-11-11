@@ -1,6 +1,3 @@
-import os
-from unittest.mock import patch
-
 import pytest
 
 from business_object.alert import Alert
@@ -14,17 +11,13 @@ def clean_alert_table():
 
     with DBConnection().connection as connection:
         with connection.cursor() as cursor:
-            cursor.execute(
-                "DELETE FROM alert WHERE label LIKE 'Pytest%' OR user_id = 1;"
-            )
+            cursor.execute("DELETE FROM alert WHERE label LIKE 'Pytest%' OR user_id = 1;")
 
     yield
 
     with DBConnection().connection as connection:
         with connection.cursor() as cursor:
-            cursor.execute(
-                "DELETE FROM alert WHERE label LIKE 'Pytest%' OR user_id = 1;"
-            )
+            cursor.execute("DELETE FROM alert WHERE label LIKE 'Pytest%' OR user_id = 1;")
 
 
 def test_create_ok():

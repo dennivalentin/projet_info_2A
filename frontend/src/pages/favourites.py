@@ -1,4 +1,5 @@
 import streamlit as st
+
 from utils.api_client import api_client
 from utils.auth_guard import check_authentification
 from utils.log_init import get_page_logger
@@ -15,7 +16,9 @@ user_id = user.get("user_id") or user.get("id", 1)
 st.subheader("Add a Favourite NEO")
 with st.form("add_favourite_form", clear_on_submit=True):
     col_id, col_btn = st.columns([3, 1])
-    neo_id_input = col_id.number_input("NEO ID", min_value=1, step=1, help="Enter the ID of the asteroid to save")
+    neo_id_input = col_id.number_input(
+        "NEO ID", min_value=1, step=1, help="Enter the ID of the asteroid to save"
+    )
     submit_add = col_btn.form_submit_button("Add to Favourites")
 
     if submit_add:
@@ -48,13 +51,15 @@ else:
     table_data = []
     for neo in favourites:
         neo_id = neo.get("id_neo") or neo.get("neo_id") or neo.get("id")
-        table_data.append({
-            "ID": neo_id,
-            "Name": neo.get("name", "Inconnu"),
-            "Diametre Min (km)": neo.get("diameter_min", "-"),
-            "Diametre Max (km)": neo.get("diameter_max", "-"),
-            "Hazardous": "Yes" if neo.get("hazardous") else "No",
-        })
+        table_data.append(
+            {
+                "ID": neo_id,
+                "Name": neo.get("name", "Inconnu"),
+                "Diametre Min (km)": neo.get("diameter_min", "-"),
+                "Diametre Max (km)": neo.get("diameter_max", "-"),
+                "Hazardous": "Yes" if neo.get("hazardous") else "No",
+            }
+        )
     st.dataframe(table_data, use_container_width=True)
 
     st.divider()
@@ -63,19 +68,21 @@ else:
     if st.checkbox("Display the approaches", value=False):
         with st.spinner("Loading..."):
             appr_res = api_client.get(f"/favourites/user/{user_id}/approaches")
-        
+
         if appr_res["status_code"] == 200:
             approaches_dict = appr_res["data"]
-            
+
             if not approaches_dict:
                 st.write("No approaches available")
             else:
                 for neo in favourites:
                     neo_id_str = str(neo.get("id_neo") or neo.get("neo_id") or neo.get("id"))
                     neo_name = neo.get("name", f"NEO #{neo_id_str}")
-                    
+
                     approaches = approaches_dict.get(neo_id_str, [])
-                    with st.expander(f"Approaches for {neo_name} ({len(approaches)} approaches recorded)"):
+                    with st.expander(
+                        f"Approaches for {neo_name} ({len(approaches)} approaches recorded)"
+                    ):
                         if approaches:
                             st.dataframe(approaches, use_container_width=True)
                         else:
@@ -84,7 +91,6 @@ else:
             st.error("Error during the loading of approaches")
 
     st.divider()
-
 
     st.subheader("Trajectory Visualizer")
     selected_fav = st.selectbox(

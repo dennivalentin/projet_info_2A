@@ -5,18 +5,17 @@ viewing detailed approaches with Astronomical Units (AU), and exporting results 
 """
 
 from datetime import datetime
+
 import pandas as pd
 import streamlit as st
 
 from utils.api_client import api_client
-from utils.log_init import get_page_logger
 from utils.auth_guard import check_authentification
+from utils.log_init import get_page_logger
 
 logger = get_page_logger("search_neo")
 
-st.set_page_config(
-    page_title="NEO-Watch | Search & Explore", page_icon="🔭", layout="wide"
-)
+st.set_page_config(page_title="NEO-Watch | Search & Explore", page_icon="🔭", layout="wide")
 
 st.title("🔭 Near-Earth Objects (NEO) Explorer")
 st.markdown("Search, inspect, and analyze Near-Earth Objects in the database.")
@@ -65,9 +64,7 @@ with st.expander("Filter Options", expanded=True):
 
     with col3:
         order_choice = st.selectbox("Order", options=["ASC", "DESC"], index=0)
-        limit_val = st.number_input(
-            "Max Results", min_value=10, max_value=500, value=100, step=10
-        )
+        limit_val = st.number_input("Max Results", min_value=10, max_value=500, value=100, step=10)
 
     col4, col5 = st.columns(2)
     with col4:
@@ -166,9 +163,7 @@ if results:
     # Detailed View for a Selected NEO
     st.subheader("🔬 Object Details & Close Approaches")
 
-    neo_options = {
-        f"{r.get('name')} (ID: {r.get('neo_id')})": r.get("neo_id") for r in results
-    }
+    neo_options = {f"{r.get('name')} (ID: {r.get('neo_id')})": r.get("neo_id") for r in results}
     selected_label = st.selectbox(
         "Select a NEO to inspect details:", options=list(neo_options.keys())
     )
@@ -183,13 +178,9 @@ if results:
 
                 det_col1, det_col2, det_col3 = st.columns(3)
                 det_col1.metric("Name", neo_data.get("name"))
-                det_col1.metric(
-                    "NASA ID", neo_data.get("nasa_id") or "N/A (User submitted)"
-                )
+                det_col1.metric("NASA ID", neo_data.get("nasa_id") or "N/A (User submitted)")
 
-                hazard_status = (
-                    "⚠️ Hazardous" if neo_data.get("hazardous") else "✅ Safe"
-                )
+                hazard_status = "⚠️ Hazardous" if neo_data.get("hazardous") else "✅ Safe"
                 det_col2.metric("Hazard Flag", hazard_status)
                 det_col2.metric("Origin", neo_data.get("origin"))
 
@@ -201,9 +192,7 @@ if results:
                     else "Unknown"
                 )
                 det_col3.metric("Estimated Diameter", size_str)
-                det_col3.metric(
-                    "Magnitude", f"{neo_data.get('absolute_magnitude') or 'N/A'}"
-                )
+                det_col3.metric("Magnitude", f"{neo_data.get('absolute_magnitude') or 'N/A'}")
 
                 if neo_data.get("url_nasa"):
                     st.markdown(f"🔗 [NASA JPL Web Page]({neo_data.get('url_nasa')})")

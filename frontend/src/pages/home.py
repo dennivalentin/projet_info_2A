@@ -17,7 +17,7 @@ st.set_page_config(page_title="NEO-Watch", page_icon="🔭", layout="centered")
 st.markdown(
     f"""
     <div style="text-align:center; padding-bottom: 1rem;">
-        <h1 style="color:{config.get_option('theme.primaryColor')}; margin-bottom: 0.2rem;">🔭 NEO-Watch</h1>
+        <h1 style="color:{config.get_option("theme.primaryColor")}; margin-bottom: 0.2rem;">🔭 NEO-Watch</h1>
         <p style="font-size: 1.05rem; opacity: 0.85;">Plateforme d'exploration et de surveillance des astéroïdes</p>
     </div>
     """,
@@ -34,9 +34,7 @@ with tab_login:
     if st.button("Se connecter", type="primary", use_container_width=True):
         logger.info(f"Attempting login for user: {username}")
         try:
-            response = api_client.post(
-                "/login/", json={"username": username, "password": password}
-            )
+            response = api_client.post("/login/", json={"username": username, "password": password})
 
             if response:
                 status_code = response.get("status_code")
@@ -88,6 +86,3 @@ with tab_register:
                 st.error(f"Erreur : {e}")
 
 st.divider()
-
-
-
