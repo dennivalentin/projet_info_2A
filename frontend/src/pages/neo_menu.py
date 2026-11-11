@@ -6,7 +6,10 @@ Object Creation, and Statistics.
 
 import streamlit as st
 
+from datetime import date
+
 from utils.auth_guard import check_authentification
+from utils.api_client import api_client
 from utils.log_init import get_page_logger
 
 st.set_page_config(page_title="NEO-Watch | Menu Principal", page_icon="🔭", layout="wide")
@@ -56,14 +59,58 @@ if st.button("🚪 Déconnexion", type="secondary"):
     st.switch_page("pages/home.py")
 
 
-if user.get("role") == "admin":
-    if st.button("🔄 Réinitialiser la base de données", type="secondary"):
-        logger.info("Reset the database")
-        response = api_client.get("/reset_database")
+today_str = str(date.today())
 
-    if response and response.get("status_code") == 200:
-        logger.info("Database successfully reset")
-        st.toast("Base de données réinitialisée avec succès ✅")
-    else:
-        logger.info("Error during database reset")
-        st.toast("Erreur lors de la réinitialisation ❌")
+if st.session_state.get("daily_update_done") != today_str:
+    last_res = api_client.get("/import/last")
+    if last_res.get("status_code") == 200:
+        last_date = last_res.get("data", {}).get("last_end_date")
+        if last_date is None or last_date < today_str:
+            with st.spinner("Update of data from NASA..."):
+                sync_res = api_client.post("/import/update", timeout=300)
+                if sync_res.get("status_code") == 200:
+                    st.toast("Data updated !")
+    st.session_state["daily_update_done"] = today_str
+
+
+if user.get("role") == "admin":
+    st.markdown("---")
+    st.subheader("🛠️ Manage data")
+
+    col_reset, col_sync = st.columns(2)
+
+    with col_reset:
+        if st.button("🗑️ Reset database", type="secondary", use_container_width=True):
+            logger.info("Database reset requested by admin")
+            with st.spinner("Reset in progress..."):
+                response = api_client.post("/reset_database")
+
+            if response.get("status_code") == 200:
+                logger.info("Database successfully reset")
+                st.session_state.pop("daily_sync_done", None)
+                st.toast("Database succesfully reset ✅")
+                st.rerun()
+            else:
+                logger.error("Error during database reset")
+                err_msg = response.get("data", {}).get("detail", "Fail during the reset")
+                st.error(f"Erreur : {err_msg}")
+
+    with col_sync:
+        if st.button("🔄 Manual update", type="primary", use_container_width=True):
+            logger.info("Manual update requested by admin")
+            with st.spinner("Update of data from NASA..."):
+                response = api_client.post("/import/update", timeout=300)
+
+            if response.get("status_code") == 200:
+                result = response.get("data", {}).get("result", {})
+                if result.get("status") == "up_to_date":
+                    st.info("Already up to date")
+                else:
+                    nb_neo = result.get("nb_neo", 0)
+                    nb_app = result.get("nb_approaches", 0)
+                    st.toast(f"Update done : +{nb_neo} NEOs, +{nb_app} approaches ✅")
+                    st.rerun()
+            else:
+                logger.error("Error during manual sync")
+                err_msg = response.get("data", {}).get("detail", "Fail during import")
+                st.error(f"Erreur : {err_msg}")

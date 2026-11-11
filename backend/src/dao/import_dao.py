@@ -92,5 +92,5 @@ class ImportDao:
                     nb_approaches=row["nb_approaches"],
                     import_id=row["import_id"],
                 )
-                task._import_id = row[0]
+                task._import_id = row["import_id"]
                 return task
