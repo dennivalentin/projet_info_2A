@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from schema.neosearch import (
     NeoCreateRequest,
@@ -8,6 +8,7 @@ from schema.neosearch import (
 )
 from service.neo_service import NeoService
 from utils.log_utils import get_logger
+from utils.security import get_current_user
 
 logger = get_logger(__name__)
 
@@ -60,7 +61,7 @@ def get_neo_detail(neo_id: int) -> NeoDetailModel:
     summary="Create a new user-observed NEO",
     description="Create an amateur-observed NEO with origin 'USER'.",
 )
-def create_neo(neo_in: NeoCreateRequest) -> NeoModel:
+def create_neo(neo_in: NeoCreateRequest, current_user=Depends(get_current_user)) -> NeoModel:
     """Submit a newly observed NEO."""
     try:
         service = NeoService()

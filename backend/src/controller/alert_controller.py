@@ -1,16 +1,27 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 
 from schema.alert_model import AlertCreateModel
 from service.alert_service import AlertService
+from dao.alert_dao import AlertDao
 from utils.log_utils import get_logger
+from utils.security import check_same_user, get_current_user
 
 router = APIRouter(prefix="/alerts", tags=["Alerts"])
 logger = get_logger(__name__)
 
 
+def _check_alert_owner(current_user, alert_id: int) -> None:
+    """404 if the alert does not exist, 403 if it belongs to someone else."""
+    alert = AlertDao().find_by_id(alert_id)
+    if alert is None:
+        raise HTTPException(status_code=404, detail="Alert not found")
+    check_same_user(current_user, alert.user_id)
+
+
 @router.post("/", status_code=201)
-def create_alert(param: AlertCreateModel):
+def create_alert(param: AlertCreateModel, current_user=Depends(get_current_user)):
     """Create a new alert for a user"""
+    check_same_user(current_user, param.user_id)
     service = AlertService()
     logger.info(f"Creating alert '{param.label}' for user_id={param.user_id}")
     try:
@@ -33,8 +44,9 @@ def create_alert(param: AlertCreateModel):
 
 
 @router.get("/user/{user_id}")
-def list_alerts_by_user(user_id: int):
+def list_alerts_by_user(user_id: int, current_user=Depends(get_current_user)):
     """List of all the alert of a user"""
+    check_same_user(current_user, user_id)
     service = AlertService()
     logger.info(f"Listing alerts for user_id={user_id}")
     alerts = service.list_alert_user(user_id)
@@ -44,8 +56,9 @@ def list_alerts_by_user(user_id: int):
 
 
 @router.get("/user/{user_id}/notifications")
-def check_notifications(user_id: int):
+def check_notifications(user_id: int, current_user=Depends(get_current_user)):
     """Check and return if an alert is triggered"""
+    check_same_user(current_user, user_id)
     service = AlertService()
     logger.info(f"Checking notifications for user_id={user_id}")
     notifications = service.check_send_notification(user_id)
@@ -53,8 +66,9 @@ def check_notifications(user_id: int):
 
 
 @router.put("/{alert_id}/toggle")
-def alert_status(alert_id: int):
+def alert_status(alert_id: int, current_user=Depends(get_current_user)):
     """Turn on/off an alert"""
+    _check_alert_owner(current_user, alert_id)
     service = AlertService()
     logger.info(f"Toggling alert_id={alert_id}")
     success = service.turn_on_off(alert_id)
@@ -64,8 +78,9 @@ def alert_status(alert_id: int):
 
 
 @router.delete("/{alert_id}")
-def delete_alert(alert_id: int):
+def delete_alert(alert_id: int, current_user=Depends(get_current_user)):
     """Delete an alert"""
+    _check_alert_owner(current_user, alert_id)
     service = AlertService()
     logger.info(f"Deleting alert_id={alert_id}")
     service.delete(alert_id)

