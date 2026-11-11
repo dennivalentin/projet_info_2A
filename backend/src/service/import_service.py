@@ -2,7 +2,6 @@ from datetime import datetime, timedelta, date
 import os
 from pathlib import Path
 from dao.db_connection import DBConnection
-from pprint import pprint
 import time
 from dotenv import load_dotenv
 import requests
@@ -220,6 +219,5 @@ class ImportService:
         with DBConnection().connection as conn:
             with conn.cursor() as cur:
                 cur.execute(sql_content)
-        
         logger.info("Database successfully reset via init_db.sql")
         return True
