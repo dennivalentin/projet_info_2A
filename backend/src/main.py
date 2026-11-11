@@ -75,6 +75,10 @@ def run_init_db():
                     logger.info("Table empty: initialization")
                     with open(sql_path, "r", encoding="utf-8") as f:
                         cur.execute(f.read())
+                    # Seed data (admin account, test users...): init_db.sql creates no user
+                    pop_path = sql_path.with_name("pop_db.sql")
+                    if pop_path.exists():
+                        cur.execute(pop_path.read_text(encoding="utf-8"))
                     logger.info("Table initialized")
                 else:
                     logger.info("Table already existing, applying schema migrations")

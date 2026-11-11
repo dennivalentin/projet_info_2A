@@ -216,6 +216,11 @@ class ImportService:
         with open(sql_path, "r", encoding="utf-8") as f:
             sql_content = f.read()
 
+        # Seed data (admin account, test users...): init_db.sql creates no user
+        pop_path = sql_path.with_name("pop_db.sql")
+        if pop_path.exists():
+            sql_content += "\n" + pop_path.read_text(encoding="utf-8")
+
         with DBConnection().connection as conn:
             with conn.cursor() as cur:
                 cur.execute(sql_content)
