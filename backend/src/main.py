@@ -27,6 +27,7 @@ from controller import (
     login_controller,
     neo_controller,
     statistics_controller,
+    apod_controller,
     import_controller
 )
 
@@ -88,6 +89,7 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 app.include_router(neo_controller.router, prefix="/neo", tags=["NEOs"])
 app.include_router(dashboard_controller.router, prefix="/dashboard", tags=["Dashboard"])
 app.include_router(statistics_controller.router, prefix="/statistics", tags=["Statistics"])
+app.include_router(apod_controller.router, prefix="/apod", tags=["APOD"])
 app.include_router(login_controller.router, prefix="/login", tags=["Login"])
 app.include_router(alert_controller.router)
 app.include_router(favourite_controller.router)
