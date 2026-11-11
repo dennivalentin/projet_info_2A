@@ -74,7 +74,7 @@ CREATE TABLE connection (
     connection_id SERIAL PRIMARY KEY,
     user_id INTEGER NOT NULL REFERENCES "user"(user_id) ON DELETE CASCADE,
     connection_date TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    access_token VARCHAR(64) UNIQUE  -- NULL once the user has logged out
+    access_token TEXT UNIQUE  -- NULL once the user has logged out
 );
 
 -- ============================================================================
