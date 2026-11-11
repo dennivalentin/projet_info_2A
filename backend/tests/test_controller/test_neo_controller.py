@@ -1,9 +1,8 @@
-from datetime import date, datetime
+from datetime import datetime
 from unittest.mock import MagicMock, patch
 
 from fastapi.testclient import TestClient
 
-from business_object.approach import Approach
 from business_object.neo import Neo
 from business_object.user import User
 from main import app

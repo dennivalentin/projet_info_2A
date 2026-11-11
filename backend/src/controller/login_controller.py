@@ -1,6 +1,3 @@
-
-
-
 """Authentication and user management controller for NEO-Watch.
 
 Implements JWT login, OAuth2 password form flow, token refresh, user registration,
@@ -8,7 +5,7 @@ and profile retrieval following OAuth2/JWT best practices.
 """
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Request, status
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from fastapi.security import OAuth2PasswordRequestForm
 
 from business_object.user import User
 from schema.user_model import (

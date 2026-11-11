@@ -117,7 +117,7 @@ class UserDao(metaclass=Singleton):
     def update(self, user: User) -> bool:
         """Update a user in the database.
         Args:
-            user (User): User to be updated 
+            user (User): User to be updated
         Returns:
             True if update is successful, False otherwise
         """
@@ -227,7 +227,7 @@ class UserDao(metaclass=Singleton):
             with DBConnection().connection as connection:
                 with connection.cursor() as cursor:
                     cursor.execute(
-                        'SELECT u.*                                          '
+                        "SELECT u.*                                          "
                         '  FROM "user" u                                    '
                         "  JOIN connection c ON c.user_id = u.user_id       "
                         " WHERE c.access_token = %(token)s;                 ",
@@ -250,6 +250,7 @@ class UserDao(metaclass=Singleton):
             )
 
         return user
+
     @log
     def find_by_email(self, email: str) -> User:
         """Find a user by their email.

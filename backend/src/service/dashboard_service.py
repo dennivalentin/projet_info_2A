@@ -32,9 +32,7 @@ class DashboardService:
 
         counts = dao.count_upcoming(start, end)
         nb_neos = counts["nb_neos"]
-        hazardous_share = (
-            round(100 * counts["nb_hazardous"] / nb_neos, 1) if nb_neos else 0.0
-        )
+        hazardous_share = round(100 * counts["nb_hazardous"] / nb_neos, 1) if nb_neos else 0.0
 
         return {
             "period": {"start": start, "end": end},

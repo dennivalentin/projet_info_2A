@@ -13,17 +13,17 @@ Covers:
 from datetime import timedelta
 from unittest.mock import MagicMock, patch
 
+import pytest
 from fastapi import HTTPException
 from fastapi.testclient import TestClient
-import pytest
 
 from business_object.user import User
 from main import app
 from utils.security import (
-    get_current_user,
     create_access_token,
     create_refresh_token,
     decode_token,
+    get_current_user,
     hash_password,
     verify_password,
 )
@@ -44,8 +44,8 @@ FAKE_ADMIN = User(
 def fake_user_database():
     """Replaces the user and connection tables with in-memory fakes."""
     fake_user_dao = MagicMock()
-    fake_user_dao.find_by_username.side_effect = (
-        lambda username: FAKE_ADMIN if username == "admin" else None
+    fake_user_dao.find_by_username.side_effect = lambda username: (
+        FAKE_ADMIN if username == "admin" else None
     )
     fake_user_dao.find_by_token.return_value = None
     with (
@@ -240,9 +240,7 @@ def test_protected_route_with_jwt_token(mock_stats_service_class):
 
 def test_login_rejects_stored_hash_as_password():
     """Knowing the stored hash must not be enough to log in."""
-    res = client.post(
-        "/login", json={"username": "admin", "password": FAKE_ADMIN.password_hash}
-    )
+    res = client.post("/login", json={"username": "admin", "password": FAKE_ADMIN.password_hash})
     assert res.status_code == 401
 
 
@@ -267,9 +265,7 @@ def test_favourites_of_another_user_are_forbidden():
         assert client.get("/favourites/user/3").status_code == 403
         assert client.delete("/favourites/3/1").status_code == 403
         assert client.get("/alerts/user/3").status_code == 403
-        assert client.post(
-            "/alerts/", json={"user_id": 3, "label": "x"}
-        ).status_code == 403
+        assert client.post("/alerts/", json={"user_id": 3, "label": "x"}).status_code == 403
     finally:
         app.dependency_overrides.clear()
 

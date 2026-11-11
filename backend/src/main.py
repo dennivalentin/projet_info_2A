@@ -3,35 +3,34 @@
 Initializes logging, loads environment variables, and sets up API routers
 for NEOs, Dashboard, Statistics, and Authentication.
 """
+
 import os
+from contextlib import asynccontextmanager
 from pathlib import Path
 
-from dao.db_connection import DBConnection
-
-from fastapi import FastAPI, Request, status, Depends
+from fastapi import Depends, FastAPI, Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse, RedirectResponse
-from contextlib import asynccontextmanager
 
+from dao.db_connection import DBConnection
 from utils.env_variables import display_values, load_environment_variables
+
 load_environment_variables()
 display_values()
 
-from utils.log_utils import LogMiddleware, get_logger, initialize_logs
-from utils.reset_database import ResetDatabase
-from utils.security import require_admin
-
-
 from controller import (
+    alert_controller,
+    apod_controller,
     dashboard_controller,
     favourite_controller,
-    alert_controller,
+    import_controller,
     login_controller,
     neo_controller,
     statistics_controller,
-    apod_controller,
-    import_controller
 )
+from utils.log_utils import LogMiddleware, get_logger, initialize_logs
+from utils.reset_database import ResetDatabase
+from utils.security import require_admin
 
 logger = get_logger(__name__)
 
@@ -58,22 +57,20 @@ def run_init_db():
         with DBConnection().connection as conn:
             with conn.cursor() as cur:
                 cur.execute(f"CREATE SCHEMA IF NOT EXISTS {os.environ['POSTGRES_SCHEMA']};")
-            with conn.cursor() as cur: #check if there is already a db in cloudbeaver
+            with conn.cursor() as cur:  # check if there is already a db in cloudbeaver
                 # The connection uses a RealDictCursor: rows are dicts, not tuples.
                 # Only look in the current schema (POSTGRES_SCHEMA), not in the whole database.
-                cur.execute(
-                    """
+                cur.execute("""
                     SELECT COUNT(*) AS nb_tables
                     FROM information_schema.tables
                     WHERE table_schema = current_schema()
                       AND table_name IN ('user', 'neo', 'approach', 'favourite', 'import');
-                    """
-                )
+                    """)
                 already_initialized = cur.fetchone()["nb_tables"] == 5
 
                 if not already_initialized:
                     logger.info("Table empty: initialization")
-                    with open(sql_path, "r", encoding="utf-8") as f:
+                    with open(sql_path, encoding="utf-8") as f:
                         cur.execute(f.read())
                     # Seed data (admin account, test users...): init_db.sql creates no user
                     pop_path = sql_path.with_name("pop_db.sql")
@@ -88,10 +85,11 @@ def run_init_db():
         logger.error(f"Error init db : {e}")
 
 
-@asynccontextmanager  #run code at the very beggining of the app
+@asynccontextmanager  # run code at the very beggining of the app
 async def lifespan(app: FastAPI):
     run_init_db()
     yield
+
 
 app = FastAPI(title="NEO-Watch Webservice", lifespan=lifespan)
 
@@ -146,9 +144,7 @@ async def reset_database(admin=Depends(require_admin)):
     logger.info("Database reset")
     success = ResetDatabase().run()
 
-    return {
-        "message": f"Database re-initialization - {'SUCCESS' if success else 'FAILURE'}"
-    }
+    return {"message": f"Database re-initialization - {'SUCCESS' if success else 'FAILURE'}"}
 
 
 # Run the FastAPI application

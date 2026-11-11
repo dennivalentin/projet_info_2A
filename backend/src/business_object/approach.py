@@ -106,8 +106,16 @@ class Approach:
         return {
             "approach_id": self._approach_id,
             "neo_id": self._neo_id,
-            "approach_day": self._approach_day.isoformat() if hasattr(self._approach_day, "isoformat") else str(self._approach_day),
-            "approach_date": self._approach_date.isoformat() if hasattr(self._approach_date, "isoformat") else str(self._approach_date),
+            "approach_day": (
+                self._approach_day.isoformat()
+                if hasattr(self._approach_day, "isoformat")
+                else str(self._approach_day)
+            ),
+            "approach_date": (
+                self._approach_date.isoformat()
+                if hasattr(self._approach_date, "isoformat")
+                else str(self._approach_date)
+            ),
             "distance_km": self._distance,
             "distance_au": self.distance_au,
             "speed_km_h": self._speed,

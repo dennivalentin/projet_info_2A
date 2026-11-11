@@ -1,12 +1,11 @@
-from dao.db_connection import DBConnection
 from business_object.approach import Approach
+from dao.db_connection import DBConnection
 from utils.log_utils import get_logger, log
 
 logger = get_logger(__name__)
 
 
 class ApproachDao:
-
     @log
     def create(self, approach: Approach) -> bool:
         """
@@ -38,9 +37,7 @@ class ApproachDao:
                 )
                 res = cur.fetchone()
                 if res:
-                    approach_id = (
-                        res["approach_id"] if isinstance(res, dict) else res[0]
-                    )
+                    approach_id = res["approach_id"] if isinstance(res, dict) else res[0]
                     approach._approach_id = approach_id
                     return True
         return False

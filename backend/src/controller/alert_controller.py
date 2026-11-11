@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException
 
+from dao.alert_dao import AlertDao
 from schema.alert_model import AlertCreateModel
 from service.alert_service import AlertService
-from dao.alert_dao import AlertDao
 from utils.log_utils import get_logger
 from utils.security import check_same_user, get_current_user
 

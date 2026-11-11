@@ -1,6 +1,8 @@
-import pytest
-from dao.neo_dao import NeoDao
 from unittest.mock import MagicMock, patch
+
+import pytest
+
+from dao.neo_dao import NeoDao
 
 
 @patch("dao.neo_dao.DBConnection")

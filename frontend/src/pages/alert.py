@@ -1,4 +1,5 @@
 import streamlit as st
+
 from utils.api_client import api_client
 from utils.auth_guard import check_authentification
 from utils.log_init import get_page_logger
@@ -51,7 +52,7 @@ with st.form("create_alert_form", clear_on_submit=True):
         value=None,
         step=0.1,
         placeholder="No limit (leave empty)",
-        help="Leave empty for no minimum diameter filter"
+        help="Leave empty for no minimum diameter filter",
     )
     max_dist = col2.number_input(
         "Maximum Distance (km)",
@@ -59,7 +60,7 @@ with st.form("create_alert_form", clear_on_submit=True):
         value=None,
         step=10000.0,
         placeholder="No limit (leave empty)",
-        help="Leave empty for no maximum distance filter"
+        help="Leave empty for no maximum distance filter",
     )
 
     hazardous_only = st.checkbox("Only Potentially Hazardous Asteroids", value=False)

@@ -5,7 +5,6 @@ from utils.log_utils import log
 
 
 class NeoService:
-
     @log
     def search_neos(
         self,
@@ -27,11 +26,7 @@ class NeoService:
             and diameter_min_m > diameter_max_m
         ):
             raise ValueError("diameter_min_m ne peut pas dépasser diameter_max_m")
-        if (
-            next_approach_from
-            and next_approach_to
-            and next_approach_from > next_approach_to
-        ):
+        if next_approach_from and next_approach_to and next_approach_from > next_approach_to:
             raise ValueError("next_approach_from doit précéder next_approach_to")
 
         # l'API parle en mètres (plus naturel), ta base stocke des km

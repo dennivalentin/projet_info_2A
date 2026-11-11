@@ -1,11 +1,9 @@
-from datetime import datetime
-
 from dotenv import load_dotenv
 
+from business_object.alert import Alert
 from dao.db_connection import DBConnection
 from utils.log_utils import get_logger, log
 from utils.singleton import Singleton
-from business_object.alert import Alert
 
 load_dotenv()
 logger = get_logger(__name__)

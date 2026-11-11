@@ -1,5 +1,4 @@
 import hmac
-import secrets
 
 from business_object.user import User
 from dao.connection_dao import ConnectionDao

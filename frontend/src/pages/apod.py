@@ -66,8 +66,9 @@ st.subheader("📥 Export")
 c1, c2 = st.columns(2)
 if image_bytes:
     ext = Path(url).suffix or ".jpg"
-    c1.download_button("Download the image", data=image_bytes,
-                       file_name=f"apod_{day.isoformat()}{ext}")
+    c1.download_button(
+        "Download the image", data=image_bytes, file_name=f"apod_{day.isoformat()}{ext}"
+    )
 c2.download_button(
     "Download the description (.txt)",
     data=f"{apod.get('title', '')}\n{apod.get('date', '')[:10]}\n\n{apod.get('caption', '')}\n\nSource: {url}",

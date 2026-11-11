@@ -1,4 +1,5 @@
 from datetime import datetime
+
 from business_object.neo import Neo
 from dao.approach_dao import ApproachDao
 from dao.neo_dao import NeoDao
@@ -10,9 +11,7 @@ logger = get_logger(__name__)
 class NeoService:
     """Service handling business logic for Near-Earth Objects (NEOs)."""
 
-    def __init__(
-        self, neo_dao: NeoDao | None = None, approach_dao: ApproachDao | None = None
-    ):
+    def __init__(self, neo_dao: NeoDao | None = None, approach_dao: ApproachDao | None = None):
         self._neo_dao = neo_dao or NeoDao()
         self._approach_dao = approach_dao or ApproachDao()
 

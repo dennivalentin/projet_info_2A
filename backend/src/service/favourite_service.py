@@ -1,14 +1,14 @@
 import base64
 import io
-from utils.log_utils import log
 
-from dao.approach_dao import ApproachDao
-from dao.neo_dao import NeoDao
-from dao.favourite_dao import FavouriteDao
-from business_object.neo import Neo
+import matplotlib.pyplot as plt
+
 from business_object.approach import Approach
-
-import matplotlib.pyplot as plt 
+from business_object.neo import Neo
+from dao.approach_dao import ApproachDao
+from dao.favourite_dao import FavouriteDao
+from dao.neo_dao import NeoDao
+from utils.log_utils import log
 
 
 class FavouriteService:

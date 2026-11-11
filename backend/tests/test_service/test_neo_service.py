@@ -1,4 +1,4 @@
-from datetime import date, datetime
+from datetime import datetime
 from unittest.mock import MagicMock
 
 from business_object.approach import Approach
