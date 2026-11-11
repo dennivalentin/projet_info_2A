@@ -1,11 +1,16 @@
--- Passwords hashed : admin1234, alice1234, bob12345
+-- Test seed data for NEO-Watch DAO tests
 
+INSERT INTO "user" (user_id, username, password_hash, email, role) VALUES
+(999, 'admin_test', 'c7ad44cbad762a5da0a452f9e854fdc1e0e7a52a38015f23f3eab1d80b931dd472634dfac71cd34ebc35d16ab7fb8a90c81f975113d6c7538dc69dd8de9077ec', 'admin_test@email.fr', 'admin'),
+(998, 'user_test', 'ef92b778bafe771e89245b89ecbc08a44a4e166c06659911881f383d4473e94f', 'user_test@email.fr', 'user')
+ON CONFLICT (user_id) DO NOTHING;
 
-INSERT INTO "user" (user_id, username, email, password_hash, role) VALUES
-(997, 'admin', 'admin@neowatch.fr', '5e7a7566435ae1379da39ffbb74f49fe80dff90fe4b87caf306b91c8cd05d1d3', 'admin'),
-(998, 'alice', 'alice@neowatch.fr', 'fd420a75c884e2ab5fbe119a90cd04b524e9da555bd9324b51366f1a69582b21', 'user'),
-(999, 'bob',   'bob@neowatch.fr',   'c038c06dbb5ea27e2e7ee77d0d124119122aaecdbb0cd5fe76b2132067618d20', 'user');
+INSERT INTO neo (neo_id, nasa_id, name, absolute_magnitude, diameter_min, diameter_max, hazardous, url_nasa, origin) VALUES
+(999, '9999999', 'Test Asteroid 1', 20.0, 0.1, 0.2, TRUE, 'https://ssd.jpl.nasa.gov', 'NASA'),
+(998, '9999998', 'Test Asteroid 2', 22.0, 0.05, 0.1, FALSE, 'https://ssd.jpl.nasa.gov', 'NASA')
+ON CONFLICT (neo_id) DO NOTHING;
 
-INSERT INTO connection (user_id, connection_date) VALUES
-(998, '2026-10-01 09:00:00'),
-(998, '2026-10-05 18:30:00');
+INSERT INTO approach (neo_id, approach_day, approach_date, body, distance, speed) VALUES
+(999, CURRENT_DATE + INTERVAL '1 day', CURRENT_TIMESTAMP + INTERVAL '1 day', 'Earth', 5000000.0, 50000.0),
+(998, CURRENT_DATE + INTERVAL '2 days', CURRENT_TIMESTAMP + INTERVAL '2 days', 'Earth', 10000000.0, 30000.0)
+ON CONFLICT DO NOTHING;
