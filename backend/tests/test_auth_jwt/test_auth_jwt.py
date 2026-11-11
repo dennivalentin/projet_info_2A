@@ -20,6 +20,7 @@ import pytest
 from business_object.user import User
 from main import app
 from utils.security import (
+    get_current_user,
     create_access_token,
     create_refresh_token,
     decode_token,
@@ -28,6 +29,31 @@ from utils.security import (
 )
 
 client = TestClient(app)
+
+# Fake "admin" account (password "admin") so these tests do not need a database
+FAKE_ADMIN = User(
+    user_id=1,
+    username="admin",
+    email="admin@email.fr",
+    password_hash=hash_password("admin", "admin"),
+    role="admin",
+)
+
+
+@pytest.fixture(autouse=True)
+def fake_user_database():
+    """Replaces the user and connection tables with in-memory fakes."""
+    fake_user_dao = MagicMock()
+    fake_user_dao.find_by_username.side_effect = (
+        lambda username: FAKE_ADMIN if username == "admin" else None
+    )
+    fake_user_dao.find_by_token.return_value = None
+    with (
+        patch("dao.user_dao.UserDao", return_value=fake_user_dao),
+        patch("service.user_service.UserDao", return_value=fake_user_dao),
+        patch("service.user_service.ConnectionDao"),
+    ):
+        yield fake_user_dao
 
 
 def test_password_hashing_and_verification():
@@ -210,3 +236,44 @@ def test_protected_route_with_jwt_token(mock_stats_service_class):
     # Protected route without token
     res_unauth = client.get("/statistics")
     assert res_unauth.status_code == 401
+
+
+def test_login_rejects_stored_hash_as_password():
+    """Knowing the stored hash must not be enough to log in."""
+    res = client.post(
+        "/login", json={"username": "admin", "password": FAKE_ADMIN.password_hash}
+    )
+    assert res.status_code == 401
+
+
+def test_login_unknown_user_has_no_backdoor():
+    """There is no hard-coded admin account when the user does not exist."""
+    res = client.post("/login", json={"username": "ghost", "password": "admin"})
+    assert res.status_code == 401
+
+
+def test_token_of_deleted_user_is_rejected(fake_user_database):
+    """A valid token for a user that no longer exists gives a 401."""
+    token = create_access_token({"sub": "ghost", "user_id": 42, "role": "admin"})
+    res = client.get("/login/me", headers={"Authorization": f"Bearer {token}"})
+    assert res.status_code == 401
+
+
+def test_favourites_of_another_user_are_forbidden():
+    """A user cannot read or delete the favourites/alerts of someone else."""
+    alice = User(user_id=2, username="alice", role="user")
+    app.dependency_overrides[get_current_user] = lambda: alice
+    try:
+        assert client.get("/favourites/user/3").status_code == 403
+        assert client.delete("/favourites/3/1").status_code == 403
+        assert client.get("/alerts/user/3").status_code == 403
+        assert client.post(
+            "/alerts/", json={"user_id": 3, "label": "x"}
+        ).status_code == 403
+    finally:
+        app.dependency_overrides.clear()
+
+
+def test_favourites_require_login():
+    assert client.get("/favourites/user/1").status_code == 401
+    assert client.get("/alerts/user/1").status_code == 401

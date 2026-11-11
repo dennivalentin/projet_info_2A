@@ -5,7 +5,9 @@ from fastapi.testclient import TestClient
 
 from business_object.approach import Approach
 from business_object.neo import Neo
+from business_object.user import User
 from main import app
+from utils.security import get_current_user
 
 client = TestClient(app)
 
@@ -119,7 +121,14 @@ def test_create_user_neo_endpoint(mock_service_class):
         "diameter_max": 0.35,
         "hazardous": False,
     }
-    response = client.post("/neo", json=payload)
+    # Creating a NEO requires a logged-in user
+    assert client.post("/neo", json=payload).status_code == 401
+
+    app.dependency_overrides[get_current_user] = lambda: User(user_id=2, username="obs")
+    try:
+        response = client.post("/neo", json=payload)
+    finally:
+        app.dependency_overrides.clear()
 
     assert response.status_code == 201
     data = response.json()

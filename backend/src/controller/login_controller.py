@@ -128,39 +128,15 @@ def refresh_token(
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    user = None
-    try:
-        from dao.user_dao import UserDao
+    from dao.user_dao import UserDao
 
-        user = UserDao().find_by_username(username)
-    except Exception:
-        pass
-
+    user = UserDao().find_by_username(username)
     if not user:
-        if username == "admin":
-            user = User(
-                user_id=payload.get("user_id", 1),
-                username="admin",
-                email="admin@email.fr",
-                password_hash="",
-                role=payload.get("role", "admin"),
-            )
-        else:
-            user_id = payload.get("user_id")
-            if user_id:
-                user = User(
-                    user_id=user_id,
-                    username=username,
-                    email=payload.get("email", f"{username}@ensai.fr"),
-                    password_hash="",
-                    role=payload.get("role", "user"),
-                )
-            else:
-                raise HTTPException(
-                    status_code=status.HTTP_401_UNAUTHORIZED,
-                    detail="User not found",
-                    headers={"WWW-Authenticate": "Bearer"},
-                )
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User not found",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
 
     new_payload = {
         "sub": user.username,

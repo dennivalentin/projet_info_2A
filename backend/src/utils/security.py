@@ -60,7 +60,7 @@ def verify_password(plain_password: str, hashed_password: str, salt: str = "") -
         bool: True if passwords match, False otherwise.
     """
     computed = hash_password(plain_password, salt)
-    return hmac.compare_digest(computed, hashed_password) or plain_password == hashed_password
+    return hmac.compare_digest(computed, hashed_password)
 
 
 def create_access_token(data: dict[str, Any], expires_delta: timedelta | None = None) -> str:
@@ -207,39 +207,16 @@ def get_current_user(
                 headers={"WWW-Authenticate": "Bearer"},
             )
 
-        # Retrieve user from database
-        user = None
-        try:
-            from dao.user_dao import UserDao
-            user = UserDao().find_by_username(username)
-        except Exception:
-            pass
+        # Retrieve user from database: a deleted user must not stay logged in
+        from dao.user_dao import UserDao
 
+        user = UserDao().find_by_username(username)
         if not user:
-            if username == "admin":
-                user = User(
-                    user_id=payload.get("user_id", 1),
-                    username="admin",
-                    email="admin@email.fr",
-                    password_hash="",
-                    role=payload.get("role", "admin"),
-                )
-            else:
-                user_id = payload.get("user_id")
-                if user_id:
-                    user = User(
-                        user_id=user_id,
-                        username=username,
-                        email=payload.get("email", f"{username}@ensai.fr"),
-                        password_hash="",
-                        role=payload.get("role", "user"),
-                    )
-                else:
-                    raise HTTPException(
-                        status_code=status.HTTP_401_UNAUTHORIZED,
-                        detail="User not found",
-                        headers={"WWW-Authenticate": "Bearer"},
-                    )
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="User not found",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
 
         return user
 
@@ -285,3 +262,16 @@ def require_admin(current_user: User = Depends(get_current_user)) -> User:
             detail="Forbidden: Admin privileges required",
         )
     return current_user
+
+
+def check_same_user(current_user: User, user_id: int) -> None:
+    """Forbids a user to read or change the data of another user (admins can).
+
+    Raises:
+        HTTPException: 403 if current_user is neither the owner nor an admin.
+    """
+    if current_user.role != "admin" and current_user.user_id != user_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Forbidden: you can only access your own data",
+        )
