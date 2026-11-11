@@ -24,6 +24,17 @@ CREATE TABLE "user" (
     creation_date TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
+INSERT INTO "user" (user_id, username, password_hash, email, role)
+VALUES (
+    1,
+    'admin',
+    '11aaa6265bc4269a731c406b1b18f5416f44b79aee3ed4f3d7c2ef10c1e328c1',
+    'admin@email.fr',
+    'admin'
+) ON CONFLICT (username) DO NOTHING;
+
+SELECT setval('user_user_id_seq', (SELECT COALESCE(MAX(user_id), 1) FROM "user"));
+
 -- ============================================================================
 -- 2. NEO
 -- ============================================================================

@@ -24,6 +24,7 @@ from controller import (
     login_controller,
     neo_controller,
     statistics_controller,
+    import_controller
 )
 
 logger = get_logger(__name__)
@@ -58,6 +59,7 @@ app.include_router(statistics_controller.router, prefix="/statistics", tags=["St
 app.include_router(login_controller.router, prefix="/login", tags=["Login"])
 app.include_router(alert_controller.router)
 app.include_router(favourite_controller.router)
+app.include_router(import_controller.router)
 
 
 @app.get("/", include_in_schema=False)
