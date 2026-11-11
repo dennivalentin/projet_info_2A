@@ -1,4 +1,5 @@
 import os
+import threading
 
 import psycopg2
 from psycopg2.extras import RealDictCursor
@@ -9,22 +10,26 @@ from utils.singleton import Singleton
 class DBConnection(metaclass=Singleton):
     """Database connection manager implementing the Singleton pattern.
 
-    This class ensures that only a single connection to the PostgreSQL
-    database is opened and shared throughout the application lifecycle.
-
-    Attributes:
-        connection (psycopg2.extensions.connection): The active database
-            connection instance.
+    FastAPI runs synchronous endpoints in a pool of worker threads. A single
+    psycopg2 connection shared by all threads means they also share the same
+    transaction: one failing query (or a long NASA import) breaks the requests
+    running at the same time ("current transaction is aborted"...).
+    So each thread gets its own connection, re-opened automatically if it was
+    closed (database restarted, idle timeout on SSP Cloud, ...).
     """
 
     def __init__(self):
-        """Initializes the database connection using environment variables.
+        self._local = threading.local()
+
+    @staticmethod
+    def _connect():
+        """Opens a new connection using the POSTGRES_* environment variables.
+
         Raises:
             KeyError: If any of the required POSTGRES_* environment variables are missing.
             psycopg2.Error: If the connection to the database fails.
         """
-
-        self.__connection = psycopg2.connect(
+        return psycopg2.connect(
             host=os.environ["POSTGRES_HOST"],
             port=os.environ["POSTGRES_PORT"],
             database=os.environ["POSTGRES_DATABASE"],
@@ -36,8 +41,12 @@ class DBConnection(metaclass=Singleton):
 
     @property
     def connection(self):
-        """Provides access to the underlying database connection.
+        """Provides the database connection of the current thread.
         Returns:
             The established database connection.
         """
-        return self.__connection
+        conn = getattr(self._local, "connection", None)
+        if conn is None or conn.closed:
+            conn = self._connect()
+            self._local.connection = conn
+        return conn

@@ -62,15 +62,23 @@ if st.button("🚪 Déconnexion", type="secondary"):
 today_str = str(date.today())
 
 if st.session_state.get("daily_update_done") != today_str:
+    # Mark it first: the import must be launched only once per session and per day
+    st.session_state["daily_update_done"] = today_str
     last_res = api_client.get("/import/last")
     if last_res.get("status_code") == 200:
         last_date = last_res.get("data", {}).get("last_end_date")
         if last_date is None or last_date < today_str:
-            with st.spinner("Update of data from NASA..."):
-                sync_res = api_client.post("/import/update", timeout=300)
-                if sync_res.get("status_code") == 200:
-                    st.toast("Data updated !")
-    st.session_state["daily_update_done"] = today_str
+            # The backend runs the NASA import in the background and answers at once
+            sync_res = api_client.post("/import/update")
+            if sync_res.get("status_code") == 200:
+                st.toast("Mise à jour des données NASA lancée en arrière-plan")
+
+status_res = api_client.get("/import/status")
+if status_res.get("status_code") == 200 and status_res.get("data", {}).get("running"):
+    st.info(
+        "⏳ Import des données NASA en cours : les NEO apparaissent au fur et à mesure "
+        "dans la recherche, le tableau de bord et les statistiques."
+    )
 
 
 if user.get("role") == "admin":
@@ -98,18 +106,14 @@ if user.get("role") == "admin":
     with col_sync:
         if st.button("🔄 Manual update", type="primary", use_container_width=True):
             logger.info("Manual update requested by admin")
-            with st.spinner("Update of data from NASA..."):
-                response = api_client.post("/import/update", timeout=300)
+            response = api_client.post("/import/update")
 
             if response.get("status_code") == 200:
                 result = response.get("data", {}).get("result", {})
-                if result.get("status") == "up_to_date":
-                    st.info("Already up to date")
+                if result.get("status") == "running":
+                    st.info("An import is already running")
                 else:
-                    nb_neo = result.get("nb_neo", 0)
-                    nb_app = result.get("nb_approaches", 0)
-                    st.toast(f"Update done : +{nb_neo} NEOs, +{nb_app} approaches ✅")
-                    st.rerun()
+                    st.toast("Update started in the background ✅")
             else:
                 logger.error("Error during manual sync")
                 err_msg = response.get("data", {}).get("detail", "Fail during import")

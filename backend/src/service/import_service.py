@@ -209,8 +209,8 @@ class ImportService:
     def reset_database(self) -> bool:
         """Run init_db.sql to reset"""
 
-        sql_path = Path("data/init_db.sql")
-        
+        sql_path = Path(__file__).resolve().parents[2] / "data" / "init_db.sql"
+
         if not sql_path.exists():
             raise FileNotFoundError(f"init_db.sql not found at {sql_path.resolve()}")
 

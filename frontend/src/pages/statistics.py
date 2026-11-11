@@ -23,7 +23,7 @@ st.divider()
 
 # Call the API
 with st.spinner("Computing statistics..."):
-    res = api_client.get("/statistics")
+    res = api_client.get("/statistics/")
 
 if not res or res.get("status_code") != 200:
     err = res.get("data") if res else "Connection failed"

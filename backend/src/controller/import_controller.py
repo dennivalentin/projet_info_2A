@@ -1,3 +1,5 @@
+import threading
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from service.import_service import ImportService
 from dao.import_dao import ImportDao
@@ -20,19 +22,47 @@ def reset_database_endpoint(current_user=Depends(require_admin)):
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Reset failed: {str(e)}",)
 
 
-@router.post("/import/update")
-def sync_data_endpoint(current_user=Depends(get_current_user)):
-    """Run the database update"""
+# Only one NASA import at a time: the first import covers 3 years
+# (~140 API calls, much longer than any HTTP timeout), so it runs in the background.
+_import_lock = threading.Lock()
+
+
+def _run_import_in_background(user_id: int) -> None:
     try:
-        service = ImportService()
-        result = service.import_update(user_id=current_user.user_id)
-        return {"status": "success", "result": result}
+        result = ImportService().import_update(user_id=user_id)
+        logger.info(f"Background import finished: {result}")
     except Exception as e:
         logger.error(f"Error during data sync: {e}")
+    finally:
+        _import_lock.release()
+
+
+@router.post("/import/update")
+def sync_data_endpoint(current_user=Depends(get_current_user)):
+    """Start the database update in the background (returns immediately)."""
+    if not _import_lock.acquire(blocking=False):
+        return {"status": "success", "result": {"status": "running"}}
+
+    try:
+        threading.Thread(
+            target=_run_import_in_background,
+            args=(current_user.user_id,),
+            daemon=True,
+        ).start()
+    except Exception as e:
+        _import_lock.release()
+        logger.error(f"Error starting data sync: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Sync failed: {str(e)}",
         )
+    return {"status": "success", "result": {"status": "started"}}
+
+
+@router.get("/import/status")
+def get_import_status(current_user=Depends(get_current_user)):
+    """Tell whether a NASA import is currently running."""
+    return {"running": _import_lock.locked()}
 
 
 @router.get("/import/last")
