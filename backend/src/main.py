@@ -4,6 +4,8 @@ Initializes logging, loads environment variables, and sets up API routers
 for NEOs, Dashboard, Statistics, and Authentication.
 """
 import os
+from pathlib import Path
+
 from dao.db_connection import DBConnection
 
 from fastapi import FastAPI, Request, status, Depends
@@ -33,18 +35,41 @@ from controller import (
 
 logger = get_logger(__name__)
 
+INIT_DB_PATH = Path(__file__).resolve().parents[2] / "data" / "init_db.sql"
+
+# Schema fixes applied to databases created with an older init_db.sql
+MIGRATIONS = [
+    # diameters are in km: NUMERIC(10, 2) rounded every NEO under 5 m to 0
+    "ALTER TABLE neo ALTER COLUMN diameter_min TYPE NUMERIC(12, 6);",
+    "ALTER TABLE neo ALTER COLUMN diameter_max TYPE NUMERIC(12, 6);",
+    "ALTER TABLE alert ALTER COLUMN diameter_min TYPE NUMERIC(12, 6);",
+    # NEOs created by users have no NASA id
+    "ALTER TABLE neo ALTER COLUMN nasa_id DROP NOT NULL;",
+]
+
+
 def run_init_db():
-    sql_path = os.path.abspath("data/init_db.sql")
-    if not os.path.exists(sql_path):
+    sql_path = INIT_DB_PATH
+    if not sql_path.exists():
+        logger.error(f"init_db.sql not found at {sql_path}")
         return
 
     try:
         with DBConnection().connection as conn:
+            with conn.cursor() as cur:
+                cur.execute(f"CREATE SCHEMA IF NOT EXISTS {os.environ['POSTGRES_SCHEMA']};")
             with conn.cursor() as cur: #check if there is already a db in cloudbeaver
+                # The connection uses a RealDictCursor: rows are dicts, not tuples.
+                # Only look in the current schema (POSTGRES_SCHEMA), not in the whole database.
                 cur.execute(
-                    "SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'user');"
+                    """
+                    SELECT COUNT(*) AS nb_tables
+                    FROM information_schema.tables
+                    WHERE table_schema = current_schema()
+                      AND table_name IN ('user', 'neo', 'approach', 'favourite', 'import');
+                    """
                 )
-                already_initialized = cur.fetchone()[0]
+                already_initialized = cur.fetchone()["nb_tables"] == 5
 
                 if not already_initialized:
                     logger.info("Table empty: initialization")
@@ -52,7 +77,9 @@ def run_init_db():
                         cur.execute(f.read())
                     logger.info("Table initialized")
                 else:
-                    logger.info("Table already existing, nothing done")
+                    logger.info("Table already existing, applying schema migrations")
+                    for migration in MIGRATIONS:
+                        cur.execute(migration)
     except Exception as e:
         logger.error(f"Error init db : {e}")
 

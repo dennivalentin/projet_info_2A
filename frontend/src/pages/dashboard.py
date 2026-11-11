@@ -27,21 +27,14 @@ st.subheader("📅 Period")
 col_start, col_end = st.columns(2)
 start = col_start.date_input("From", value=date.today())
 end = col_end.date_input("To", value=date.today() + timedelta(days=7))
-with st.spinner("Loading dashboard..."):
-    res = api_client.get(
-        "/dashboard", params={"start": start.isoformat(), "end": end.isoformat()}
-    )
-
-if not res or res.get("status_code") != 200:
-    err = res.get("data") if res else "Connection failed"
-    st.error(f"Dashboard error: {err}")
+if end < start:
+    st.error("The end date must be after the start date.")
     st.stop()
 
-data = res.get("data", {})
-# Call the API
+# Call the API (trailing slash: the route is "/dashboard/", avoids a 307 redirect)
 with st.spinner("Loading dashboard..."):
     res = api_client.get(
-        "/dashboard", params={"start": start.isoformat(), "end": end.isoformat()}
+        "/dashboard/", params={"start": start.isoformat(), "end": end.isoformat()}
     )
 
 if not res or res.get("status_code") != 200:

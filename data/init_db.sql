@@ -40,11 +40,11 @@ SELECT setval('user_user_id_seq', (SELECT COALESCE(MAX(user_id), 1) FROM "user")
 -- ============================================================================
 CREATE TABLE neo (
     neo_id SERIAL PRIMARY KEY,
-    nasa_id VARCHAR(10) NOT NULL UNIQUE,
+    nasa_id VARCHAR(10) UNIQUE,  -- NULL for NEOs created by users (origin USER)
     name VARCHAR(100) NOT NULL,
     absolute_magnitude NUMERIC(5, 2),
-    diameter_min NUMERIC(10, 2),
-    diameter_max NUMERIC(10, 2),
+    diameter_min NUMERIC(12, 6),  -- km: most NEOs are only a few metres wide
+    diameter_max NUMERIC(12, 6),
     hazardous BOOLEAN NOT NULL DEFAULT FALSE,
     url_nasa VARCHAR(500),
     origin VARCHAR(12) NOT NULL DEFAULT 'nasa',
@@ -120,7 +120,7 @@ CREATE TABLE alert (
     user_id INTEGER NOT NULL REFERENCES "user"(user_id) ON DELETE CASCADE,
     label VARCHAR(100) NOT NULL,
     distance_max NUMERIC(15, 2),  
-    diameter_min NUMERIC(10, 2),  
+    diameter_min NUMERIC(12, 6),
     hazardous_only BOOLEAN NOT NULL DEFAULT FALSE,
     active BOOLEAN NOT NULL DEFAULT TRUE,
     creation_date TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
