@@ -1,0 +1,57 @@
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[english]{babel}
+\usepackage{lmodern}
+\usepackage[a4paper,margin=2.5cm]{geometry}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{longtable}
+\usepackage{float}
+\usepackage{caption}
+\usepackage{rotating}
+\usepackage{fancyhdr}
+\usepackage[hidelinks]{hyperref}
+
+\newcommand{\projetNom}{NEO-Watch}
+\newcommand{\projetType}{Software engineering project: analysis report}
+\newcommand{\projetAccroche}{Monitoring near-Earth objects catalogued by NASA}
+\newcommand{\projetGroupe}{Group 7}
+\newcommand{\projetEtudiants}{%
+  Valentin Denni\\
+  Yalalt Schneider\\
+  Sofia Bounaga\\
+  Mohammed-adam Lakhrissi}
+\newcommand{\projetTuteur}{Olivier Ricciardi}
+\newcommand{\projetAnnee}{2026--2027}
+
+\begin{document}
+
+
+% Page de garde
+\input{pagedegarde}
+
+% Sommaire et listes
+\tableofcontents
+\newpage
+\listoffigures
+\listoftables
+\newpage
+
+% Sections principales
+\input{sections/01_introduction}
+\input{sections/02_specifications}
+\input{sections/03_architecture_design}
+\input{sections/04_implementation}
+\input{sections/05_testing_quality}
+\input{sections/06_organization}
+\input{sections/07_conclusion}
+
+% Annexes et bilans individuels
+\newpage
+\appendix
+\input{sections/08_appendices}
+
+\end{document}
