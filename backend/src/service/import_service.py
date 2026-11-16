@@ -71,17 +71,26 @@ class ImportService:
         import_dao = ImportDao()
         import_dao.create(import_task)
 
+        last_saved_day = None  # end of the last window fully saved
         try:
             window_start = start_date
             while window_start <= end_date:
                 window_end = min(window_start + timedelta(days=MAX_DAYS_PER_CALL), end_date)
                 feed = self._fetch_feed(window_start, window_end, import_task)
                 self._save_feed(feed, import_task)
+                last_saved_day = window_end
                 window_start = window_end + timedelta(days=1)
                 time.sleep(0.2)  # be gentle with the NASA API
             import_task._status = "success"
         except Exception:
-            import_task._status = "failed"
+            if last_saved_day is None:
+                import_task._status = "failed"
+            else:
+                # Some windows were saved (e.g. the NASA quota ran out in the middle):
+                # the import is recorded as 'partial', ending at the last saved day,
+                # so that the next import resumes from there instead of starting again
+                import_task._status = "partial"
+                import_task._end_date = last_saved_day
             raise
         finally:
             # Always record the final status, even when the import failed

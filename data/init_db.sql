@@ -127,7 +127,7 @@ CREATE TABLE import (
     start_date DATE NOT NULL,
     end_date DATE NOT NULL,
     trigger_type VARCHAR(10),  -- 'manual' or 'auto'
-    status VARCHAR(15) NOT NULL DEFAULT 'running',  -- then 'success' or 'failed'
+    status VARCHAR(15) NOT NULL DEFAULT 'running',  -- then 'success', 'partial' (interrupted, resumable) or 'failed'
     nb_calls INTEGER,  --number of API calls made
     nb_neo INTEGER,   -- number of NEO imported
     nb_approaches INTEGER,  

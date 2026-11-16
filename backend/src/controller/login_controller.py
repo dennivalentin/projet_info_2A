@@ -41,7 +41,6 @@ def login(credentials: UserLoginModel):
             refresh_token=refresh_token,
             token_type="bearer",  # nosec B106
             user_id=user.user_id,
-            id_player=user.user_id,
             username=user.username,
             role=user.role,
         )
@@ -64,7 +63,6 @@ def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends()):
             refresh_token=refresh_token,
             token_type="bearer",  # nosec B106
             user_id=user.user_id,
-            id_player=user.user_id,
             username=user.username,
             role=user.role,
         )
@@ -148,7 +146,6 @@ def refresh_token(
         refresh_token=new_refresh_token,
         token_type="bearer",  # nosec B106
         user_id=user.user_id,
-        id_player=user.user_id,
         username=user.username,
         role=user.role,
     )

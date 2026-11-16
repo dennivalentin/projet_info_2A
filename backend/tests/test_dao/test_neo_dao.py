@@ -6,8 +6,8 @@ from dao.neo_dao import NeoDao
 
 
 @patch("dao.neo_dao.DBConnection")
-def test_find_un_critere(mock_db):
-    donnees_simulees = [
+def test_find_with_one_criterion(mock_db):
+    fake_rows = [
         {
             "neo_id": 1,
             "nasa_id": "2000433",
@@ -24,7 +24,7 @@ def test_find_un_critere(mock_db):
 
     # Use standard MagicMock instead of mocker.MagicMock()
     mock_cursor = MagicMock()
-    mock_cursor.fetchall.return_value = donnees_simulees
+    mock_cursor.fetchall.return_value = fake_rows
 
     mock_connection = MagicMock()
     mock_connection.cursor.return_value.__enter__.return_value = mock_cursor
@@ -43,7 +43,7 @@ def test_find_un_critere(mock_db):
     assert len(resultats) == 1
     assert resultats[0]._name == "Eros"
 
-    # Vérifier la requête et les paramètres réellement envoyés
+    # Check the query and the parameters actually sent
     query, params = mock_cursor.execute.call_args.args
 
     assert "n.name ILIKE %(name)s" in query
@@ -51,7 +51,7 @@ def test_find_un_critere(mock_db):
     assert params == {"name": "%Eros%", "limit": 100, "offset": 0}
 
 
-def test_find_critere_inconnu():
+def test_find_with_an_unknown_criterion():
     dao = NeoDao()
 
     with pytest.raises(ValueError, match="Unknown search criterion"):

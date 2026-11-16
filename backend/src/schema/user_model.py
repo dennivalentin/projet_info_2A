@@ -35,7 +35,6 @@ class Token(BaseModel):
     refresh_token: str | None = None
     token_type: str = "bearer"
     user_id: int | None = None
-    id_player: int | None = None  # Backward-compatibility for Streamlit UI
     username: str | None = None
     role: str | None = None
 

@@ -124,3 +124,29 @@ def test_import_update_without_previous_import_runs_the_full_import(mocks):
     with patch.object(ImportService, "import_all", return_value={"status": "success"}) as full:
         ImportService().import_update(user_id=5)
     full.assert_called_once_with(user_id=5)
+
+
+def test_import_interrupted_by_the_quota_is_saved_as_partial(mocks):
+    """The first window is saved, then the quota runs out: the next import must resume after it."""
+    mocks["get"].side_effect = [_response(200, {"2026-01-01": [NASA_ITEM]})] + [_response(429)] * 10
+
+    with pytest.raises(RuntimeError):
+        ImportService().import_neo_range(date(2026, 1, 1), date(2026, 1, 20))
+
+    saved_task = mocks["import_dao"].update.call_args.args[0]
+    assert saved_task._status == "partial"
+    assert saved_task._end_date == date(2026, 1, 8)  # end of the first window [1 - 8]
+    assert saved_task._nb_neo == 1
+
+
+def test_import_update_resumes_the_day_after_the_last_import(mocks):
+    last_end = date.today() - timedelta(days=100)
+    last = Import(user_id=1, start_date=last_end - timedelta(days=7), end_date=last_end)
+    mocks["import_dao"].find_last_successful_import.return_value = last
+
+    with patch.object(ImportService, "import_neo_range", return_value={}) as import_range:
+        ImportService().import_update(user_id=5)
+
+    start, end = import_range.call_args.args
+    assert start == last_end + timedelta(days=1)
+    assert end == date.today() + timedelta(days=365)
