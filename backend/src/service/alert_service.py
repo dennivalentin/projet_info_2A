@@ -7,6 +7,8 @@ from utils.singleton import Singleton
 
 
 class AlertService(metaclass=Singleton):
+    """Business logic of the alerts: creation, notifications, activation."""
+
     @log
     def create_alert(
         self,
@@ -101,84 +103,60 @@ class AlertService(metaclass=Singleton):
         alerts = AlertDao().find_by_user(user_id)
         return alerts
 
-    def turn_on_off(self, alert_id) -> bool:
-        """method in order to turn off an alert if it is active, and on otherwise
+    @staticmethod
+    def _save_changes(alert: Alert, **changes) -> None:
+        """Saves a copy of `alert` where the given attributes are replaced.
 
-        Parameters
-        ----------
-            alert_id : Alert that we want to turn off
-
-        Return
-        ------
-            bool : True if the changement has been done, False if the alert does not exists
+        Example: _save_changes(alert, active=False)
         """
+        fields = {
+            "alert_id": alert.alert_id,
+            "user_id": alert.user_id,
+            "label": alert.label,
+            "distance_max": alert.distance_max,
+            "diameter_min": alert.diameter_min,
+            "hazardous_only": alert.hazardous_only,
+            "active": alert.active,
+            "creation_date": alert.creation_date,
+            "last_eval_date": alert.last_eval_date,
+        }
+        fields.update(changes)
+        AlertDao().update(Alert(**fields))
 
+    def turn_on_off(self, alert_id: int) -> bool:
+        """Turns an alert off if it is active, and on otherwise.
+
+        Args:
+            alert_id: The alert to switch.
+
+        Returns:
+            bool: True if the alert was switched, False if it does not exist.
+        """
         alert = AlertDao().find_by_id(alert_id)
         if alert is None:
             return False
-        status = alert.active
-
-        if status:
-            AlertDao().update(
-                Alert(
-                    alert_id=alert.alert_id,
-                    user_id=alert.user_id,
-                    label=alert.label,
-                    distance_max=alert.distance_max,
-                    diameter_min=alert.diameter_min,
-                    hazardous_only=alert.hazardous_only,
-                    active=False,
-                    creation_date=alert.creation_date,
-                    last_eval_date=alert.last_eval_date,
-                )
-            )
-        else:
-            AlertDao().update(
-                Alert(
-                    alert_id=alert.alert_id,
-                    user_id=alert.user_id,
-                    label=alert.label,
-                    distance_max=alert.distance_max,
-                    diameter_min=alert.diameter_min,
-                    hazardous_only=alert.hazardous_only,
-                    active=True,
-                    creation_date=alert.creation_date,
-                    last_eval_date=alert.last_eval_date,
-                )
-            )
-
+        self._save_changes(alert, active=not alert.active)
         return True
 
-    def last_eval_update(self, alert_id) -> bool:
-        """update the last eval date
-        Parameters
-        ----------
-            alert_id : Alert that we want to update
+    def last_eval_update(self, alert_id: int) -> bool:
+        """Records that the alert has just been evaluated (last_eval_date = now).
 
-        Return
-        ------
-            bool : True if the changement has been done, False if the alert does not exists
+        Args:
+            alert_id: The alert to update.
+
+        Returns:
+            bool: True if the alert was updated, False if it does not exist.
         """
-
         alert = AlertDao().find_by_id(alert_id)
         if alert is None:
             return False
-
-        AlertDao().update(
-            Alert(
-                alert_id=alert.alert_id,
-                user_id=alert.user_id,
-                label=alert.label,
-                distance_max=alert.distance_max,
-                diameter_min=alert.diameter_min,
-                hazardous_only=alert.hazardous_only,
-                active=alert.active,
-                creation_date=alert.creation_date,
-                last_eval_date=datetime.today(),
-            )
-        )
-
+        self._save_changes(alert, last_eval_date=datetime.today())
         return True
 
-    def delete(self, alert_id) -> bool:
-        AlertDao().delete(alert_id)
+    def delete(self, alert_id: int) -> bool:
+        """Deletes an alert.
+
+        Returns:
+            bool: True if an alert was deleted.
+        """
+        return AlertDao().delete(alert_id)

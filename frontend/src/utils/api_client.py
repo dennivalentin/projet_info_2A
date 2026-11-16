@@ -1,3 +1,5 @@
+"""HTTP client used by all the pages to call the backend API (adds the JWT token)."""
+
 import os
 
 import requests

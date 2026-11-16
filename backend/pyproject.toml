@@ -1,8 +1,8 @@
 [project]
-name = "project_name_back"
+name = "neo-watch-backend"
 version = "0.1.0"
-description = "API Template for the ENSAI 2nd year IT project"
-authors = [{ name = "Lastname Firstname" }, { name = "Author2" }]
+description = "NEO-Watch REST API (FastAPI): Near-Earth Objects from the NASA NeoWs API"
+authors = [{ name = "NEO-Watch team - ENSAI 2A IT project" }]
 requires-python = ">=3.13"
 
 dependencies = [
@@ -22,7 +22,7 @@ dependencies = [
 
 # Dependencies used only for development, not for runtime
 [project.optional-dependencies]
-dev = ["bandit", "coverage", "pylint", "pytest", "ruff"]
+dev = ["bandit", "coverage", "httpx", "pylint", "pytest", "ruff"]
 
 [build-system]
 requires = ["setuptools>=61.0"]

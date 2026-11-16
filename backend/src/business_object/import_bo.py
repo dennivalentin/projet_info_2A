@@ -113,6 +113,7 @@ class Import:
         self._nb_approaches = int(value)
 
     def to_dict(self) -> dict:
+        """Returns the object as a dict (JSON-friendly) for the API responses."""
         return {
             "import_id": self._import_id,
             "user_id": self._user_id,

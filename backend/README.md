@@ -1,100 +1,153 @@
+# NEO-Watch backend: developer guide
 
-# Backend - Engine API
+REST API built with [FastAPI](https://fastapi.tiangolo.com/). It imports the Near-Earth Objects
+from the NASA NeoWs API, stores them in PostgreSQL and serves them to the Streamlit frontend.
 
-This is the core engine of the application. It is a layered REST API built with [FastAPI](https://fastapi.tiangolo.com/), responsible for game logic, player management, and data persistence.
+How to install and configure the whole application (`.env`, SSP Cloud): see the
+[README at the root](../README.md).
 
-## 🚀 Run the application
+## 🚀 Run
 
-Command to run from the repository's root directory:
+From the repository root:
 
-- Install all dependencies: `uv sync --project backend --all-extras`
-  - option all-extras: including dev dependancies
-- Launch the API in development mode: `uv run --project backend python backend/src/main.py`
+```bash
+uv sync --project backend --all-extras
+uv run --project backend python backend/src/main.py
+```
 
-:bulb: First Launch: Click on **Reset Database** to initialize it.
+- API documentation (Swagger): `http://localhost:5000/docs`
+- On start, `main.run_init_db()` creates the tables (`data/init_db.sql`) and the seed data
+  (`data/pop_db.sql`) if the schema is empty. On an existing database, it applies the schema
+  fixes listed in `MIGRATIONS` instead: the data is kept.
 
 ## 🏛️ Architecture
 
-The backend follows a **Layered Architecture** (N-Tier) to ensure separation of concerns and maintainability:
+The code is in `src/` and follows a **layered architecture**: each layer only calls the layer
+below it.
 
-- **Business Object** (`business_object/`) : Represents the pure domain entities
-- **Controller** (`controller/`) : Handles HTTP requests and routing via FastAPI
-- **Service** (`service/`) : Contains the core business logic
-- **DAO** (`dao/`) : Manages database interactions
-- **Schema** (`schema/`) : Data contract via [Pydantic](https://pydantic.dev/docs/validation/latest/get-started/) to ensure API requests and responses follow a strict structure
+| Layer | Folder | Role |
+| --- | --- | --- |
+| Controller | `controller/` | HTTP endpoints (FastAPI routers): validation, authentication, HTTP errors |
+| Schema | `schema/` | Pydantic models of the API requests and responses |
+| Service | `service/` | Business logic (rules, computations, NASA calls) |
+| DAO | `dao/` | SQL queries, one class per table or feature |
+| Business object | `business_object/` | Domain classes: `Neo`, `Approach`, `User`, `Alert`... |
+| Utils | `utils/` | Security (JWT, passwords), logs, singleton, database reset |
 
-### Layers
-
-Sequence diagram of the player retrieval flow through the application layers:
+Example: searching NEOs from the frontend.
 
 ```mermaid
 sequenceDiagram
-    participant Client as Client
-    participant Router as API Router (main)
-    participant WS as PlayerController
-    participant Service as PlayerService
-    participant DAO as PlayerDao
+    participant Front as Streamlit (search_neo.py)
+    participant Ctrl as neo_controller
+    participant Svc as NeoService
+    participant Dao as NeoDao
+    participant DB as PostgreSQL
 
-    Client->>Router: GET /player/1
-    Note right of Router: Route matching /player
-    Router->>WS: player_by_id(id_player=1)
-
-    WS->>Service: find_by_id(1)
-
-    Service->>DAO: find_by_id(1)
-    DAO-->>DAO: Database request <br/>SELECT *<br/>FROM player<br/> WHERE id = 1
-    DAO-->>Service: Player instance (or None)
-    Service-->>WS: Player instance (or None)
-    WS-->>Client: 200 OK JSON {id_player: 1, username: "...", ...} <br/> or 404 Not Found
+    Front->>Ctrl: POST /neo/search {"name": "apophis", "hazardous": true}
+    Ctrl->>Svc: search(criteria)
+    Svc->>Dao: find(criteria)
+    Dao->>DB: SELECT DISTINCT n.* FROM neo n WHERE n.name ILIKE %(name)s AND ...
+    DB-->>Dao: rows
+    Dao-->>Svc: list[Neo]
+    Svc-->>Ctrl: list[Neo]
+    Ctrl-->>Front: 200 OK [ {neo_id, name, diameter_min, ...} ]
 ```
 
-### Config files
+### Main design choices
 
-In both the backend and frontend folders, you will find:
+- **NASA import** (`service/import_service.py`): the `/feed` endpoint returns at most 7 days per
+  call, so the period is split into windows. The import runs in a background thread
+  (`controller/import_controller.py`), one at a time, and each import is recorded in the
+  `import` table with its status, so the next one only fetches what is missing.
+- **Database connection** (`dao/db_connection.py`): one connection per thread, because FastAPI
+  runs the endpoints in a thread pool and threads must not share a transaction.
+- **Security** (`utils/security.py`): passwords are hashed with SHA-256 salted with the
+  username; the API uses JWT access and refresh tokens. A user only reads and changes their
+  own favourites and alerts (administrators excepted).
+- **Units**: distances in km, diameters in km, speeds in km/h.
 
-| Item                  | Description                                         | 
-| --------------------- | --------------------------------------------------- | 
-| logging_config.yml    | Configuration for the structured logging system.    | 
-| pyproject.toml        | Project metadata and dependency definitions.        | 
-| uv.lock               | Lockfile that ensures reproducible environments by pinning exact dependency versions. |
-| \_\_init\_\_.py       | Marks a directory as a Python package, enabling module imports. |
+## 📡 Endpoints
 
+All endpoints except `/login/` and `/login/register` need a token:
+`Authorization: Bearer <access_token>`.
 
-## ⚒️ Development toolkit
+| Method | Path | Description |
+| --- | --- | --- |
+| POST | `/login/` | Log in, returns an access and a refresh token |
+| POST | `/login/register` | Create an account |
+| POST | `/login/refresh` | New access token from a refresh token |
+| GET | `/login/me` | Profile of the logged-in user |
+| GET | `/neo` | List the NEOs (pagination: `limit`, `offset`) |
+| POST | `/neo/search` | Search with criteria (name, diameter, hazardous, origin, dates, sort) |
+| GET | `/neo/{neo_id}` | NEO details and close approaches |
+| POST | `/neo` | Declare a NEO observed by a user (origin `USER`) |
+| GET | `/dashboard/` | Dashboard of the logged-in user (`start`, `end`; default: next 7 days) |
+| GET | `/statistics/` | Statistics on all the NEOs |
+| GET | `/apod/` | NASA picture of the day (`day`, default: today) |
+| POST / GET / DELETE | `/favourites/...` | Add, list, remove favourites; their approaches and graph |
+| POST / GET / PUT / DELETE | `/alerts/...` | Create, list, switch on/off, delete alerts; notifications |
+| POST | `/import/update` | Start the NASA update in the background |
+| GET | `/import/status`, `/import/last` | Is an import running? End date of the last import |
+| POST | `/reset_database` | Re-create all the tables and the seed data (admin only) |
 
-### Debugging & Logs
+Example:
 
-The application uses a structured logging system. Logs are written to the `backend/logs/` directory and follow the format defined in `logging_config.yml`.
+```bash
+export API_URL=http://localhost:5000
+TOKEN=$(curl -s -X POST $API_URL/login/ -H "Content-Type: application/json" \
+  -d '{"username": "admin", "password": "admin"}' | jq -r .access_token)
+curl -s -X POST $API_URL/neo/search -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" -d '{"hazardous": true, "limit": 5}' | jq .
+```
 
-A custom `@log` decorator is available to automatically log method inputs and outputs, making it much easier to trace the flow of data through the services.
+## 🧪 Unit tests
 
-### Unit tests
+Run from the `backend` folder:
 
-To ensure tests are repeatable, safe, and **do not interfere with the real database**, we use a dedicated schema for unit testing.
+```bash
+cd backend
+uv run --all-extras pytest
+```
 
-The DAO unit tests use data from the `data/pop_db_test.sql` file.
+- **Service and controller tests** mock the DAOs and the NASA API: they need neither a
+  database nor the network.
+- **DAO tests** (`tests/test_dao/`) run on a real PostgreSQL, in a dedicated schema,
+  **`project_test_dao`**, re-created from `data/pop_db_test.sql` at the start of the test
+  session (fixture `test_database` in `tests/conftest.py`). The tests force this schema: they
+  never touch the application data. Without a reachable database (no `POSTGRES_*` variables in
+  `.env`), these tests are skipped instead of failing.
 
-This data is loaded into a separate schema (project_test_dao) so as not to pollute the other data.
+Coverage:
 
-- [ ] Lanch unit tests: `uv run --project backend pytest -v` 
+```bash
+uv run --all-extras coverage run -m pytest
+uv run --all-extras coverage report
+uv run --all-extras coverage html   # then open coverage_report/index.html
+```
 
-It is also possible to generate test coverage using [Coverage](https://coverage.readthedocs.io/en/)
+## ⚒️ Code quality
 
-- [ ] `uv run --project backend coverage run -m pytest backend`
-- [ ] `uv run --project backend coverage report -m`
-- [ ] `uv run --project backend coverage html`
-  - Download and open coverage_report/index.html
+```bash
+uv run --all-extras ruff check src tests     # lint
+uv run --all-extras ruff format src tests    # formatting
+uv run --all-extras bandit -r src            # security
+```
 
-### Ruff
+The same commands run in the continuous integration (`.github/workflows/ci.yml`).
+Format on save with Ruff is enabled in the VSCode workspace (`.vscode/settings.json`).
 
-The **format on save** with [Ruff](https://docs.astral.sh/ruff/) is enabled by default in the workspace (cf. *.vscode/settings.json*).
+## 📝 Logs
 
-To do it manually:
+Logs are written to `backend/logs/backend.log` (format: `logging_config.yml`).
+The `@log` decorator (`utils/log_utils.py`) logs the inputs and outputs of a method, with
+passwords masked, and `LogMiddleware` logs every HTTP request with its status.
 
-- ensures consistent and readable code style: `uv run --project backend ruff format backend/`
-- identifies and fixes potential issues: `uv run --project frontend ruff check --fix backend/`
+## 📁 Config files
 
-
-### Pylint
-
-Static analysis with **pylint**: `uv run --project backend --extra dev pylint --output-format=colorized --disable=C0114,C0411,C0415,W0718 $(git ls-files 'backend/**/*.py') --fail-under=7.5`
+| File | Description |
+| --- | --- |
+| `pyproject.toml` | Dependencies, and the configuration of pytest, coverage and Ruff |
+| `uv.lock` | Exact versions of the dependencies (reproducible installs) |
+| `logging_config.yml` | Configuration of the logs |
+| `Dockerfile` | Image of the API |

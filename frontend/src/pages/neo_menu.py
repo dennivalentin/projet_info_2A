@@ -1,7 +1,7 @@
 """Streamlit main menu for NEO-Watch.
 
-Provides navigation to core features: Dashboard, NEO Search & Exploration,
-Object Creation, and Statistics.
+Gives access to every feature of the application, starts the daily NASA
+data update and, for administrators, the data management tools.
 """
 
 from datetime import date
@@ -12,56 +12,67 @@ from utils.api_client import api_client
 from utils.auth_guard import check_authentification
 from utils.log_init import get_page_logger
 
-st.set_page_config(page_title="NEO-Watch | Menu Principal", page_icon="🔭", layout="wide")
+st.set_page_config(page_title="NEO-Watch | Menu", page_icon="🔭", layout="wide")
 
 logger = get_page_logger("neo_menu")
 check_authentification()
 
 user = st.session_state.get("user") or {}
-username = user.get("username", "Observateur")
+username = user.get("username", "Observer")
 
-st.title("🔭 NEO-Watch — Espace Principal")
-st.markdown(f"Bienvenue, **{username}** ! Choisissez une fonctionnalité ci-dessous :")
+# (title, description, page) of each feature, displayed as cards on two columns
+FEATURES = [
+    (
+        "☄️ Dashboard",
+        "Upcoming close approaches, key figures of the period and your favourite NEOs.",
+        "pages/dashboard.py",
+    ),
+    (
+        "🔍 Search & Explore",
+        "Search NEOs with several criteria, see their approaches in km and AU, export as CSV.",
+        "pages/search_neo.py",
+    ),
+    (
+        "📊 Statistics",
+        "Size distribution, share of potentially hazardous objects and approaches per month.",
+        "pages/statistics.py",
+    ),
+    (
+        "⭐ Favourites",
+        "Follow your favourite NEOs: their approaches and a graph of their distance to Earth.",
+        "pages/favourites.py",
+    ),
+    (
+        "🔔 Alerts",
+        "Be notified when a NEO matches your criteria (size, distance, hazardous).",
+        "pages/alert.py",
+    ),
+    (
+        "➕ Declare a NEO",
+        "Record your own observation of an asteroid (origin 'USER', never overwritten by NASA).",
+        "pages/create_neo.py",
+    ),
+    (
+        "🌌 Picture of the Day",
+        "NASA's astronomy picture of the day, with its description, to download.",
+        "pages/apod.py",
+    ),
+]
 
-col1, col2 = st.columns(2)
+st.title("🔭 NEO-Watch")
+st.markdown(f"Welcome, **{username}**! Choose a feature:")
 
-with col1:
-    with st.container(border=True):
-        st.subheader("☄️ Tableau de bord (F2)")
-        st.write(
-            "Consultez vos statistiques personnalisées, les prochains passages rapprochés et vos objets favoris."
-        )
-        if st.button("Accéder au Tableau de bord", type="primary", use_container_width=True):
-            st.switch_page("pages/dashboard.py")
-
-    with st.container(border=True):
-        st.subheader("➕ Déclarer un NEO (F4)")
-        st.write(
-            "Enregistrez une observation personnelle d'un astéroïde avec l'étiquette protégée 'USER'."
-        )
-        if st.button("Créer un nouvel objet", use_container_width=True):
-            st.switch_page("pages/create_neo.py")
-
-with col2:
-    with st.container(border=True):
-        st.subheader("🔍 Recherche & Exploration (F3)")
-        st.write(
-            "Recherchez des astéroïdes selon des critères multiples, inspectez leurs passages en km/UA et exportez en CSV."
-        )
-        if st.button("Explorer le catalogue NEO", type="primary", use_container_width=True):
-            st.switch_page("pages/search_neo.py")
-
-    with st.container(border=True):
-        st.subheader("📊 Statistiques Générales (FO3)")
-        st.write(
-            "Analysez la distribution des diamètres, la proportion d'objets potentiellement dangereux et les tendances globales."
-        )
-        if st.button("Voir les statistiques", use_container_width=True):
-            st.switch_page("pages/statistics.py")
+columns = st.columns(2)
+for index, (title, description, page) in enumerate(FEATURES):
+    with columns[index % 2], st.container(border=True):
+        st.subheader(title)
+        st.write(description)
+        if st.button(f"Open {title.split(' ', 1)[1]}", key=page, use_container_width=True):
+            st.switch_page(page)
 
 st.divider()
 
-if st.button("🚪 Déconnexion", type="secondary"):
+if st.button("🚪 Log out", type="secondary"):
     logger.info("Log out")
     st.session_state.clear()
     st.switch_page("pages/home.py")
@@ -79,13 +90,13 @@ if st.session_state.get("daily_update_done") != today_str:
             # The backend runs the NASA import in the background and answers at once
             sync_res = api_client.post("/import/update")
             if sync_res.get("status_code") == 200:
-                st.toast("Mise à jour des données NASA lancée en arrière-plan")
+                st.toast("NASA data update started in the background")
 
 status_res = api_client.get("/import/status")
 if status_res.get("status_code") == 200 and status_res.get("data", {}).get("running"):
     st.info(
-        "⏳ Import des données NASA en cours : les NEO apparaissent au fur et à mesure "
-        "dans la recherche, le tableau de bord et les statistiques."
+        "⏳ NASA data import in progress: the NEOs appear little by little "
+        "in the search, the dashboard and the statistics."
     )
 
 
@@ -109,7 +120,7 @@ if user.get("role") == "admin":
             else:
                 logger.error("Error during database reset")
                 err_msg = response.get("data", {}).get("detail", "Fail during the reset")
-                st.error(f"Erreur : {err_msg}")
+                st.error(f"Error: {err_msg}")
 
     with col_sync:
         if st.button("🔄 Manual update", type="primary", use_container_width=True):
@@ -125,4 +136,4 @@ if user.get("role") == "admin":
             else:
                 logger.error("Error during manual sync")
                 err_msg = response.get("data", {}).get("detail", "Fail during import")
-                st.error(f"Erreur : {err_msg}")
+                st.error(f"Error: {err_msg}")

@@ -69,6 +69,7 @@ class Search:
         self._neo_id = value
 
     def to_dict(self) -> dict:
+        """Returns the object as a dict (JSON-friendly) for the API responses."""
         return {
             "search_id": self._search_id,
             "user_id": self._user_id,

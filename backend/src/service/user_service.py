@@ -3,8 +3,10 @@ import hmac
 from business_object.user import User
 from dao.connection_dao import ConnectionDao
 from dao.user_dao import UserDao
-from utils.log_utils import log
+from utils.log_utils import get_logger, log
 from utils.security import create_access_token, create_refresh_token, hash_password
+
+logger = get_logger(__name__)
 
 
 class UserService:
@@ -72,10 +74,11 @@ class UserService:
         acc_tok = access_token or create_access_token(payload)
         ref_tok = create_refresh_token(payload)
 
+        # The connection history is only informative: a failure must not block the login
         try:
             ConnectionDao().create(user.user_id, acc_tok)
-        except Exception:
-            pass
+        except Exception as e:
+            logger.warning(f"Connection of user {user.user_id} not recorded: {e}")
 
         return user, acc_tok, ref_tok
 

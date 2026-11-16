@@ -8,7 +8,7 @@ import os
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-from fastapi import Depends, FastAPI, Request, status
+from fastapi import FastAPI, Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse, RedirectResponse
 
@@ -18,7 +18,7 @@ from utils.env_variables import display_values, load_environment_variables
 load_environment_variables()
 display_values()
 
-from controller import (
+from controller import (  # noqa: E402 (needs the .env loaded above)
     alert_controller,
     apod_controller,
     dashboard_controller,
@@ -28,9 +28,7 @@ from controller import (
     neo_controller,
     statistics_controller,
 )
-from utils.log_utils import LogMiddleware, get_logger, initialize_logs
-from utils.reset_database import ResetDatabase
-from utils.security import require_admin
+from utils.log_utils import LogMiddleware, get_logger, initialize_logs  # noqa: E402
 
 logger = get_logger(__name__)
 
@@ -48,6 +46,7 @@ MIGRATIONS = [
 
 
 def run_init_db():
+    """Creates the tables and the seed data on the first launch, or applies MIGRATIONS."""
     sql_path = INIT_DB_PATH
     if not sql_path.exists():
         logger.error(f"init_db.sql not found at {sql_path}")
@@ -87,6 +86,7 @@ def run_init_db():
 
 @asynccontextmanager  # run code at the very beggining of the app
 async def lifespan(app: FastAPI):
+    """Runs at the start of the web service, before the first request."""
     run_init_db()
     yield
 
@@ -129,22 +129,6 @@ app.include_router(import_controller.router)
 async def redirect_to_docs():
     """Redirect to the API documentation"""
     return RedirectResponse(url="/docs")
-
-
-@app.get("/hello/{name}", tags=["Misc"])
-async def hello_name(name: str):
-    """Display Hello"""
-    logger.info("Display Hello")
-    return {"message": f"Hello {name}"}
-
-
-@app.post("/reset_database", tags=["Misc"])
-async def reset_database(admin=Depends(require_admin)):
-    """Reset the database"""
-    logger.info("Database reset")
-    success = ResetDatabase().run()
-
-    return {"message": f"Database re-initialization - {'SUCCESS' if success else 'FAILURE'}"}
 
 
 # Run the FastAPI application

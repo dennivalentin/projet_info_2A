@@ -1,3 +1,5 @@
+"""Entry point of the Streamlit frontend: redirects to the menu or the login page."""
+
 import streamlit as st
 
 from utils.env_variables import display_values, load_environment_variables

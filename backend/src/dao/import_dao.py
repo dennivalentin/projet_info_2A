@@ -3,16 +3,18 @@ from dao.db_connection import DBConnection
 
 
 class ImportDao:
+    """Class containing methods to access the NASA import history in the database."""
+
     def create(self, import_task: Import) -> Import:
-        """Insère une nouvelle tâche d'importation en base."""
+        """Inserts a new import task and sets its import_id."""
         query = """
             INSERT INTO import (
-                user_id, start_date, end_date, 
-                trigger_type, status, nb_calls, 
+                user_id, start_date, end_date,
+                trigger_type, status, nb_calls,
                 nb_neo, nb_approaches
             ) VALUES (
-                %(user_id)s, %(start_date)s, %(end_date)s, 
-                %(trigger_type)s, %(status)s, %(nb_calls)s, 
+                %(user_id)s, %(start_date)s, %(end_date)s,
+                %(trigger_type)s, %(status)s, %(nb_calls)s,
                 %(nb_neo)s, %(nb_approaches)s
             )
             RETURNING import_id;
@@ -38,7 +40,11 @@ class ImportDao:
         return import_task
 
     def update(self, import_task: Import) -> bool:
-        """Met à jour le statut et les compteurs de la tâche à la fin de l'import."""
+        """Updates the status and the counters of an import task.
+
+        Returns:
+            bool: False if the task was never created (no import_id).
+        """
         if not getattr(import_task, "_import_id", None):
             return False
 
@@ -67,7 +73,7 @@ class ImportDao:
     def find_last_successful_import(self) -> Import | None:
         """Get the last successful import"""
         query = """
-            SELECT import_id, user_id, start_date, end_date, 
+            SELECT import_id, user_id, start_date, end_date,
                    trigger_type, status, nb_calls, nb_neo, nb_approaches
             FROM import
             WHERE status = 'success'

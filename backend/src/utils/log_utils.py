@@ -20,11 +20,17 @@ def initialize_logs(name: str):
 
     with open(config_file, encoding="utf-8") as stream:
         config = yaml.safe_load(stream)
-        logging.config.dictConfig(config)
 
-        logging.info("-" * 50)
-        logging.info(f"Starting {name}                           ")
-        logging.info("-" * 50)
+    # The file name in the YAML is relative: make it absolute so the logs work
+    # whatever the folder the application (or pytest) is launched from
+    for handler in config.get("handlers", {}).values():
+        if "filename" in handler:
+            handler["filename"] = str(logs_dir / Path(handler["filename"]).name)
+    logging.config.dictConfig(config)
+
+    logging.info("-" * 50)
+    logging.info(f"Starting {name}")
+    logging.info("-" * 50)
 
 
 def get_logger(module_name: str, max_size: int = 25):
@@ -141,6 +147,8 @@ def log(func):
 
 
 class LogMiddleware(BaseHTTPMiddleware):
+    """Middleware logging the start, end and status of every HTTP request."""
+
     async def dispatch(self, request: Request, call_next):
         """
         Middleware to log HTTP requests and responses.

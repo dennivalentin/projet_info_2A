@@ -66,6 +66,6 @@ def get_favourite_graph(user_id: int, neo_id: int, current_user=Depends(get_curr
         image_base64 = service.graph_favourite(user_id=user_id, neo_id=neo_id)
         return {"image": image_base64}
     except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e))
+        raise HTTPException(status_code=404, detail=str(e)) from e
     except KeyError:
-        raise HTTPException(status_code=404, detail="This Neo is not in your favourite")
+        raise HTTPException(status_code=404, detail="This Neo is not in your favourite") from None

@@ -62,15 +62,18 @@ jobs:
           POSTGRES_USER: postgres_user
           POSTGRES_PASSWORD: postgres_pwd
           POSTGRES_SCHEMA: project
+        working-directory: backend
         run: |
-          uv run --project backend coverage run -m pytest
-          uv run --project backend coverage report
+          uv run --all-extras coverage run -m pytest
+          uv run --all-extras coverage report
 
       - name: Lint backend with Ruff
-        run: uv run --project backend ruff check backend/src backend/tests
+        working-directory: backend
+        run: uv run --all-extras ruff check src tests
 
       - name: Security scan backend
-        run: uv run --project backend bandit -r backend/src
+        working-directory: backend
+        run: uv run --all-extras bandit -r src
 
   frontend:
     runs-on: ubuntu-latest
@@ -102,7 +105,9 @@ jobs:
         run: uv sync --project frontend --all-extras
 
       - name: Lint frontend with Ruff
-        run: uv run --project frontend ruff check frontend/src
+        working-directory: frontend
+        run: uv run --all-extras ruff check src
 
       - name: Security scan frontend
-        run: uv run --project frontend bandit -r frontend/src
+        working-directory: frontend
+        run: uv run --all-extras bandit -r src

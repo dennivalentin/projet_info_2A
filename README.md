@@ -1,53 +1,59 @@
-# ENSAI-2A-projet-info-template
+# 🔭 NEO-Watch
 
-![CI](https://github.com/ludo2ne/ENSAI-2A-projet-info-template/actions/workflows/ci.yml/badge.svg)
+![CI](https://github.com/dennivalentin/projet_info_2A/actions/workflows/ci.yml/badge.svg)
 
-Template for the ENSAI 2nd year IT project.
+**NEO-Watch** is a web application to explore and monitor **Near-Earth Objects** (NEOs):
+asteroids and comets whose orbit comes close to the Earth. The data comes from the
+[NASA NeoWs API](https://api.nasa.gov/) and is stored in a PostgreSQL database.
 
-This very simple application includes a few elements that may help with the info 2A project:
+ENSAI 2nd year IT project.
 
-- Creating a webservice with FastAPI
-- Layer programming (DAO, service, view, business_object)
-- Connection to a database
-- Calling a Webservice
-- Interface with Streamlit
+## ✨ Features
 
-## :arrow_forward: Quick launch with SSP Cloud
+| Feature | Description |
+| --- | --- |
+| 🔐 Accounts | Create an account and log in (JWT authentication). Administrators can reset and update the data. |
+| ☄️ Dashboard | Upcoming close approaches over a chosen period, number of NEOs and share of hazardous ones, closest approach, your favourites. |
+| 🔍 Search & Explore | Search NEOs by name, size, hazard flag, origin; sort; details and close approaches (km and astronomical units); CSV export. |
+| 📊 Statistics | Approaches per month, size distribution, share of potentially hazardous NEOs, mean and median distance, each with an explanation. |
+| ⭐ Favourites | Follow NEOs, see their approaches and a graph of their distance to Earth over time. |
+| 🔔 Alerts | Define criteria (minimum size, maximum distance, hazardous only) and be notified of the matching approaches. |
+| ➕ Declare a NEO | Record your own observation (origin `USER`: it is never overwritten by the NASA imports). |
+| 🌌 Picture of the Day | NASA's astronomy picture of the day, with its description, to download. |
 
-Needed: [SSP Cloud](https://datalab.sspcloud.fr/) account.
+The NASA data is imported automatically, in the background: 2 years back and 1 year ahead on
+the first launch, then only what is missing, once a day.
 
-### Start a service and import the project
+## 🚀 Install and launch (SSP Cloud)
 
-- [ ] Launch a **VSCode-python** service (including Visual Studio Code, Python 3.13, Git)
-  - Open ports 5000 and 8000 (Otherwise, you won't be able to access your application from the web)
-- [ ] Open a terminal
-- [ ] Clone the repository
-  - `git clone https://github.com/ludo2ne/ENSAI-2A-projet-info-template.git`
-- [ ] Open Folder of the repository
-  - `code-server ENSAI-2A-projet-info-template` or File > Open Folder
-  - *ENSAI-2A-projet-info-template* should be the root directory of your Explorer
-  - :warning: if not the application will not launch. Retry open folder
+You need an [SSP Cloud](https://datalab.sspcloud.fr/) account.
 
-### Install required packages
+### 1. Start the services
 
-Install and manage all dependencies with [uv](https://docs.astral.sh/uv/):
+- [ ] Launch a **PostgreSQL** service
+- [ ] Launch a **VSCode-python** service, with the ports **5000** (API) and **8000** (interface) open
+
+### 2. Get the code and the dependencies
+
+In a terminal of the VSCode service:
 
 ```bash
-# curl -LsSf https://astral.sh/uv/install.sh | sh
+git clone https://github.com/dennivalentin/projet_info_2A.git
+cd projet_info_2A
 uv sync --project backend
 uv sync --project frontend
 ```
 
-### Environment variables
+:warning: Open the folder `projet_info_2A` in VSCode (File > Open Folder): it must be the root
+of the explorer.
 
-Define environment variables to declare the database and webservice to which you are going to connect your python application.
+### 3. Create the `.env` file
 
-- [ ] Launch a [PostreSQL](https://www.postgresql.org/) database
-- [ ] Create a file called `.env` in the project's root directory
-- [ ] Paste in and complete the elements below
+Create a file named `.env` at the root of the repository (next to this README) and complete it.
+The PostgreSQL values are given in the README of your PostgreSQL service on SSP Cloud.
 
 ```default
-POSTGRES_HOST=postgresql-cnpg-<suffixe>
+POSTGRES_HOST=postgresql-<suffix>
 POSTGRES_PORT=5432
 POSTGRES_DATABASE=defaultdb
 POSTGRES_USER=user-<username>
@@ -58,133 +64,82 @@ UVICORN_HOST=0.0.0.0
 UVICORN_PORT=5000
 
 BACKEND_URL=http://localhost:5000
-BACKEND_TIMEOUT=5
+BACKEND_TIMEOUT=10
 
-NASA_API_KEY = ...
+NASA_API_KEY=<your NASA key>
 
-JWT_SECRET_KEY="neo_watch_super_secret_jwt_key_2026_ensai"   <- use the key_generator function in key_generator_for_.env.py 
+JWT_SECRET_KEY=<a long random key>
 ACCESS_TOKEN_EXPIRE_MINUTES=30
 REFRESH_TOKEN_EXPIRE_DAYS=7
-
-
-
 ```
 
-### Launch applications
+- `NASA_API_KEY`: get a free key in one minute at [api.nasa.gov](https://api.nasa.gov/).
+  Without it, the application uses `DEMO_KEY`, limited to 30 calls per hour: the first import
+  then takes hours.
+- `JWT_SECRET_KEY` is **required**. Generate one with `python key_generator_for_.env.py`.
 
-Open two terminals:
+### 4. Launch the application
 
-- Backend FastApi: `uv run --project backend python backend/src/main.py`
-- Frontend Streamlit: `cd frontend` and `uv run --project . streamlit run src/app.py`
+Open two terminals, both at the root of the repository:
 
-:bulb: First Launch: Click on **Reset Database** to initialize it.
+```bash
+uv run --project backend python backend/src/main.py
+```
 
-:warning: **After launching, do not click on the link in the pop-up!**
+```bash
+cd frontend
+uv run streamlit run src/app.py
+```
 
+:warning: After launching, do not click on the link of the pop-up: on SSP Cloud the
+application is reached through the URLs of the next step.
 
-### Accessing the application from the web
+### 5. Open the application
 
-Since the application runs inside a cloud container, the services are not directly accessible via *localhost* from your local browser. You must use the public URLs provided by Onyxia.
+In [My services](https://datalab.sspcloud.fr/my-services), click **Open** on the VSCode
+service: it gives the public URLs of the interface (port 8000) and of the API (port 5000).
 
-To get the public URL for your services (Frontend or Backend):
+### 6. First launch
 
-- [ ] Go to your [Onyxia services](https://datalab.sspcloud.fr/my-services)
-- [ ] Click on the **"Open"** button, you will see links to access the api and/or the gui
+On its first start, the API creates the tables and two accounts by itself (`data/init_db.sql`
+and `data/pop_db.sql`):
 
+| Username | Password | Role |
+| --- | --- | --- |
+| `admin` | `admin` | administrator |
+| `observateur` | `observateur` | user |
 
-### Endpoints
+Log in, then the NASA import starts in the background: the NEOs appear little by little.
+You can also create your own account from the login page.
 
-Documentation : `/docs` or `/redoc`
+:lock: Change the `admin` password before any real use.
 
-Examples of endpoints, assuming that the environment variable `$API_URL` (e.g. `export API_URL=http://localhost:5000`) contains the URL of the web service:
+## 🗂️ Project structure
 
-- `curl -L -X GET $API_URL/player | jq .`
-- `curl -L -X GET $API_URL/player/3 | jq .`
-- ```
-  curl -L -X POST "$API_URL/player" \
-    -H "Content-Type: application/json" \
-    -d '{
-      "username": "patapouf",
-      "password": "123456789abcdefghijklmnopqrstuvwxyz",
-      "elo": 1500,
-      "email": "patapouf@mail.fr",
-      "pokemon_fan": true
-    }' | jq .
-  ```
-- ```
-  curl -L -X PUT "$API_URL/player/3" \
-    -H "Content-Type: application/json" \
-    -d '{
-      "username": "maurice_new",
-      "password": "123456789abcdefghijklmnopqrstuvwxyz",
-      "elo": 1400,
-      "email": "maurice@ensai.fr",
-      "pokemon_fan": true
-    }' | jq .
-  ```
-- `curl -L -X DELETE "$API_URL/player/5" | jq .`
+| Item | Description |
+| --- | --- |
+| `backend/` | REST API (FastAPI), layered architecture: see [backend/README.md](backend/README.md) |
+| `frontend/` | User interface (Streamlit): see [frontend/README.md](frontend/README.md) |
+| `data/` | SQL scripts: `init_db.sql` creates the tables, `pop_db.sql` the seed data, `pop_db_test.sql` the test data |
+| `doc/` | Report, tracking documents, UML diagrams |
+| `.github/workflows/ci.yml` | Continuous integration: tests, Ruff and Bandit on every push |
+| `key_generator_for_.env.py` | Generates a value for `JWT_SECRET_KEY` |
 
+## ⚙️ Continuous integration
 
-## :arrow_forward: Project structure
+On every push, GitHub Actions (`.github/workflows/ci.yml`):
 
-### Folders
+- starts a PostgreSQL database and runs all the backend unit tests, with coverage
+- checks the code style of the backend and the frontend with [Ruff](https://docs.astral.sh/ruff/)
+- looks for security issues with [Bandit](https://bandit.readthedocs.io/)
 
-| Item                       | Description                                                              |
-| -------------------------- | ------------------------------------------------------------------------ |
-| `data`                     | SQL script to create the tables and insert some data                     |
-| `doc`                      | Report, tracking, UML diagrams, etc.                                     |
-| `backend`                  | API code organized using a layered architecture                          |
-| `frontend`                 | GUI code (graphical user interface)                                      |
+The result is in the *Actions* tab of the GitHub repository.
 
+## ❓ Troubleshooting
 
-### Files
-
-| Item                       | Description                                                                          |
-| -------------------------- | -------------------------------------------------------------------------------------|
-| `README.md`                | Provides useful information to present, install, and use the application             |
-| `LICENSE`                  | Specifies the usage rights and licensing terms for the repository                    |
-| `.github/workflows/ci.yml` | Automated workflow that runs predefined tasks (like testing, linting, or deploying)  |
-| `.vscode/settings.json`    | VSCode settings specific to this project                                             |
-| `.gitignore`               | Lists files and folders that should not be tracked by Git                            |
-
-
-## :arrow_forward: Continuous integration (CI)
-
-The repository contains a `.github/workflow/main.yml` file.
-
-When you *push* on GitHub, it triggers a pipeline that will perform the following steps:
-
-- Creating a container from an Ubuntu (Linux) image
-  - In other words, it creates a virtual machine with just a Linux kernel.
-- Install Python
-- Install the required packages
-- Run the unit tests (only the service tests, as it's more complicated to run the dao tests)
-- Analyse the code with *pylint*
-  - If the score is less than 7.5, the step will fail
-
-You can check how this pipeline is progressing on your repository's GitHub page, *Actions* tab.
-
-
-## :arrow_forward: Quick launch with Docker
-
-Prerequisites: [Docker Desktop](https://docs.docker.com/desktop/).
-
-**Dockerfile**: A text document containing all the commands a user could call to assemble a specific image (the blueprint of your application and its environment).
-
-**Docker Compose**: A tool for defining and running multi-container applications, using a YAML file to configure how different services (like your backend, frontend, and database) interact and start together.
-
-- [ ] Build containers:  `docker compose up --build -d`
-- [ ] See running processes: `docker compose ps`
-
-To see logs:
-
-- `docker compose logs -f` for all containers
-- `docker compose logs -f backend` only for backend
-
-**Backend API:** http://localhost:5000
-**Frontend UI:** http://localhost:8000
-
-- [ ]  `docker compose down` to remove conainers
-  - `docker compose stop` to simply stop
-
-[How it works](https://github.com/olevitt/kubernetes)
+| Problem | Solution |
+| --- | --- |
+| `JWT_SECRET_KEY missing in .env` | Add `JWT_SECRET_KEY` to `.env` (step 3). |
+| The interface shows "Connection error" | The API is not running, or `BACKEND_URL` is wrong. |
+| No NEO after a few minutes | The NASA import is limited by `DEMO_KEY`: set your own `NASA_API_KEY`. |
+| Data to start again from scratch | Log in as `admin`, then **Reset database** in the menu. |

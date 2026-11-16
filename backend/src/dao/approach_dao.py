@@ -6,6 +6,8 @@ logger = get_logger(__name__)
 
 
 class ApproachDao:
+    """Class containing methods to access the close approaches in the database."""
+
     @log
     def create(self, approach: Approach) -> bool:
         """

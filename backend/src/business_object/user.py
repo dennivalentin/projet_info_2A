@@ -18,7 +18,7 @@ class User:
         user_id: int | None = None,
         username: str = "",
         email: str = "",
-        password_hash: str = "",
+        password_hash: str = "",  # nosec B107
         creation_date: datetime | None = None,
         role: str = "user",
     ):
@@ -86,6 +86,7 @@ class User:
         self._role = value
 
     def to_dict(self, include_sensitive: bool = False) -> dict:
+        """Returns the user as a dict for the API; the password hash only if include_sensitive."""
         data = {
             "user_id": self._user_id,
             "username": self._username,

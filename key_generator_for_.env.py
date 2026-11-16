@@ -1,14 +1,17 @@
+"""Generates a random secret key for JWT_SECRET_KEY in the .env file.
+
+Usage (from the repository root): python key_generator_for_.env.py
+"""
+
 import secrets
 import string
 
 
-def generer_cle_securisee(longueur):
-    # Définit les caractères utilisables (lettres, chiffres, symboles)
+def generate_secret_key(length: int = 64) -> str:
+    """Returns a random key of `length` letters, generated with the secrets module."""
     alphabet = string.ascii_letters
-    # Génère la clé
-    cle = "".join(secrets.choice(alphabet) for _ in range(longueur))
-    return cle
+    return "".join(secrets.choice(alphabet) for _ in range(length))
 
 
-#  générer une clé de 64 caractères
-print(generer_cle_securisee(64))
+if __name__ == "__main__":
+    print(generate_secret_key(64))

@@ -42,6 +42,7 @@ class Connection:
         self._date = value
 
     def to_dict(self) -> dict:
+        """Returns the object as a dict (JSON-friendly) for the API responses."""
         return {
             "connection_id": self._connection_id,
             "user_id": self._user_id,
