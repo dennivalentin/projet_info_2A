@@ -122,6 +122,7 @@ class Neo:
         self._date_update = value
 
     def to_dict(self) -> dict:
+        """Returns the object as a dict (JSON-friendly) for the API responses."""
         return {
             "neo_id": self._neo_id,
             "nasa_id": self._nasa_id,

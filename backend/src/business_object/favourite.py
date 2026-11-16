@@ -41,6 +41,7 @@ class Favourite:
         self._date_added = value
 
     def to_dict(self) -> dict:
+        """Returns the object as a dict (JSON-friendly) for the API responses."""
         return {
             "neo_id": self._neo_id,
             "user_id": self._user_id,

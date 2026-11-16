@@ -33,7 +33,7 @@ def create_alert(param: AlertCreateModel, current_user=Depends(get_current_user)
             hazardous_only=param.hazardous_only,
         )
     except ValueError as e:
-        raise HTTPException(status_code=422, detail=str(e))
+        raise HTTPException(status_code=422, detail=str(e)) from e
 
     if not res:
         raise HTTPException(

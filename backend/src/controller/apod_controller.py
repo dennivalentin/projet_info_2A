@@ -18,4 +18,4 @@ def get_apod(day: date | None = None, user=Depends(verify_token)):
         return ApodService().get_picture_of_the_day(day).to_dict()
     except requests.RequestException as e:
         # NASA down or rate limit reached (429) -> clear error instead of a crash
-        raise HTTPException(status_code=503, detail=f"NASA APOD unavailable: {e}")
+        raise HTTPException(status_code=503, detail=f"NASA APOD unavailable: {e}") from e

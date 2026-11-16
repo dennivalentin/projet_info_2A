@@ -73,6 +73,7 @@ class Proposal:
         self._status = value
 
     def to_dict(self) -> dict:
+        """Returns the object as a dict (JSON-friendly) for the API responses."""
         return {
             "proposal_id": self._proposal_id,
             "neo_id": self._neo_id,

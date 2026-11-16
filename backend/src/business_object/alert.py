@@ -161,6 +161,7 @@ class Alert:
         self._object = value
 
     def to_dict(self) -> dict:
+        """Returns the object as a dict (JSON-friendly) for the API responses."""
         return {
             "alert_id": self._alert_id,
             "user_id": self._user_id,

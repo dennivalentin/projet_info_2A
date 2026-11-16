@@ -1,3 +1,5 @@
+"""Loading and display (with secrets masked) of the environment variables."""
+
 import logging
 
 import dotenv

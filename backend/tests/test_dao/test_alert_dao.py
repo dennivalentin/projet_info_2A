@@ -4,27 +4,40 @@ from business_object.alert import Alert
 from dao.alert_dao import AlertDao
 from dao.db_connection import DBConnection
 
+# "user_test" in data/pop_db_test.sql
+TEST_USER_ID = 998
+
+
+# These tests run on the test schema filled by data/pop_db_test.sql
+pytestmark = pytest.mark.usefixtures("test_database")
+
 
 @pytest.fixture(autouse=True)
-def clean_alert_table():
+def clean_alert_table(test_database):
     """Clean test alerts before and after each test"""
 
     with DBConnection().connection as connection:
         with connection.cursor() as cursor:
-            cursor.execute("DELETE FROM alert WHERE label LIKE 'Pytest%' OR user_id = 1;")
+            cursor.execute(
+                "DELETE FROM alert WHERE label LIKE 'Pytest%%' OR user_id = %(user_id)s;",
+                {"user_id": TEST_USER_ID},
+            )
 
     yield
 
     with DBConnection().connection as connection:
         with connection.cursor() as cursor:
-            cursor.execute("DELETE FROM alert WHERE label LIKE 'Pytest%' OR user_id = 1;")
+            cursor.execute(
+                "DELETE FROM alert WHERE label LIKE 'Pytest%%' OR user_id = %(user_id)s;",
+                {"user_id": TEST_USER_ID},
+            )
 
 
 def test_create_ok():
     """Successfully create an Alert"""
 
     # GIVEN
-    user_id = 1
+    user_id = TEST_USER_ID
     label = "test"
     distance_max = 10000
     diameter_min = 100
@@ -46,7 +59,7 @@ def test_create_duplicate_ko():
     """Successfully create an Alert"""
 
     # GIVEN
-    user_id = 1
+    user_id = TEST_USER_ID
     label = "test"
     label2 = "test2"
     distance_max = 10000
@@ -78,7 +91,7 @@ def test_find_by_user():
     """Find a player by an existing id"""
 
     # GIVEN
-    user_id = 1
+    user_id = TEST_USER_ID
     AlertDao().create(user_id=user_id, label="Pytest Alert", diameter_min=50)
 
     # WHEN
@@ -103,7 +116,7 @@ def test_find_by_id_non_existing():
 
 def test_find_by_id():
     """Find an alert by its id"""
-    user_id = 1
+    user_id = TEST_USER_ID
     AlertDao().create(user_id=user_id, label="Pytest Find By ID", distance_max=2000)
     alerts = AlertDao().find_by_user(user_id)
     alert_id = alerts[0].alert_id
@@ -119,7 +132,7 @@ def test_create_ko():
     """Fail to create a Player (invalid elo and email)"""
 
     # GIVEN
-    user_id = 1
+    user_id = TEST_USER_ID
     label = "test"
     distance_max = "not an int"
     diameter_min = 100
@@ -141,7 +154,7 @@ def test_update_ok():
     """Successfully update a Player"""
 
     # GIVEN
-    user_id = 1
+    user_id = TEST_USER_ID
     label = "Pytest"
     label1 = "Pytest label de base"
     new_distance_max = 100000
@@ -178,7 +191,7 @@ def test_update_ko():
     """Fail to update a Player (unknown id)"""
 
     # GIVEN
-    user_id = 1
+    user_id = TEST_USER_ID
     label = "Pytest"
     new_distance_max = 100000
     diameter_min = 100
@@ -214,7 +227,7 @@ def test_delete_ok():
     """Successfully delete a Player"""
 
     # GIVEN
-    user_id = 1
+    user_id = TEST_USER_ID
     AlertDao().create(user_id=user_id, label="Pytest Alert", diameter_min=50)
     alert_id = AlertDao().find_by_user(user_id)[0].alert_id
 
@@ -229,7 +242,7 @@ def test_delete_ko():
     """Fail to delete a Player (unknown id)"""
 
     # GIVEN
-    user_id = 1
+    user_id = TEST_USER_ID
     AlertDao().create(user_id=user_id, label="Pytest Alert", diameter_min=50)
     alert_id = 999999999999999999
 

@@ -1,8 +1,12 @@
+"""Streamlit page for the alerts: notifications, creation and management of alerts."""
+
 import streamlit as st
 
 from utils.api_client import api_client
 from utils.auth_guard import check_authentification
 from utils.log_init import get_page_logger
+
+st.set_page_config(page_title="NEO-Watch | Alerts", page_icon="🔔", layout="wide")
 
 st.title("NEO Alerts & Notifications")
 logger = get_page_logger("alerts")

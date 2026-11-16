@@ -33,7 +33,7 @@ def search_neos(criteria: NeoSearchCriteria) -> list[NeoModel]:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to execute search: {str(e)}",
-        )
+        ) from e
 
 
 @router.get(
@@ -78,17 +78,20 @@ def create_neo(neo_in: NeoCreateRequest, current_user=Depends(get_current_user))
                 detail="Unable to create NEO. Please check input values.",
             )
         return NeoModel(**created.to_dict())
+    except HTTPException:
+        # keep the 400 above instead of turning it into a 500 below
+        raise
     except ValueError as ve:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail=str(ve),
-        )
+        ) from ve
     except Exception as e:
         logger.error(f"Error creating NEO: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to create NEO: {str(e)}",
-        )
+        ) from e
 
 
 @router.get(
@@ -111,4 +114,4 @@ def list_neos(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to list NEOs: {str(e)}",
-        )
+        ) from e

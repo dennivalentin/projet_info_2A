@@ -51,6 +51,7 @@ class ApodData:
         self._url = value
 
     def to_dict(self) -> dict:
+        """Returns the object as a dict (JSON-friendly) for the API responses."""
         return {
             "title": self._title,
             "date": (

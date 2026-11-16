@@ -1,3 +1,5 @@
+"""Protection of the pages that need a logged-in user."""
+
 import logging
 import time
 

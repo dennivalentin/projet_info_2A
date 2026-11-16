@@ -8,29 +8,34 @@ from business_object.neo import Neo
 from dao.approach_dao import ApproachDao
 from dao.favourite_dao import FavouriteDao
 from dao.neo_dao import NeoDao
-from utils.log_utils import log
+from utils.log_utils import get_logger, log
+
+logger = get_logger(__name__)
 
 
 class FavouriteService:
+    """Business logic of the favourite NEOs of a user (list, approaches, graph)."""
+
     @log
     def add_favourite(self, neo_id: int, user_id: int) -> bool:
-        """Add a NEO to the user's favorites list."""
-        if FavouriteDao().create(neo_id, user_id):
-            print("Succesfully created")
-            return True
-        else:
-            print("Error happened")
-            return False
+        """Adds a NEO to the user's favourites.
+
+        Returns:
+            bool: True if the favourite was added, False otherwise.
+        """
+        added = FavouriteDao().create(neo_id, user_id)
+        if not added:
+            logger.warning(f"NEO {neo_id} not added to the favourites of user {user_id}")
+        return added
 
     @log
     def remove_favourite(self, neo_id: int, user_id: int) -> bool:
-        """Remove a NEO from the user's favorites list."""
-        if FavouriteDao().delete(neo_id, user_id):
-            print("Succesfully deleted")
-            return True
-        else:
-            print("Nothing deleted")
-            return False
+        """Removes a NEO from the user's favourites.
+
+        Returns:
+            bool: True if a favourite was removed, False if there was none.
+        """
+        return FavouriteDao().delete(neo_id, user_id)
 
     @log
     def list_all_favourite_by_user(self, user_id: int) -> list[Neo]:
@@ -74,7 +79,20 @@ class FavouriteService:
         return dict_approaches
 
     @log
-    def graph_favourite(self, user_id, neo_id) -> io.BytesIO:
+    def graph_favourite(self, user_id: int, neo_id: int) -> str:
+        """Draws the distance to Earth of a favourite NEO over time.
+
+        Args:
+            user_id: Owner of the favourites.
+            neo_id: The favourite NEO to draw.
+
+        Returns:
+            str: The PNG image as a data URL ("data:image/png;base64,...").
+
+        Raises:
+            KeyError: If the NEO is not one of the user's favourites.
+            ValueError: If the NEO has no recorded approach.
+        """
         list_approaches = self.approches_favourite(user_id)[neo_id]
 
         if not list_approaches:

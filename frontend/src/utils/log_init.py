@@ -1,3 +1,5 @@
+"""Logging configuration of the frontend and logger of the current page."""
+
 import logging
 import logging.config
 from pathlib import Path
@@ -14,7 +16,13 @@ def initialize_logs(name: str):
 
     with open(config_file, encoding="utf-8") as stream:
         config = yaml.safe_load(stream)
-        logging.config.dictConfig(config)
+
+    # The file name in the YAML is relative: make it absolute so the logs work
+    # whatever the folder the application is launched from
+    for handler in config.get("handlers", {}).values():
+        if "filename" in handler:
+            handler["filename"] = str(logs_dir / Path(handler["filename"]).name)
+    logging.config.dictConfig(config)
 
     logging.info("-" * 50)
     logging.info(f"Launch FRONTEND : {name}")

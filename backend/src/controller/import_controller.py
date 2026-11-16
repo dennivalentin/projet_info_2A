@@ -23,7 +23,7 @@ def reset_database_endpoint(current_user=Depends(require_admin)):
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Reset failed: {str(e)}",
-        )
+        ) from e
 
 
 # Only one NASA import at a time: the first import covers 3 years
@@ -59,7 +59,7 @@ def sync_data_endpoint(current_user=Depends(get_current_user)):
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Sync failed: {str(e)}",
-        )
+        ) from e
     return {"status": "success", "result": {"status": "started"}}
 
 

@@ -39,7 +39,7 @@ def login(credentials: UserLoginModel):
         return Token(
             access_token=access_token,
             refresh_token=refresh_token,
-            token_type="bearer",
+            token_type="bearer",  # nosec B106
             user_id=user.user_id,
             id_player=user.user_id,
             username=user.username,
@@ -62,7 +62,7 @@ def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends()):
         return Token(
             access_token=access_token,
             refresh_token=refresh_token,
-            token_type="bearer",
+            token_type="bearer",  # nosec B106
             user_id=user.user_id,
             id_player=user.user_id,
             username=user.username,
@@ -108,7 +108,7 @@ def refresh_token(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid or expired refresh token",
             headers={"WWW-Authenticate": "Bearer"},
-        )
+        ) from None
 
     if payload.get("type") and payload.get("type") != "refresh":
         raise HTTPException(
@@ -146,7 +146,7 @@ def refresh_token(
     return Token(
         access_token=new_access_token,
         refresh_token=new_refresh_token,
-        token_type="bearer",
+        token_type="bearer",  # nosec B106
         user_id=user.user_id,
         id_player=user.user_id,
         username=user.username,
@@ -184,10 +184,10 @@ def register(user_in: UserCreateModel):
             creation_date=user.creation_date,
         )
     except ValueError as ve:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(ve))
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(ve)) from ve
     except Exception as e:
         logger.error(f"Registration error: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Internal server error",
-        )
+        ) from e

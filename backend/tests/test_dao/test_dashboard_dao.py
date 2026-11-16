@@ -1,4 +1,4 @@
-"""Tests of DashboardDao (F2). They need the database to contain approaches."""
+"""Tests of DashboardDao (F2), on the test database (data/pop_db_test.sql)."""
 
 from datetime import date, timedelta
 
@@ -10,16 +10,8 @@ START = date.today()
 END = date.today() + timedelta(days=7)
 
 
-def _has_data() -> bool:
-    """True if the DB is reachable and contains approaches for the next 7 days."""
-    try:
-        return DashboardDao().count_upcoming(START, END)["nb_neos"] > 0
-    except Exception:
-        return False
-
-
-# Skip all the tests of this file if there is no data (e.g. on a teammate's empty DB, or in CI)
-pytestmark = pytest.mark.skipif(not _has_data(), reason="No approach data in the database")
+# These tests run on the test schema filled by data/pop_db_test.sql
+pytestmark = pytest.mark.usefixtures("test_database")
 
 
 def test_upcoming_approaches_are_sorted():

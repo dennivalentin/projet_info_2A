@@ -2,6 +2,7 @@
 
 import hashlib
 import hmac
+import logging
 import os
 from datetime import UTC, datetime, timedelta
 from typing import Any
@@ -132,13 +133,13 @@ def decode_token(token: str) -> dict[str, Any]:
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Token has expired",
             headers={"WWW-Authenticate": "Bearer"},
-        )
+        ) from None
     except jwt.InvalidTokenError:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid token",
             headers={"WWW-Authenticate": "Bearer"},
-        )
+        ) from None
 
 
 def get_current_user(
@@ -159,6 +160,9 @@ def get_current_user(
     Raises:
         HTTPException: 401 if missing, invalid, or expired.
     """
+    # The token can come from several places, checked in this order:
+    # a raw token given directly, "Authorization: Bearer <token>",
+    # the "X-Auth-Token" header (used by the Streamlit frontend), the raw request
     token = None
 
     if isinstance(token_or_request, str) and token_or_request:
@@ -238,8 +242,8 @@ def get_current_user(
         user = UserDao().find_by_token(token)
         if user:
             return user
-    except Exception:
-        pass
+    except Exception as e:
+        logging.getLogger(__name__).warning(f"Opaque token lookup failed: {e}")
 
     raise HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,

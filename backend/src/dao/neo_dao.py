@@ -133,6 +133,9 @@ class NeoDao(metaclass=Singleton):
         Returns:
             A list of matching Neo objects, or an empty list.
         """
+        # Each criterion gives a SQL condition with a named parameter: the values
+        # are always passed to psycopg2 as parameters, never pasted in the SQL
+        # (no SQL injection). The lambda prepares the value (e.g. %name% for ILIKE).
         criteria_map = {
             "neo_id": ("n.neo_id = %(neo_id)s", lambda v: v),
             "nasa_id": ("n.nasa_id = %(nasa_id)s", lambda v: v),
@@ -164,6 +167,8 @@ class NeoDao(metaclass=Singleton):
             if criterion in ("approach_day", "start_date", "end_date"):
                 needs_approach = True
 
+        # The approach table is only joined when a date criterion is used
+        # (DISTINCT then avoids one row per approach of the same NEO)
         if needs_approach:
             query = query.replace(
                 "FROM neo n WHERE",
@@ -176,6 +181,7 @@ class NeoDao(metaclass=Singleton):
         if order not in ("ASC", "DESC"):
             order = "ASC"
 
+        # ORDER BY cannot be a SQL parameter: only whitelisted columns are accepted
         valid_sort_columns = {
             "neo_id": "n.neo_id",
             "name": "n.name",

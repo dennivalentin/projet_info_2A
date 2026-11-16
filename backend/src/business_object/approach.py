@@ -103,6 +103,7 @@ class Approach:
         self._body = value
 
     def to_dict(self) -> dict:
+        """Returns the object as a dict (JSON-friendly) for the API responses."""
         return {
             "approach_id": self._approach_id,
             "neo_id": self._neo_id,
