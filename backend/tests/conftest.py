@@ -4,16 +4,27 @@ import os
 
 import pytest
 
-from utils.env_variables import load_environment_variables
+import utils.env_variables as env_variables
 
-load_environment_variables()
+TEST_SCHEMA = "project_test_dao"
 
 os.environ.setdefault("JWT_SECRET_KEY", "test_secret_key_only_for_pytest_0123456789")
 os.environ.setdefault("JWT_ALGORITHM", "HS256")
 
 # The tests must never touch the application data: every connection opened
-# during the tests uses the dedicated test schema
-os.environ["POSTGRES_SCHEMA"] = "project_test_dao"
+# during the tests uses the dedicated test schema.
+# main.py reloads the .env (override=True) when it is imported, which would put
+# back POSTGRES_SCHEMA=project: the loader is wrapped to always restore the test schema.
+_load_environment_variables = env_variables.load_environment_variables
+
+
+def _load_keeping_the_test_schema():
+    _load_environment_variables()
+    os.environ["POSTGRES_SCHEMA"] = TEST_SCHEMA
+
+
+env_variables.load_environment_variables = _load_keeping_the_test_schema
+_load_keeping_the_test_schema()
 
 
 @pytest.fixture(scope="session")
