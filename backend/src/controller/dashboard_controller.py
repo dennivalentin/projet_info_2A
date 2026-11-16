@@ -17,8 +17,7 @@ def get_dashboard(
     user=Depends(verify_token),
 ):
     """Dashboard of the connected user (default period: next 7 days)."""
-    # verify_token gives back the connected user (User after Sofia's F1, Player before)
-    user_id = getattr(user, "user_id", None) or user.id_player
+    user_id = user.user_id
     try:
         return DashboardService().get_dashboard(user_id, start, end)
     except ValueError as e:

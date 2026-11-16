@@ -74,8 +74,8 @@ REFRESH_TOKEN_EXPIRE_DAYS=7
 ```
 
 - `NASA_API_KEY`: get a free key in one minute at [api.nasa.gov](https://api.nasa.gov/).
-  Without it, the application uses `DEMO_KEY`, limited to 30 calls per hour: the first import
-  then takes hours.
+  Without it, the application uses `DEMO_KEY`, limited to a few dozen calls: the first import
+  then stops early, and it goes on a little more at each launch (it resumes where it stopped).
 - `JWT_SECRET_KEY` is **required**. Generate one with `python key_generator_for_.env.py`.
 
 ### 4. Launch the application
@@ -141,5 +141,5 @@ The result is in the *Actions* tab of the GitHub repository.
 | --- | --- |
 | `JWT_SECRET_KEY missing in .env` | Add `JWT_SECRET_KEY` to `.env` (step 3). |
 | The interface shows "Connection error" | The API is not running, or `BACKEND_URL` is wrong. |
-| No NEO after a few minutes | The NASA import is limited by `DEMO_KEY`: set your own `NASA_API_KEY`. |
+| Few NEOs, or none in the coming days | The NASA import is limited by `DEMO_KEY`: set your own `NASA_API_KEY`, then restart the API. |
 | Data to start again from scratch | Log in as `admin`, then **Reset database** in the menu. |

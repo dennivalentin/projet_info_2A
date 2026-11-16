@@ -5,7 +5,8 @@ Seed data used here:
 - NEOs 999 "Test Asteroid 1" (hazardous) and 998 "Test Asteroid 2",
   each with one approach in the next days
 
-Each test that writes data removes it at the end, so the tests stay independent.
+The schema is re-created at the start of each test session. Most tests that write
+data remove it; the others only add rows that no other test depends on.
 """
 
 from datetime import date, datetime, timedelta
@@ -164,6 +165,24 @@ def test_last_successful_import():
 
     last = ImportDao().find_last_successful_import()
     assert last._end_date == date(2026, 1, 7)
+
+
+def test_partial_import_is_a_resume_point():
+    """An interrupted import keeps the day it reached: the next one resumes from there."""
+    task = Import(
+        user_id=TEST_USER_ID,
+        start_date=date(2030, 1, 1),
+        end_date=date(2030, 12, 31),
+        status="running",
+    )
+    ImportDao().create(task)
+    task._status = "partial"
+    task._end_date = date(2030, 3, 15)
+    ImportDao().update(task)
+
+    last = ImportDao().find_last_successful_import()
+    assert last._status == "partial"
+    assert last._end_date == date(2030, 3, 15)
 
 
 def test_update_an_import_that_was_never_created():

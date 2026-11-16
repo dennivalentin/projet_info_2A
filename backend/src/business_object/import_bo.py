@@ -12,7 +12,7 @@ class Import:
         _start_date (datetime | date): Start date/time of the data retrieval period.
         _end_date (datetime | date): End date/time of the data retrieval period.
         _trigger_type (str): Trigger mode ('MANUAL' or 'BATCH').
-        _status (str): Current status ('ON GOING', 'DONE', 'PARTIAL', 'FAIL').
+        _status (str): 'running', then 'success', 'partial' (interrupted, resumable) or 'failed'.
         _nb_calls (int): Number of API calls made.
         _nb_neo (int): Number of Near-Earth Objects inserted or updated.
         _nb_approaches (int): Number of close approaches inserted or updated.

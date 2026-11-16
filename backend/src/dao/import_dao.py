@@ -40,7 +40,9 @@ class ImportDao:
         return import_task
 
     def update(self, import_task: Import) -> bool:
-        """Updates the status and the counters of an import task.
+        """Updates the status, the end date and the counters of an import task.
+
+        The end date changes when an interrupted import is recorded as 'partial'.
 
         Returns:
             bool: False if the task was never created (no import_id).
@@ -51,6 +53,7 @@ class ImportDao:
         query = """
             UPDATE import
             SET status = %(status)s,
+                end_date = %(end_date)s,
                 nb_calls = %(nb_calls)s,
                 nb_neo = %(nb_neo)s,
                 nb_approaches = %(nb_approaches)s
@@ -62,6 +65,7 @@ class ImportDao:
                     query,
                     {
                         "status": import_task._status,
+                        "end_date": import_task._end_date,
                         "nb_calls": import_task._nb_calls,
                         "nb_neo": import_task._nb_neo,
                         "nb_approaches": import_task._nb_approaches,
@@ -71,12 +75,19 @@ class ImportDao:
                 return cur.rowcount > 0
 
     def find_last_successful_import(self) -> Import | None:
-        """Get the last successful import"""
+        """Returns the import that ends the latest among the successful or partial ones.
+
+        A 'partial' import (interrupted, e.g. by the NASA quota) counts: the next
+        import resumes after its end date.
+
+        Returns:
+            Import | None: None if no data was ever imported.
+        """
         query = """
             SELECT import_id, user_id, start_date, end_date,
                    trigger_type, status, nb_calls, nb_neo, nb_approaches
             FROM import
-            WHERE status = 'success'
+            WHERE status IN ('success', 'partial')
             ORDER BY end_date DESC
             LIMIT 1;
         """
