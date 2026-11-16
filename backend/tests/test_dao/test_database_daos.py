@@ -177,3 +177,16 @@ def test_record_and_list_connections():
     ConnectionDao().create(TEST_USER_ID, "pytest-token")
     connections = ConnectionDao().find_by_user(TEST_USER_ID)
     assert len(connections) >= 1
+
+
+# ---------------------------------------------------------------- Safety
+
+
+def test_the_tests_run_on_the_test_schema():
+    """Guard: the DAO tests must never run on the application schema."""
+    from dao.db_connection import DBConnection
+
+    with DBConnection().connection as connection:
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT current_schema() AS schema;")
+            assert cursor.fetchone()["schema"] == "project_test_dao"

@@ -36,8 +36,7 @@ class ResetDatabase(metaclass=Singleton):
         Returns:
             True when the schema has been re-created.
         """
-        app_schema = os.environ.get("POSTGRES_SCHEMA", "project")
-        schema = TEST_SCHEMA if test_dao else app_schema
+        schema = TEST_SCHEMA if test_dao else os.environ.get("POSTGRES_SCHEMA", "project")
         pop_file = "pop_db_test.sql" if test_dao else "pop_db.sql"
 
         init_db = (self.data_path / "init_db.sql").read_text(encoding="utf-8")
@@ -54,10 +53,8 @@ class ResetDatabase(metaclass=Singleton):
                 )
                 cursor.execute(init_db)
                 cursor.execute(pop_db)
-                # Back to the schema the application is configured to use
-                cursor.execute(
-                    sql.SQL("SET search_path TO {s};").format(s=sql.Identifier(app_schema))
-                )
+                # The connection stays on the schema that was reset: for the tests,
+                # every following query must keep using the test schema
 
         logger.info(f"Schema {schema} re-created with {pop_file}")
         return True
