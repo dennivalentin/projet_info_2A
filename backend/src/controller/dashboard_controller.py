@@ -5,7 +5,7 @@ from datetime import date
 from fastapi import APIRouter, Depends, HTTPException
 
 from service.dashboard_service import DashboardService
-from utils.security import verify_token
+from utils.security import get_current_user
 
 router = APIRouter()
 
@@ -14,7 +14,7 @@ router = APIRouter()
 def get_dashboard(
     start: date | None = None,
     end: date | None = None,
-    user=Depends(verify_token),
+    user=Depends(get_current_user),
 ):
     """Dashboard of the connected user (default period: next 7 days)."""
     user_id = user.user_id

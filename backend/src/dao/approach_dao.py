@@ -39,8 +39,7 @@ class ApproachDao:
                 )
                 res = cur.fetchone()
                 if res:
-                    approach_id = res["approach_id"] if isinstance(res, dict) else res[0]
-                    approach._approach_id = approach_id
+                    approach._approach_id = res["approach_id"]
                     return True
         return False
 

@@ -18,11 +18,13 @@ from business_object.approach import Approach
 from business_object.import_bo import Import
 from business_object.neo import Neo
 from business_object.user import User
+from dao.alert_dao import AlertDao
 from dao.approach_dao import ApproachDao
 from dao.connection_dao import ConnectionDao
 from dao.favourite_dao import FavouriteDao
 from dao.import_dao import ImportDao
 from dao.neo_dao import NeoDao
+from dao.statistics_dao import StatisticsDao
 from dao.user_dao import UserDao
 
 pytestmark = pytest.mark.usefixtures("test_database")
@@ -196,6 +198,94 @@ def test_record_and_list_connections():
     ConnectionDao().create(TEST_USER_ID, "pytest-token")
     connections = ConnectionDao().find_by_user(TEST_USER_ID)
     assert len(connections) >= 1
+
+
+def test_connections_are_listed_latest_first():
+    ConnectionDao().create(TEST_USER_ID, "pytest-token-old")
+    ConnectionDao().create(TEST_USER_ID, "pytest-token-new")
+    dates = [connection.date for connection in ConnectionDao().find_by_user(TEST_USER_ID)]
+    assert dates == sorted(dates, reverse=True)
+
+
+# ---------------------------------------------------------------- Daily refresh (FO7)
+
+
+def test_refreshed_today():
+    assert ImportDao().refreshed_today() is False
+    task = Import(
+        user_id=TEST_USER_ID,
+        start_date=date.today(),
+        end_date=date.today() + timedelta(days=30),
+        trigger_type="REFRESH",
+        status="success",
+    )
+    ImportDao().create(task)
+    assert ImportDao().refreshed_today() is True
+    _execute("DELETE FROM import WHERE import_id = %(id)s;", {"id": task._import_id})
+
+
+# ---------------------------------------------------------------- Alerts: notify once (F6)
+
+
+def test_an_approach_is_notified_only_once():
+    """After a check, only the approaches recorded since then match the alert."""
+    AlertDao().create(user_id=TEST_USER_ID, label="pytest notify once", distance_max=1e12)
+    alert = next(
+        a for a in AlertDao().find_by_user(TEST_USER_ID) if a.label == "pytest notify once"
+    )
+    try:
+        first = AlertDao().find_matching_approaches_for_user(TEST_USER_ID)
+        assert len(first) >= 2  # at least the two seed approaches of the next days
+
+        AlertDao().mark_evaluated(alert.alert_id)
+        assert AlertDao().find_matching_approaches_for_user(TEST_USER_ID) == []
+
+        # A new approach is imported: it is the only new notification
+        new_approach = Approach(
+            neo_id=998,
+            approach_date=datetime.now() + timedelta(days=20),
+            distance=1000.0,
+            speed=1.0,
+            body="Earth",
+        )
+        ApproachDao().create(new_approach)
+        again = AlertDao().find_matching_approaches_for_user(TEST_USER_ID)
+        assert [item["distance"] for item in again] == [1000.0]
+    finally:
+        AlertDao().delete(alert.alert_id)
+        _execute("DELETE FROM approach WHERE distance = 1000.0;", {})
+
+
+# ---------------------------------------------------------------- Statistics
+
+
+def test_neo_without_diameter_is_in_the_unknown_size_class():
+    neo = Neo(
+        nasa_id=None,
+        name="pytest no size",
+        absolute_magnitude=None,
+        diameter_min=None,
+        diameter_max=None,
+        hazardous=False,
+        url_nasa=None,
+        origin="USER",
+        date_update=datetime.now(),
+    )
+    NeoDao().create(neo)
+    try:
+        classes = {row["size_class"]: row["nb_neos"] for row in StatisticsDao().size_distribution()}
+        assert classes["5. Unknown"] == 1
+        assert "4. > 1 km" not in classes
+    finally:
+        NeoDao().delete(neo.neo_id)
+
+
+def _execute(query: str, params: dict) -> None:
+    from dao.db_connection import DBConnection
+
+    with DBConnection().connection as connection:
+        with connection.cursor() as cursor:
+            cursor.execute(query, params)
 
 
 # ---------------------------------------------------------------- Safety

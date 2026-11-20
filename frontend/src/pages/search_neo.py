@@ -4,12 +4,12 @@ Allows filtering by name, size, hazard flag, origin, and approach dates,
 viewing detailed approaches with Astronomical Units (AU), and exporting results as CSV.
 """
 
-from datetime import datetime
+from datetime import date, datetime, timedelta
 
 import pandas as pd
 import streamlit as st
 
-from utils.api_client import api_client
+from utils.api_client import api_client, error_message
 from utils.auth_guard import check_authentification
 from utils.log_init import get_page_logger
 
@@ -87,6 +87,16 @@ with st.expander("Filter Options", expanded=True):
             disabled=not use_dia_max,
         )
 
+    col6, col7 = st.columns(2)
+    with col6:
+        use_dates = st.checkbox("Filter by close approach date")
+    with col7:
+        approach_period = st.date_input(
+            "Close approach between",
+            value=(date.today(), date.today() + timedelta(days=30)),
+            disabled=not use_dates,
+        )
+
     search_clicked = st.button("🔎 Run Search", type="primary")
 
 # Execute Search
@@ -114,13 +124,16 @@ if search_clicked or "search_results" not in st.session_state:
     if use_dia_max:
         payload["diameter_max"] = float(dia_max)
 
+    if use_dates and len(approach_period) == 2:
+        payload["start_date"] = approach_period[0].isoformat()
+        payload["end_date"] = approach_period[1].isoformat()
+
     with st.spinner("Searching database..."):
         res = api_client.post("/neo/search", json=payload)
         if res and res.get("status_code") == 200:
             st.session_state["search_results"] = res.get("data", [])
         else:
-            err = res.get("data") if res else "Connection failed"
-            st.error(f"Search error: {err}")
+            st.error(f"Search error: {error_message(res, 'Connection failed')}")
             st.session_state["search_results"] = []
 
 results = st.session_state.get("search_results", [])
@@ -196,6 +209,16 @@ if results:
 
                 if neo_data.get("url_nasa"):
                     st.markdown(f"🔗 [NASA JPL Web Page]({neo_data.get('url_nasa')})")
+
+                if st.button("⭐ Add to my favourites", key=f"fav_{selected_id}"):
+                    user_id = st.session_state.get("user", {}).get("user_id")
+                    fav_res = api_client.post(
+                        "/favourites/", json={"user_id": user_id, "neo_id": selected_id}
+                    )
+                    if fav_res.get("status_code") == 201:
+                        st.success(f"{neo_data.get('name')} added to your favourites")
+                    else:
+                        st.warning(error_message(fav_res))
 
                 # Approaches Table
                 approaches = neo_data.get("approaches", [])

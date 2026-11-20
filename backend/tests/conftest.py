@@ -10,6 +10,8 @@ TEST_SCHEMA = "project_test_dao"
 
 os.environ.setdefault("JWT_SECRET_KEY", "test_secret_key_only_for_pytest_0123456789")
 os.environ.setdefault("JWT_ALGORITHM", "HS256")
+# Never call the NASA API from the tests
+os.environ["AUTO_IMPORT"] = "false"
 
 # The tests must never touch the application data: every connection opened
 # during the tests uses the dedicated test schema.

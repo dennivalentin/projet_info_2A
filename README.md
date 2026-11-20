@@ -12,17 +12,18 @@ ENSAI 2nd year IT project.
 
 | Feature | Description |
 | --- | --- |
-| 🔐 Accounts | Create an account and log in (JWT authentication). Administrators can reset and update the data. |
+| 🔐 Accounts | Create an account and log in (JWT authentication). Administrators manage the accounts (promote, delete), see the connection history, and can update or reset the data. |
 | ☄️ Dashboard | Upcoming close approaches over a chosen period, number of NEOs and share of hazardous ones, closest approach, your favourites. |
-| 🔍 Search & Explore | Search NEOs by name, size, hazard flag, origin; sort; details and close approaches (km and astronomical units); CSV export. |
+| 🔍 Search & Explore | Search NEOs by name, size, hazard flag, origin, close approach date; sort; details and close approaches (km and astronomical units); CSV export; add to favourites. |
 | 📊 Statistics | Approaches per month, size distribution, share of potentially hazardous NEOs, mean and median distance, each with an explanation. |
-| ⭐ Favourites | Follow NEOs, see their approaches and a graph of their distance to Earth over time. |
-| 🔔 Alerts | Define criteria (minimum size, maximum distance, hazardous only) and be notified of the matching approaches. |
+| ⭐ Favourites | Follow NEOs, see their approaches and a graph of their distance to Earth over time; export the history (CSV) and the graph (PNG). |
+| 🔔 Alerts | Define criteria (minimum size, maximum distance, hazardous only) and be notified of the matching approaches when you log in, once per approach. |
 | ➕ Declare a NEO | Record your own observation (origin `USER`: it is never overwritten by the NASA imports). |
 | 🌌 Picture of the Day | NASA's astronomy picture of the day, with its description, to download. |
 
-The NASA data is imported automatically, in the background: 2 years back and 1 year ahead on
-the first launch, then only what is missing, once a day.
+The NASA data is imported automatically by the API, in the background: 2 years back and 1 year
+ahead when it starts for the first time, then once a day what is missing plus the next 30 days
+again (to get the newly discovered NEOs). Administrators can also start an update by hand.
 
 ## 🚀 Install and launch (SSP Cloud)
 
@@ -71,12 +72,15 @@ NASA_API_KEY=<your NASA key>
 JWT_SECRET_KEY=<a long random key>
 ACCESS_TOKEN_EXPIRE_MINUTES=30
 REFRESH_TOKEN_EXPIRE_DAYS=7
+
+AUTO_IMPORT=true
 ```
 
 - `NASA_API_KEY`: get a free key in one minute at [api.nasa.gov](https://api.nasa.gov/).
   Without it, the application uses `DEMO_KEY`, limited to a few dozen calls: the first import
   then stops early, and it goes on a little more at each launch (it resumes where it stopped).
 - `JWT_SECRET_KEY` is **required**. Generate one with `python key_generator_for_.env.py`.
+- `AUTO_IMPORT`: `false` turns off the automatic daily NASA import (optional, `true` by default).
 
 ### 4. Launch the application
 
@@ -109,8 +113,8 @@ and `data/pop_db.sql`):
 | `admin` | `admin` | administrator |
 | `observateur` | `observateur` | user |
 
-Log in, then the NASA import starts in the background: the NEOs appear little by little.
-You can also create your own account from the login page.
+The NASA import starts in the background as soon as the API is running: the NEOs appear little
+by little. You can also create your own account from the login page.
 
 :lock: Change the `admin` password before any real use.
 
@@ -131,6 +135,7 @@ On every push, GitHub Actions (`.github/workflows/ci.yml`):
 
 - starts a PostgreSQL database and runs all the backend unit tests, with coverage
 - checks the code style of the backend and the frontend with [Ruff](https://docs.astral.sh/ruff/)
+- checks the type annotations with [mypy](https://mypy.readthedocs.io/)
 - looks for security issues with [Bandit](https://bandit.readthedocs.io/)
 
 The result is in the *Actions* tab of the GitHub repository.
@@ -141,5 +146,6 @@ The result is in the *Actions* tab of the GitHub repository.
 | --- | --- |
 | `JWT_SECRET_KEY missing in .env` | Add `JWT_SECRET_KEY` to `.env` (step 3). |
 | The interface shows "Connection error" | The API is not running, or `BACKEND_URL` is wrong. |
-| Few NEOs, or none in the coming days | The NASA import is limited by `DEMO_KEY`: set your own `NASA_API_KEY`, then restart the API. |
+| Few NEOs, or none in the coming days | The NASA import is limited by `DEMO_KEY`: set your own `NASA_API_KEY`, then restart the API (or, as `admin`, **Manual update**): the import resumes where it stopped. |
+| "Session expired", back to the login page | The refresh token is valid 7 days (`REFRESH_TOKEN_EXPIRE_DAYS`): log in again. |
 | Data to start again from scratch | Log in as `admin`, then **Reset database** in the menu. |

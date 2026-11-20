@@ -57,14 +57,22 @@ sequenceDiagram
 ### Main design choices
 
 - **NASA import** (`service/import_service.py`): the `/feed` endpoint returns at most 7 days per
-  call, so the period is split into windows. The import runs in a background thread
-  (`controller/import_controller.py`), one at a time, and each import is recorded in the
-  `import` table with its status, so the next one only fetches what is missing.
+  call, so the period is split into windows. Each import is recorded in the `import` table with
+  its status (`success`, `partial` when the quota ran out, `failed`), so the next one only fetches
+  what is missing.
+- **Automatic update, FO7** (`service/import_scheduler.py`): imports run in a background thread,
+  one at a time. `DailyImportScheduler` starts one when the API starts, then every 24 h: it
+  imports the missing days and, once a day, the next 30 days again (new discoveries). The admin
+  button (`POST /import/update`) calls the same code. `AUTO_IMPORT=false` turns it off.
+- **Notifications, F6** (`service/alert_service.py`): an approach is notified once. When an
+  alert has matched, its `last_eval_date` is set (database clock), and only the approaches
+  recorded after that date match it again.
 - **Database connection** (`dao/db_connection.py`): one connection per thread, because FastAPI
   runs the endpoints in a thread pool and threads must not share a transaction.
 - **Security** (`utils/security.py`): passwords are hashed with SHA-256 salted with the
-  username; the API uses JWT access and refresh tokens. A user only reads and changes their
-  own favourites and alerts (administrators excepted).
+  username; the API uses JWT access tokens (30 min) and refresh tokens (7 days), read from the
+  `Authorization` or `X-Auth-Token` header only. An expired token is always refused. A user only
+  reads and changes their own favourites and alerts (administrators excepted).
 - **Units**: distances in km, diameters in km, speeds in km/h.
 
 ## 📡 Endpoints
@@ -87,9 +95,13 @@ All endpoints except `/login/` and `/login/register` need a token:
 | GET | `/apod/` | NASA picture of the day (`day`, default: today) |
 | POST / GET / DELETE | `/favourites/...` | Add, list, remove favourites; their approaches and graph |
 | POST / GET / PUT / DELETE | `/alerts/...` | Create, list, switch on/off, delete alerts; notifications |
-| POST | `/import/update` | Start the NASA update in the background |
+| POST | `/import/update` | Start the NASA update in the background (admin only) |
 | GET | `/import/status`, `/import/last` | Is an import running? End date of the last import |
-| POST | `/reset_database` | Re-create all the tables and the seed data (admin only) |
+| POST | `/reset_database` | Re-create all the tables and the seed data (admin only, not during an import) |
+| GET | `/users/` | List the accounts (admin only) |
+| PUT | `/users/{user_id}/admin` | Give the administrator role (admin only) |
+| DELETE | `/users/{user_id}` | Delete an account (admin only) |
+| GET | `/users/{user_id}/connections` | Connection history of a user (admin only) |
 
 Example:
 
@@ -131,6 +143,7 @@ uv run --all-extras coverage html   # then open coverage_report/index.html
 ```bash
 uv run --all-extras ruff check src tests     # lint
 uv run --all-extras ruff format src tests    # formatting
+uv run --all-extras mypy src                 # type check
 uv run --all-extras bandit -r src            # security
 ```
 

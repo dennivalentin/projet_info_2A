@@ -89,3 +89,40 @@ def test_make_admin_unknown_user(user_dao):
     user_dao.find_by_id.return_value = None
     with pytest.raises(ValueError):
         UserService().make_admin(42)
+
+
+def test_connection_history_of_unknown_user(user_dao):
+    user_dao.find_by_id.return_value = None
+    with pytest.raises(ValueError):
+        UserService().connection_history(42)
+
+
+def test_list_users(user_dao):
+    user_dao.find_all.return_value = [ALICE]
+    assert UserService().list_users() == [ALICE]
+
+
+def test_refresh_gives_new_tokens(user_dao):
+    # GIVEN: alice logged in
+    user_dao.find_by_username.return_value = ALICE
+    _, _, refresh_token = UserService().login("alice", "alice_password")
+
+    # WHEN
+    user, access_token, _ = UserService().refresh(refresh_token)
+
+    # THEN
+    assert user.username == "alice"
+    assert decode_token(access_token)["type"] == "access"
+
+
+def test_refresh_refuses_an_access_token(user_dao):
+    user_dao.find_by_username.return_value = ALICE
+    _, access_token, _ = UserService().login("alice", "alice_password")
+
+    with pytest.raises(ValueError, match="refresh token expected"):
+        UserService().refresh(access_token)
+
+
+def test_refresh_refuses_an_invalid_token(user_dao):
+    with pytest.raises(ValueError, match="Invalid or expired"):
+        UserService().refresh("not.a.token")

@@ -88,7 +88,7 @@ def test_create_duplicate_ko():
 
 
 def test_find_by_user():
-    """Find a player by an existing id"""
+    """Find the alerts of a user who has some"""
 
     # GIVEN
     user_id = TEST_USER_ID
@@ -101,17 +101,22 @@ def test_find_by_user():
     assert alert is not None
 
 
-def test_find_by_id_non_existing():
-    """Find a player by a non-existing id"""
+def test_find_by_user_without_alert():
+    """A user without alert gets an empty list"""
 
     # GIVEN
     user_id = 9999999999999
 
     # WHEN
-    alert = AlertDao().find_by_user(user_id)
+    alerts = AlertDao().find_by_user(user_id)
 
     # THEN
-    assert alert is None
+    assert alerts == []
+
+
+def test_find_by_id_non_existing():
+    """Find an alert by a non-existing id"""
+    assert AlertDao().find_by_id(9999999) is None
 
 
 def test_find_by_id():
@@ -129,7 +134,7 @@ def test_find_by_id():
 
 
 def test_create_ko():
-    """Fail to create a Player (invalid elo and email)"""
+    """Fail to create an alert (invalid distance)"""
 
     # GIVEN
     user_id = TEST_USER_ID
@@ -151,7 +156,7 @@ def test_create_ko():
 
 
 def test_update_ok():
-    """Successfully update a Player"""
+    """Successfully update an alert"""
 
     # GIVEN
     user_id = TEST_USER_ID
@@ -188,7 +193,7 @@ def test_update_ok():
 
 
 def test_update_ko():
-    """Fail to update a Player (unknown id)"""
+    """Fail to update an alert (unknown id)"""
 
     # GIVEN
     user_id = TEST_USER_ID
@@ -224,7 +229,7 @@ def test_update_ko():
 
 
 def test_delete_ok():
-    """Successfully delete a Player"""
+    """Successfully delete an alert"""
 
     # GIVEN
     user_id = TEST_USER_ID
@@ -239,7 +244,7 @@ def test_delete_ok():
 
 
 def test_delete_ko():
-    """Fail to delete a Player (unknown id)"""
+    """Fail to delete an alert (unknown id)"""
 
     # GIVEN
     user_id = TEST_USER_ID

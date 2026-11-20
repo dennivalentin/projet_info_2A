@@ -1,5 +1,6 @@
 """HTTP client used by all the pages to call the backend API (adds the JWT token)."""
 
+import logging
 import os
 
 import requests
@@ -37,8 +38,37 @@ class APIClient:
             headers["X-Auth-Token"] = token
         return headers
 
+    def _refresh_access_token(self) -> bool:
+        """Gets a new access token with the refresh token (the access token lasts 30 min).
+
+        Returns:
+            bool: True if the tokens of the session were renewed.
+        """
+        refresh_token = st.session_state.get("refresh_token")
+        if not refresh_token:
+            return False
+        try:
+            response = self.session.post(
+                f"{self.base_url}/login/refresh",
+                json={"refresh_token": refresh_token},
+                timeout=self.timeout,
+            )
+        except requests.exceptions.RequestException:
+            return False
+        if response.status_code != 200:
+            return False
+        tokens = response.json()
+        st.session_state["access_token"] = tokens["access_token"]
+        st.session_state["refresh_token"] = tokens.get("refresh_token", refresh_token)
+        return True
+
     def _request(self, method: str, path: str, **kwargs):
         """Internal centralized method for all types of requests.
+
+        When the access token has expired (401), it is renewed once with the
+        refresh token and the request is sent again. If the session cannot be
+        renewed, the user is sent back to the login page.
+
         Args:
             method (str): The HTTP method to use (e.g., 'GET', 'POST').
             path (str): The API endpoint path.
@@ -47,7 +77,8 @@ class APIClient:
             dict: A dictionary containing the 'status_code' and the response 'data'.
         """
         url = f"{self.base_url}{path}"
-        logger = st.session_state.get("logger")
+        # Logger of the current page (see log_init.get_page_logger)
+        logger = st.session_state.get("logger") or logging.getLogger("api_client")
         logger.info(f"  {method} {url}")
 
         # Automatically inject headers (including the token)
@@ -55,12 +86,27 @@ class APIClient:
         headers.update(self._get_headers())
         timeout = kwargs.pop("timeout", self.timeout)
 
+        response = None
+        data = None
         try:
             response = self.session.request(
                 method=method, url=url, timeout=timeout, headers=headers, **kwargs
             )
+            if (
+                response.status_code == 401
+                and st.session_state.get("access_token")
+                and not path.startswith("/login")
+            ):
+                if self._refresh_access_token():
+                    headers.update(self._get_headers())
+                    response = self.session.request(
+                        method=method, url=url, timeout=timeout, headers=headers, **kwargs
+                    )
+                else:
+                    logger.info("Session expired: back to the login page")
+                    st.session_state.clear()
+                    st.switch_page("pages/home.py")
 
-            data = None
             try:
                 data = response.json()
             except Exception:
@@ -75,8 +121,8 @@ class APIClient:
         except requests.exceptions.RequestException as e:
             return {"status_code": 0, "data": str(e)}
         finally:
-            # Only log if a response was actually received to avoid errors in the finally block
-            if "response" in locals():
+            # Only log if a response was actually received
+            if response is not None:
                 logger.info(f"  {response.status_code} {response.reason}")
                 logger.debug(f"  {data}")
 
@@ -124,6 +170,33 @@ class APIClient:
             dict: The response dictionary.
         """
         return self._request(method="DELETE", path=path, **kwargs)
+
+
+def error_message(response: dict, default: str = "Error") -> str:
+    """Readable error of an API answer: the "detail" given by FastAPI, if any."""
+    data = response.get("data") if response else None
+    if isinstance(data, dict) and "detail" in data:
+        detail = data["detail"]
+        if isinstance(detail, list):  # 422: list of the invalid fields
+            return "; ".join(
+                f"{error.get('loc', ['?'])[-1]}: {error.get('msg', '')}" for error in detail
+            )
+        return str(detail)
+    return str(data) if data else default
+
+
+def fetch_new_notifications() -> list[str]:
+    """Gets the new alert notifications and keeps them for the session.
+
+    The backend gives each notification once (F6): they are stored in
+    st.session_state["notifications"] so that the alerts page can show them again.
+    """
+    user = st.session_state.get("user") or {}
+    res = api_client.get(f"/alerts/user/{user.get('user_id')}/notifications")
+    new = res.get("data", {}).get("notifications", []) if res.get("status_code") == 200 else []
+    st.session_state.setdefault("notifications", [])
+    st.session_state["notifications"] = new + st.session_state["notifications"]
+    return new
 
 
 api_client = APIClient(API_URL)

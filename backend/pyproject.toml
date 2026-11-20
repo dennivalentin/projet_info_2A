@@ -22,7 +22,19 @@ dependencies = [
 
 # Dependencies used only for development, not for runtime
 [project.optional-dependencies]
-dev = ["bandit", "coverage", "httpx", "pylint", "pytest", "ruff"]
+dev = [
+    "bandit",
+    "coverage",
+    "httpx",
+    "mypy",
+    "pylint",
+    "pytest",
+    "ruff",
+    # type information of libraries that have none, for mypy
+    "types-psycopg2",
+    "types-PyYAML",
+    "types-requests",
+]
 
 [build-system]
 requires = ["setuptools>=61.0"]
@@ -43,6 +55,14 @@ ignore = ["B008", "E501"]
 [tool.ruff.format]
 quote-style = "double"
 indent-style = "space"
+
+[tool.mypy]
+# The code is in src/: mypy must read it there. Otherwise it finds the copy
+# installed by "uv sync" in .venv and skips it ("missing library stubs or py.typed marker"),
+# or does not find it at all ("Cannot find implementation or library stub").
+# $MYPY_CONFIG_FILE_DIR is the folder of this file: it works whatever folder mypy is run from.
+mypy_path = "$MYPY_CONFIG_FILE_DIR/src"
+explicit_package_bases = true
 
 [tool.pytest.ini_options]
 pythonpath = ["src"]

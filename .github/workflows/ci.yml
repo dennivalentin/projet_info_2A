@@ -71,6 +71,10 @@ jobs:
         working-directory: backend
         run: uv run --all-extras ruff check src tests
 
+      - name: Type check backend with mypy
+        working-directory: backend
+        run: uv run --all-extras mypy src
+
       - name: Security scan backend
         working-directory: backend
         run: uv run --all-extras bandit -r src
@@ -107,6 +111,10 @@ jobs:
       - name: Lint frontend with Ruff
         working-directory: frontend
         run: uv run --all-extras ruff check src
+
+      - name: Type check frontend with mypy
+        working-directory: frontend
+        run: uv run --all-extras mypy src
 
       - name: Security scan frontend
         working-directory: frontend

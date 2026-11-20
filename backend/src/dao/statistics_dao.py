@@ -26,9 +26,13 @@ class StatisticsDao(metaclass=Singleton):
         return self._run(query)
 
     def size_distribution(self) -> list[dict]:
-        """Query 2: number of NEOs per size class (mean estimated diameter, in km)."""
+        """Query 2: number of NEOs per size class (mean estimated diameter, in km).
+
+        NEOs declared by users without a diameter are counted as 'Unknown'.
+        """
         query = """
             SELECT CASE
+                       WHEN diameter_min IS NULL OR diameter_max IS NULL THEN '5. Unknown'
                        WHEN (diameter_min + diameter_max) / 2 < 0.025 THEN '1. < 25 m'
                        WHEN (diameter_min + diameter_max) / 2 < 0.14  THEN '2. 25 m - 140 m'
                        WHEN (diameter_min + diameter_max) / 2 < 1     THEN '3. 140 m - 1 km'

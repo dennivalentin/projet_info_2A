@@ -1,6 +1,7 @@
 from datetime import datetime
 from unittest.mock import MagicMock, patch
 
+import pytest
 from fastapi.testclient import TestClient
 
 from business_object.neo import Neo
@@ -11,8 +12,22 @@ from utils.security import get_current_user
 client = TestClient(app)
 
 
+@pytest.fixture
+def logged_in():
+    """Every NEO route needs a logged-in user."""
+    app.dependency_overrides[get_current_user] = lambda: User(user_id=2, username="obs")
+    yield
+    app.dependency_overrides.clear()
+
+
+def test_neo_routes_require_login():
+    assert client.post("/neo/search", json={}).status_code == 401
+    assert client.get("/neo/1").status_code == 401
+    assert client.get("/neo").status_code == 401
+
+
 @patch("controller.neo_controller.NeoService")
-def test_search_neos_endpoint(mock_service_class):
+def test_search_neos_endpoint(mock_service_class, logged_in):
     """Test POST /neo/search endpoint."""
     mock_service = MagicMock()
     mock_service_class.return_value = mock_service
@@ -41,7 +56,7 @@ def test_search_neos_endpoint(mock_service_class):
 
 
 @patch("controller.neo_controller.NeoService")
-def test_get_neo_detail_endpoint_found(mock_service_class):
+def test_get_neo_detail_endpoint_found(mock_service_class, logged_in):
     """Test GET /neo/{neo_id} when object exists."""
     mock_service = MagicMock()
     mock_service_class.return_value = mock_service
@@ -81,7 +96,7 @@ def test_get_neo_detail_endpoint_found(mock_service_class):
 
 
 @patch("controller.neo_controller.NeoService")
-def test_get_neo_detail_endpoint_not_found(mock_service_class):
+def test_get_neo_detail_endpoint_not_found(mock_service_class, logged_in):
     """Test GET /neo/{neo_id} when object does not exist."""
     mock_service = MagicMock()
     mock_service_class.return_value = mock_service
@@ -134,3 +149,18 @@ def test_create_user_neo_endpoint(mock_service_class):
     assert data["neo_id"] == 10
     assert data["name"] == "Amateur-Observer-1"
     assert data["origin"] == "USER"
+
+
+@pytest.mark.parametrize(
+    "payload",
+    [
+        {"name": "Bad", "diameter_min": -5, "diameter_max": 1},
+        {"name": "Bad", "diameter_min": 0.5, "diameter_max": 0.1},
+        {"name": ""},
+    ],
+)
+@patch("controller.neo_controller.NeoService")
+def test_create_neo_with_invalid_values_is_refused(mock_service_class, logged_in, payload):
+    """Negative diameters, min > max or an empty name give a 422, nothing is created."""
+    assert client.post("/neo", json=payload).status_code == 422
+    mock_service_class.return_value.create.assert_not_called()

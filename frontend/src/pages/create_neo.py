@@ -6,7 +6,7 @@ to guarantee they are never overwritten during automatic NASA data imports.
 
 import streamlit as st
 
-from utils.api_client import api_client
+from utils.api_client import api_client, error_message
 from utils.auth_guard import check_authentification
 from utils.log_init import get_page_logger
 
@@ -91,8 +91,9 @@ if submitted:
                 )
                 st.json(created_data)
 
-                if st.button("🔍 View in Explorer"):
-                    st.switch_page("pages/search_neo.py")
+                # A link, not a button: a button inside "if submitted" would never fire
+                # (clicking it reruns the page with submitted = False)
+                st.session_state.pop("search_results", None)  # the explorer reloads its results
+                st.page_link("pages/search_neo.py", label="View in Explorer", icon="🔍")
             else:
-                err_msg = response.get("data") if response else "Unknown server error"
-                st.error(f"Failed to create NEO: {err_msg}")
+                st.error(f"Failed to create NEO: {error_message(response, 'Unknown server error')}")

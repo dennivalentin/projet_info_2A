@@ -18,62 +18,54 @@ class NeoService:
     @log
     def create(
         self,
-        first_arg: str | None = None,
-        name: str | None = None,
+        name: str,
         absolute_magnitude: float | None = None,
         diameter_min: float | None = None,
         diameter_max: float | None = None,
         hazardous: bool = False,
-        url_nasa: str | None = None,
-        origin: str = "USER",
-        date_update: datetime | str | None = None,
-        neo_id: int | None = None,
-        nasa_id: str | None = None,
     ) -> Neo | None:
-        """Creates a new NEO in the system.
+        """Creates a NEO declared by a user (F4).
 
-        Supports both positional signatures:
-          - create(name, absolute_magnitude, ...)
-          - create(nasa_id, name, absolute_magnitude, ...)
-          - create(name="...", ...)
+        The NEO has the origin 'USER' and no NASA id: the NASA imports never
+        overwrite it.
+
+        Args:
+            name: Name of the NEO.
+            absolute_magnitude: Absolute magnitude (H), if known.
+            diameter_min: Estimated minimum diameter in km, if known.
+            diameter_max: Estimated maximum diameter in km, if known.
+            hazardous: True if the NEO is potentially hazardous.
+
+        Returns:
+            The created Neo, or None if the DAO could not save it.
+
+        Raises:
+            ValueError: If the name is empty or the diameters are not valid.
         """
-        if name is not None:
-            resolved_name = name
-            resolved_nasa_id = first_arg if first_arg is not None else nasa_id
-        else:
-            resolved_name = first_arg
-            resolved_nasa_id = nasa_id
-
-        if not resolved_name or not str(resolved_name).strip():
+        if not name or not name.strip():
             raise ValueError("NEO name cannot be empty")
-
-        if isinstance(date_update, str):
-            try:
-                resolved_date = datetime.fromisoformat(date_update)
-            except Exception:
-                resolved_date = datetime.now()
-        elif isinstance(date_update, datetime):
-            resolved_date = date_update
-        else:
-            resolved_date = datetime.now()
+        for diameter in (diameter_min, diameter_max):
+            if diameter is not None and diameter <= 0:
+                raise ValueError("A diameter must be positive")
+        if diameter_min is not None and diameter_max is not None and diameter_min > diameter_max:
+            raise ValueError("The minimum diameter cannot be larger than the maximum diameter")
 
         new_neo = Neo(
-            nasa_id=resolved_nasa_id,
-            name=str(resolved_name).strip(),
-            absolute_magnitude=(
-                float(absolute_magnitude) if absolute_magnitude is not None else None
-            ),
-            diameter_min=float(diameter_min) if diameter_min is not None else None,
-            diameter_max=float(diameter_max) if diameter_max is not None else None,
-            hazardous=bool(hazardous),
-            url_nasa=url_nasa,
-            origin=origin,
-            date_update=resolved_date,
-            neo_id=neo_id,
+            nasa_id=None,
+            name=name.strip(),
+            absolute_magnitude=absolute_magnitude,
+            diameter_min=diameter_min,
+            diameter_max=diameter_max,
+            hazardous=hazardous,
+            url_nasa=None,
+            origin="USER",
+            date_update=datetime.now(),
         )
 
         success = self._neo_dao.create(new_neo)
-        return new_neo if success else None
+        if not success:
+            return None
+        return new_neo
 
     @log
     def search(self, search_criteria: dict) -> list[Neo]:

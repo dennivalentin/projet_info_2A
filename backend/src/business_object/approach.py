@@ -28,6 +28,7 @@ class Approach:
     ):
         self._approach_id = approach_id
         self._neo_id = neo_id
+        self._approach_day: date | None
         if approach_day is not None:
             self._approach_day = approach_day
         elif isinstance(approach_date, datetime):
@@ -108,9 +109,7 @@ class Approach:
             "approach_id": self._approach_id,
             "neo_id": self._neo_id,
             "approach_day": (
-                self._approach_day.isoformat()
-                if hasattr(self._approach_day, "isoformat")
-                else str(self._approach_day)
+                self._approach_day.isoformat() if self._approach_day is not None else None
             ),
             "approach_date": (
                 self._approach_date.isoformat()

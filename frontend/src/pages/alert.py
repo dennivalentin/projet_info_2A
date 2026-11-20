@@ -2,7 +2,7 @@
 
 import streamlit as st
 
-from utils.api_client import api_client
+from utils.api_client import api_client, error_message, fetch_new_notifications
 from utils.auth_guard import check_authentification
 from utils.log_init import get_page_logger
 
@@ -13,29 +13,25 @@ logger = get_page_logger("alerts")
 
 check_authentification()
 
-user = st.session_state.get("user")
+user = st.session_state.get("user") or {}
 user_id = user.get("user_id")
 
 
 st.subheader("Triggered Notifications")
+st.caption(
+    "Each approach matching one of your active alerts is notified once. "
+    "The notifications of this session are listed here, newest first."
+)
 
 with st.spinner("Checking for triggered alerts..."):
-    notif_res = api_client.get(f"/alerts/user/{user_id}/notifications")
+    fetch_new_notifications()
 
-if notif_res["status_code"] == 200:
-    notifications = notif_res.get("data", {}).get("notifications", [])
-    if notifications:
-        for notif in notifications:
-            if isinstance(notif, dict):
-                label = notif.get("label") or notif.get("alert_name", "Alert")
-                detail = notif.get("message") or notif.get("detail", str(notif))
-                st.warning(f"**{label}** : {detail}")
-            else:
-                st.warning(str(notif))
-    else:
-        st.info("No active notifications. Nothing special to see.")
+notifications = st.session_state.get("notifications", [])
+if notifications:
+    for notif in notifications:
+        st.warning(notif)
 else:
-    st.error("Could not fetch notifications.")
+    st.info("No new notification. Nothing special to see.")
 
 st.divider()
 
@@ -89,8 +85,10 @@ with st.form("create_alert_form", clear_on_submit=True):
                 st.success(f"Alert '{alert_label}' successfully created!")
                 st.rerun()
             else:
-                err_detail = create_res.get("data", "Error while creating alert")
-                st.error(f"Failed to create alert: {err_detail}")
+                if create_res["status_code"] == 400:
+                    st.error("Alert not created: you may already have one with these criteria.")
+                else:
+                    st.error(f"Failed to create alert: {error_message(create_res)}")
 
 st.divider()
 
@@ -112,8 +110,8 @@ else:
         a_id = alert.get("alert_id")
         a_label = alert.get("label", f"Alert #{a_id}")
         is_active = alert.get("active", True)
-        d_min = alert.get("diameter_min", "None")
-        d_max = alert.get("distance_max", "None")
+        d_min = alert.get("diameter_min")
+        d_max = alert.get("distance_max")
         haz_only = "Yes" if alert.get("hazardous_only") else "No"
 
         with st.container(border=True):
@@ -123,8 +121,8 @@ else:
                 status_icon = "🟢 Active" if is_active else "⚪ Inactive"
                 st.markdown(f"**{a_label}** — `{status_icon}`")
                 st.caption(
-                    f"Min Diameter: **{d_min} km** | "
-                    f"Max Distance: **{d_max}** | "
+                    f"Min Diameter: **{f'{d_min} km' if d_min is not None else 'any'}** | "
+                    f"Max Distance: **{f'{d_max:,.0f} km' if d_max is not None else 'any'}** | "
                     f"Hazardous Only: **{haz_only}**"
                 )
 

@@ -1,6 +1,8 @@
 from datetime import datetime
 from unittest.mock import MagicMock
 
+import pytest
+
 from business_object.approach import Approach
 from business_object.neo import Neo
 from dao.approach_dao import ApproachDao
@@ -8,76 +10,20 @@ from dao.neo_dao import NeoDao
 from service.neo_service import NeoService
 
 
-def test_create_ok():
-    """Successfully create a Neo"""
-
+def test_created_neo_is_a_user_neo():
+    """A declared NEO has the origin USER and no NASA id, and its name is cleaned."""
     # GIVEN
-    (
-        nasa_id,
-        name,
-        absolute_magnitude,
-        diameter_min,
-        diameter_max,
-        hazardous,
-        url_nasa,
-        origin,
-        date_update,
-        neo_id,
-    ) = (None, "caillou", 1500, 200, 600, True, "", "USER", "2005-12-25", 262543)
-    NeoDao().create = MagicMock(return_value=True)
+    neo_dao = MagicMock(spec=NeoDao)  # injected: the NeoDao singleton is not modified
+    neo_dao.create.return_value = True
 
     # WHEN
-    neo = NeoService().create(
-        nasa_id,
-        name,
-        absolute_magnitude,
-        diameter_min,
-        diameter_max,
-        hazardous,
-        url_nasa,
-        origin,
-        date_update,
-        neo_id,
-    )
+    neo = NeoService(neo_dao=neo_dao).create(name="  caillou  ", diameter_min=0.2)
 
     # THEN
-    assert isinstance(neo, Neo) and neo.name == name
-
-
-def test_create_fail():
-    """Fail to create a neo because NeoDao().create returns False"""
-
-    # GIVEN
-    (
-        nasa_id,
-        name,
-        absolute_magnitude,
-        diameter_min,
-        diameter_max,
-        hazardous,
-        url_nasa,
-        origin,
-        date_update,
-        neo_id,
-    ) = (None, "caillou", 1500, 200, 600, True, "", "USER", "2005-12-25", 262543)
-    NeoDao().create = MagicMock(return_value=False)
-
-    # WHEN
-    neo = NeoService().create(
-        nasa_id,
-        name,
-        absolute_magnitude,
-        diameter_min,
-        diameter_max,
-        hazardous,
-        url_nasa,
-        origin,
-        date_update,
-        neo_id,
-    )
-
-    # THEN
-    assert neo is None
+    assert neo.name == "caillou"
+    assert neo.origin == "USER"
+    assert neo.nasa_id is None
+    neo_dao.create.assert_called_once_with(neo)
 
 
 def test_neo_service_create_success():
@@ -177,3 +123,15 @@ def test_neo_service_get_details():
     assert details["approaches"][0]["distance_km"] == 750000.0
     assert details["approaches"][0]["distance_au"] > 0
     assert details["approaches"][0]["body"] == "Earth"
+
+
+@pytest.mark.parametrize(
+    "diameters",
+    [{"diameter_min": -1.0}, {"diameter_max": 0.0}, {"diameter_min": 0.5, "diameter_max": 0.1}],
+)
+def test_neo_service_create_refuses_invalid_diameters(diameters):
+    """A diameter must be positive, and the minimum cannot exceed the maximum."""
+    mock_neo_dao = MagicMock(spec=NeoDao)
+    with pytest.raises(ValueError):
+        NeoService(neo_dao=mock_neo_dao).create(name="Bad", **diameters)
+    mock_neo_dao.create.assert_not_called()

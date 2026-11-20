@@ -9,7 +9,7 @@ import streamlit as st
 def check_authentification():
     """Checks if the user is authenticated.
 
-    If the user is not logged, he is redirected to the home page.
+    If the user is not logged in, they are sent back to the home page.
     """
     if not st.session_state.get("access_token"):
         logging.info("Not logged in, return to the home page")

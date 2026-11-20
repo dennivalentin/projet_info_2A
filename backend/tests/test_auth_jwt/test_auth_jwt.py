@@ -47,7 +47,6 @@ def fake_user_database():
     fake_user_dao.find_by_username.side_effect = lambda username: (
         FAKE_ADMIN if username == "admin" else None
     )
-    fake_user_dao.find_by_token.return_value = None
     with (
         patch("dao.user_dao.UserDao", return_value=fake_user_dao),
         patch("service.user_service.UserDao", return_value=fake_user_dao),

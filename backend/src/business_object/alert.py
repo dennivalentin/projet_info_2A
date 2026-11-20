@@ -1,7 +1,5 @@
 from datetime import datetime
 
-from business_object.neo import Neo
-
 
 class Alert:
     """Class describing an alert configured by a user.
@@ -29,24 +27,16 @@ class Alert:
         active: bool = True,
         creation_date: datetime | None = None,
         last_eval_date: datetime | None = None,
-        # Backward-compatibility aliases
-        neo_id: int | None = None,
-        obj_neo: Neo | None = None,
-        min_diameter: float | None = None,
-        max_distance: float | None = None,
-        is_active: bool | None = None,
     ):
         self._alert_id = alert_id
         self._user_id = user_id
-        self._label = label or (f"NEO-{neo_id}" if neo_id is not None else "Alert")
-        self._distance_max = distance_max if distance_max is not None else max_distance
-        self._diameter_min = diameter_min if diameter_min is not None else min_diameter
+        self._label = label or "Alert"
+        self._distance_max = distance_max
+        self._diameter_min = diameter_min
         self._hazardous_only = bool(hazardous_only)
-        self._active = active if is_active is None else is_active
+        self._active = active
         self._creation_date = creation_date or datetime.now()
         self._last_eval_date = last_eval_date
-        self._neo_id = neo_id
-        self._object = obj_neo
 
     @property
     def alert_id(self) -> int | None:
@@ -81,27 +71,11 @@ class Alert:
         self._distance_max = float(value) if value is not None else None
 
     @property
-    def max_distance(self) -> float | None:
-        return self._distance_max
-
-    @max_distance.setter
-    def max_distance(self, value: float | None) -> None:
-        self._distance_max = float(value) if value is not None else None
-
-    @property
     def diameter_min(self) -> float | None:
         return self._diameter_min
 
     @diameter_min.setter
     def diameter_min(self, value: float | None) -> None:
-        self._diameter_min = float(value) if value is not None else None
-
-    @property
-    def min_diameter(self) -> float | None:
-        return self._diameter_min
-
-    @min_diameter.setter
-    def min_diameter(self, value: float | None) -> None:
         self._diameter_min = float(value) if value is not None else None
 
     @property
@@ -121,14 +95,6 @@ class Alert:
         self._active = bool(value)
 
     @property
-    def is_active(self) -> bool:
-        return self._active
-
-    @is_active.setter
-    def is_active(self, value: bool) -> None:
-        self._active = bool(value)
-
-    @property
     def creation_date(self) -> datetime:
         return self._creation_date
 
@@ -143,22 +109,6 @@ class Alert:
     @last_eval_date.setter
     def last_eval_date(self, value: datetime | None) -> None:
         self._last_eval_date = value
-
-    @property
-    def neo_id(self) -> int | None:
-        return self._neo_id
-
-    @neo_id.setter
-    def neo_id(self, value: int | None) -> None:
-        self._neo_id = value
-
-    @property
-    def obj_neo(self) -> Neo | None:
-        return self._object
-
-    @obj_neo.setter
-    def obj_neo(self, value: Neo | None) -> None:
-        self._object = value
 
     def to_dict(self) -> dict:
         """Returns the object as a dict (JSON-friendly) for the API responses."""
@@ -180,7 +130,6 @@ class Alert:
                 if self._last_eval_date and hasattr(self._last_eval_date, "isoformat")
                 else (str(self._last_eval_date) if self._last_eval_date else None)
             ),
-            "neo_id": self._neo_id,
         }
 
     def __repr__(self) -> str:

@@ -21,8 +21,13 @@ class FavouriteService:
         """Adds a NEO to the user's favourites.
 
         Returns:
-            bool: True if the favourite was added, False otherwise.
+            bool: True if the favourite was added, False if it already was a favourite.
+
+        Raises:
+            ValueError: If the NEO does not exist.
         """
+        if NeoDao().find_by_id(neo_id) is None:
+            raise ValueError(f"NEO {neo_id} not found")
         added = FavouriteDao().create(neo_id, user_id)
         if not added:
             logger.warning(f"NEO {neo_id} not added to the favourites of user {user_id}")
@@ -59,9 +64,9 @@ class FavouriteService:
         return list_neo
 
     @log
-    def approches_favourite(self, user_id: int) -> dict[int, list[Approach]]:
+    def approaches_favourite(self, user_id: int) -> dict[int, list[Approach]]:
         """
-        list of all the approches by the favourites Neo of a user
+        list of all the approaches of the favourites Neo of a user
 
         Parameters
         ----------
@@ -93,7 +98,7 @@ class FavouriteService:
             KeyError: If the NEO is not one of the user's favourites.
             ValueError: If the NEO has no recorded approach.
         """
-        list_approaches = self.approches_favourite(user_id)[neo_id]
+        list_approaches = self.approaches_favourite(user_id)[neo_id]
 
         if not list_approaches:
             raise ValueError(f"No data available for Neo : {neo_id}.")

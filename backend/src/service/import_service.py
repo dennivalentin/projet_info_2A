@@ -3,7 +3,6 @@
 import os
 import time
 from datetime import date, datetime, timedelta
-from pathlib import Path
 
 import requests
 from dotenv import load_dotenv
@@ -12,7 +11,6 @@ from business_object.approach import Approach
 from business_object.import_bo import Import
 from business_object.neo import Neo
 from dao.approach_dao import ApproachDao
-from dao.db_connection import DBConnection
 from dao.import_dao import ImportDao
 from dao.neo_dao import NeoDao
 from utils.log_utils import get_logger, log
@@ -25,7 +23,9 @@ MAX_DAYS_PER_CALL = 7  # limit of the NASA /feed endpoint
 REQUEST_TIMEOUT_S = 30
 MAX_RATE_LIMIT_RETRIES = 3  # DEMO_KEY is limited to 30 calls/hour and 50 calls/day
 RATE_LIMIT_PAUSE_S = 60
-DATA_PATH = Path(__file__).resolve().parents[3] / "data"
+PAST_DAYS = 730  # import window: 2 years back...
+FUTURE_DAYS = 365  # ... and 1 year ahead
+REFRESH_DAYS = 30  # days re-imported once a day to get the newly discovered NEOs
 
 
 class ImportService:
@@ -49,7 +49,8 @@ class ImportService:
             start_date: First day of the period.
             end_date: Last day of the period.
             user_id: User who triggered the import.
-            trigger_type: How the import was triggered ('MANUAL' or 'USUAL').
+            trigger_type: Why the import was run ('MANUAL' first import, 'USUAL' update,
+                'REFRESH' daily refresh of the next days).
 
         Returns:
             dict: status, number of API calls, of NEOs and of approaches imported.
@@ -140,7 +141,8 @@ class ImportService:
         for date_str, neo_list in feed.items():
             for item in neo_list:
                 neo = self._neo_from_nasa(item, date_str)
-                if not neo_dao.create(neo):  # insert, or update if the NEO is already known
+                saved = neo_dao.create(neo)  # insert, or update if the NEO is already known
+                if not saved or neo.neo_id is None:
                     continue
                 import_task._nb_neo += 1
                 for approach_data in item.get("close_approach_data", []):
@@ -193,56 +195,59 @@ class ImportService:
     def import_all(self, user_id: int = 1) -> dict:
         """Full import: from 2 years ago to 1 year ahead (first launch)."""
         today = date.today()
-        start = today - timedelta(days=730)
-        end = today + timedelta(days=365)
+        start = today - timedelta(days=PAST_DAYS)
+        end = today + timedelta(days=FUTURE_DAYS)
         return self.import_neo_range(start, end, user_id=user_id, trigger_type="MANUAL")
 
     @log
-    def import_update(self, user_id: int = 1) -> dict:
-        """Imports only what is missing since the last successful import.
+    def import_update(self, user_id: int = 1, refresh: bool = False) -> dict:
+        """Imports what is missing since the last successful import.
 
-        With no successful import yet, the full import is run instead.
+        1. With no successful import yet, the full import is run instead.
+        2. Otherwise, the days between the end of the last import and one year
+           ahead are imported (this also resumes an interrupted 'partial' import).
+        3. With `refresh`, the next REFRESH_DAYS days are imported again, once a
+           day, to get the NEOs discovered since the last import (about 5 calls).
 
         Returns:
-            dict: The result of the import, or status 'up_to_date'.
+            dict: The total of the imports run, or status 'up_to_date'.
         """
         today = date.today()
-        last_import = ImportDao().find_last_successful_import()
+        import_dao = ImportDao()
+        last_import = import_dao.find_last_successful_import()
 
         if last_import is None:
             return self.import_all(user_id=user_id)
 
-        last_end = last_import._end_date
-        if today + timedelta(days=365) < last_end + timedelta(days=1):
+        results = []
+        horizon = today + timedelta(days=FUTURE_DAYS)
+        if last_import._end_date < horizon:
+            results.append(
+                self.import_neo_range(
+                    last_import._end_date + timedelta(days=1),
+                    horizon,
+                    user_id=user_id,
+                    trigger_type="USUAL",
+                )
+            )
+        if refresh and not import_dao.refreshed_today():
+            results.append(
+                self.import_neo_range(
+                    today,
+                    today + timedelta(days=REFRESH_DAYS),
+                    user_id=user_id,
+                    trigger_type="REFRESH",
+                )
+            )
+
+        if not results:
             return {"status": "up_to_date", "nb_calls": 0, "nb_neo": 0, "nb_approaches": 0}
+        total = {
+            key: sum(result.get(key, 0) for result in results)
+            for key in ("nb_calls", "nb_neo", "nb_approaches")
+        }
+        return {"status": results[-1].get("status"), **total}
 
-        return self.import_neo_range(
-            last_end + timedelta(days=1),
-            today + timedelta(days=365),
-            user_id=user_id,
-            trigger_type="USUAL",
-        )
-
-    @log
-    def reset_database(self) -> bool:
-        """Re-creates all the tables (init_db.sql) and loads the seed data (pop_db.sql).
-
-        Raises:
-            FileNotFoundError: If init_db.sql is missing.
-        """
-        sql_path = DATA_PATH / "init_db.sql"
-        if not sql_path.exists():
-            raise FileNotFoundError(f"init_db.sql not found at {sql_path}")
-
-        sql_content = sql_path.read_text(encoding="utf-8")
-
-        # Seed data (admin account, test users...): init_db.sql creates no user
-        pop_path = DATA_PATH / "pop_db.sql"
-        if pop_path.exists():
-            sql_content += "\n" + pop_path.read_text(encoding="utf-8")
-
-        with DBConnection().connection as conn:
-            with conn.cursor() as cur:
-                cur.execute(sql_content)
-        logger.info("Database successfully reset via init_db.sql and pop_db.sql")
-        return True
+    def find_last_import(self) -> Import | None:
+        """The last successful (or partial) import, None if no data was ever imported."""
+        return ImportDao().find_last_successful_import()

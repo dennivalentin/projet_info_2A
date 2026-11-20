@@ -6,7 +6,7 @@ Provides options to log in or to register a new account.
 import streamlit as st
 from streamlit import config
 
-from utils.api_client import api_client
+from utils.api_client import api_client, error_message
 from utils.log_init import get_page_logger
 
 if "user" in st.session_state:
@@ -80,8 +80,7 @@ with tab_register:
                 if reg_res and reg_res.get("status_code") == 200:
                     st.success("Account created! You can now log in.")
                 else:
-                    err = reg_res.get("data") if reg_res else "Error"
-                    st.error(f"Registration failed: {err}")
+                    st.error(f"Registration failed: {error_message(reg_res)}")
             except Exception as e:
                 st.error(f"Error: {e}")
 
