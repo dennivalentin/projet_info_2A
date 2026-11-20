@@ -29,7 +29,7 @@ day = st.date_input("Day", value=date.today(), min_value=date(1995, 6, 16), max_
 
 # Call the API
 with st.spinner("Asking NASA..."):
-    res = api_client.get(f"/apod/?day={day.isoformat()}")
+    res = api_client.get("/apod/", params={"day": day.isoformat()})
 
 if not res or res.get("status_code") != 200:
     err = res.get("data") if res else "Connection failed"

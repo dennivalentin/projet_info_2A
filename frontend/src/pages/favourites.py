@@ -1,8 +1,11 @@
 """Streamlit page for the favourite NEOs: add, list, approaches, graph and delete."""
 
+import base64
+
+import pandas as pd
 import streamlit as st
 
-from utils.api_client import api_client
+from utils.api_client import api_client, error_message
 from utils.auth_guard import check_authentification
 from utils.log_init import get_page_logger
 
@@ -13,8 +16,8 @@ logger = get_page_logger("favourites")
 
 check_authentification()
 
-user = st.session_state.get("user")
-user_id = user.get("user_id") or user.get("id", 1)
+user = st.session_state.get("user") or {}
+user_id = user.get("user_id")
 
 
 st.subheader("Add a Favourite NEO")
@@ -31,11 +34,10 @@ with st.form("add_favourite_form", clear_on_submit=True):
         add_response = api_client.post("/favourites/", json=req)
 
         if add_response["status_code"] in (200, 201):
-            st.success(f"NEO #{neo_id_input} successfully added!")
+            st.toast(f"NEO #{neo_id_input} successfully added!")
             st.rerun()
         else:
-            err_msg = add_response.get("data", "Error adding favourite")
-            st.error(f"Failed to add favourite: {err_msg}")
+            st.error(f"Failed to add favourite: {error_message(add_response)}")
 
 st.divider()
 
@@ -54,13 +56,12 @@ else:
     st.subheader("List of your favourite(s)")
     table_data = []
     for neo in favourites:
-        neo_id = neo.get("id_neo") or neo.get("neo_id") or neo.get("id")
         table_data.append(
             {
-                "ID": neo_id,
-                "Name": neo.get("name", "Inconnu"),
-                "Diametre Min (km)": neo.get("diameter_min", "-"),
-                "Diametre Max (km)": neo.get("diameter_max", "-"),
+                "ID": neo["neo_id"],
+                "Name": neo["name"],
+                "Diameter Min (km)": neo.get("diameter_min"),
+                "Diameter Max (km)": neo.get("diameter_max"),
                 "Hazardous": "Yes" if neo.get("hazardous") else "No",
             }
         )
@@ -80,17 +81,26 @@ else:
                 st.write("No approaches available")
             else:
                 for neo in favourites:
-                    neo_id_str = str(neo.get("id_neo") or neo.get("neo_id") or neo.get("id"))
-                    neo_name = neo.get("name", f"NEO #{neo_id_str}")
+                    # JSON keys are strings: the approaches of NEO 12 are under "12"
+                    neo_id_str = str(neo["neo_id"])
+                    neo_name = neo["name"]
 
                     approaches = approaches_dict.get(neo_id_str, [])
                     with st.expander(
                         f"Approaches for {neo_name} ({len(approaches)} approaches recorded)"
                     ):
                         if approaches:
-                            st.dataframe(approaches, use_container_width=True)
+                            df_approaches = pd.DataFrame(approaches)
+                            st.dataframe(df_approaches, use_container_width=True)
+                            st.download_button(
+                                "📥 Export the distance history (CSV)",
+                                data=df_approaches.to_csv(index=False).encode("utf-8"),
+                                file_name=f"approaches_neo_{neo_id_str}.csv",
+                                mime="text/csv",
+                                key=f"csv_{neo_id_str}",
+                            )
                         else:
-                            st.write("No approaches availabe")
+                            st.write("No approaches available")
         else:
             st.error("Error during the loading of approaches")
 
@@ -100,27 +110,34 @@ else:
     selected_fav = st.selectbox(
         "Choose a favourite NEO to plot",
         favourites,
-        format_func=lambda item: f"{item.get('name', 'NEO')} (ID: {item.get('neo_id')})",
+        format_func=lambda item: f"{item['name']} (ID: {item['neo_id']})",
     )
 
     if st.button("Display Neo infos"):
-        target_id = selected_fav.get("neo_id")
-        logger.info(f"Displaying graph for neo_id={selected_fav['neo_id']}")
+        target_id = selected_fav["neo_id"]
+        logger.info(f"Displaying graph for neo_id={target_id}")
         with st.spinner("Generating plot..."):
             graph_response = api_client.get(f"/favourites/user/{user_id}/neo/{target_id}/graph")
 
         if graph_response["status_code"] == 200:
             img_b64 = graph_response["data"]["image"]
-            st.image(img_b64, caption=f"Graph for {selected_fav.get('name', 'NEO')}")
+            st.image(img_b64, caption=f"Graph for {selected_fav['name']}")
+            # The API sends a data URL "data:image/png;base64,...": decoded for the export
+            st.download_button(
+                "📥 Download the graph (PNG)",
+                data=base64.b64decode(img_b64.split(",", 1)[1]),
+                file_name=f"distance_neo_{target_id}.png",
+                mime="image/png",
+            )
         else:
-            st.error("Unable to generate trajectory graph for this NEO.")
+            st.error(f"Unable to generate the graph: {error_message(graph_response)}")
 
     st.divider()
 
     st.subheader("Manage Favourites")
     for fav in favourites:
-        f_neo_id = fav.get("neo_id")
-        f_name = fav.get("name", "Unknown NEO")
+        f_neo_id = fav["neo_id"]
+        f_name = fav["name"]
         col_name, col_del = st.columns([4, 1])
         col_name.write(f"**{f_name}** (ID: `{f_neo_id}`)")
 
@@ -131,7 +148,7 @@ else:
                 st.success("Favourite deleted")
                 st.rerun()
             else:
-                st.error(del_response.get("data", "Error deleting favourite"))
+                st.error(error_message(del_response, "Error deleting favourite"))
 
 if st.button("Back to menu", type="primary"):
     st.switch_page("pages/neo_menu.py")

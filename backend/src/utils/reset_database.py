@@ -17,8 +17,11 @@ TEST_SCHEMA = "project_test_dao"
 class ResetDatabase(metaclass=Singleton):
     """Drops and re-creates a schema, then fills it with seed data.
 
-    Used by the DAO unit tests, which run on their own schema
-    (project_test_dao) so that they never touch the application data.
+    Used in three places:
+    - on the first start of the API, when the database is empty (main.run_init_db)
+    - by the administrators, with the "Reset database" button (POST /reset_database)
+    - by the DAO unit tests, which run on their own schema (project_test_dao)
+      so that they never touch the application data
     """
 
     def __init__(self):

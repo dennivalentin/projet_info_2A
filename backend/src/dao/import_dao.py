@@ -111,3 +111,17 @@ class ImportDao:
                 )
                 task._import_id = row["import_id"]
                 return task
+
+    def refreshed_today(self) -> bool:
+        """Tells whether the daily refresh of the next days already succeeded today."""
+        query = """
+            SELECT 1 FROM import
+            WHERE trigger_type = 'REFRESH'
+              AND status = 'success'
+              AND import_date >= CURRENT_DATE
+            LIMIT 1;
+        """
+        with DBConnection().connection as conn:
+            with conn.cursor() as cur:
+                cur.execute(query)
+                return cur.fetchone() is not None

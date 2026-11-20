@@ -6,9 +6,9 @@ for NEOs, Dashboard, Statistics, and Authentication.
 
 import os
 from contextlib import asynccontextmanager
-from pathlib import Path
 
-from fastapi import FastAPI, Request, status
+from fastapi import FastAPI, Request
+from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse, RedirectResponse
 
@@ -27,12 +27,13 @@ from controller import (  # noqa: E402 (needs the .env loaded above)
     login_controller,
     neo_controller,
     statistics_controller,
+    user_controller,
 )
+from service.import_scheduler import DailyImportScheduler  # noqa: E402
 from utils.log_utils import LogMiddleware, get_logger, initialize_logs  # noqa: E402
+from utils.reset_database import ResetDatabase  # noqa: E402
 
 logger = get_logger(__name__)
-
-INIT_DB_PATH = Path(__file__).resolve().parents[2] / "data" / "init_db.sql"
 
 # Schema fixes applied to databases created with an older init_db.sql
 MIGRATIONS = [
@@ -47,18 +48,11 @@ MIGRATIONS = [
 
 def run_init_db():
     """Creates the tables and the seed data on the first launch, or applies MIGRATIONS."""
-    sql_path = INIT_DB_PATH
-    if not sql_path.exists():
-        logger.error(f"init_db.sql not found at {sql_path}")
-        return
-
     try:
         with DBConnection().connection as conn:
             with conn.cursor() as cur:
-                cur.execute(f"CREATE SCHEMA IF NOT EXISTS {os.environ['POSTGRES_SCHEMA']};")
-            with conn.cursor() as cur:  # check if there is already a db in cloudbeaver
-                # The connection uses a RealDictCursor: rows are dicts, not tuples.
                 # Only look in the current schema (POSTGRES_SCHEMA), not in the whole database.
+                # If the schema does not exist yet, current_schema() is NULL: 0 table found.
                 cur.execute("""
                     SELECT COUNT(*) AS nb_tables
                     FROM information_schema.tables
@@ -67,28 +61,32 @@ def run_init_db():
                     """)
                 already_initialized = cur.fetchone()["nb_tables"] == 5
 
-                if not already_initialized:
-                    logger.info("Table empty: initialization")
-                    with open(sql_path, encoding="utf-8") as f:
-                        cur.execute(f.read())
-                    # Seed data (admin account, test users...): init_db.sql creates no user
-                    pop_path = sql_path.with_name("pop_db.sql")
-                    if pop_path.exists():
-                        cur.execute(pop_path.read_text(encoding="utf-8"))
-                    logger.info("Table initialized")
-                else:
-                    logger.info("Table already existing, applying schema migrations")
+        if not already_initialized:
+            logger.info("Empty database: creation of the tables and of the seed data")
+            ResetDatabase().run()
+        else:
+            logger.info("Tables already existing, applying schema migrations")
+            with DBConnection().connection as conn:
+                with conn.cursor() as cur:
                     for migration in MIGRATIONS:
                         cur.execute(migration)
     except Exception as e:
         logger.error(f"Error init db : {e}")
 
 
-@asynccontextmanager  # run code at the very beggining of the app
+@asynccontextmanager  # run code at the very beginning of the app
 async def lifespan(app: FastAPI):
-    """Runs at the start of the web service, before the first request."""
+    """Runs at the start of the web service, before the first request.
+
+    Creates the database if needed, then starts the automatic daily NASA import
+    (FO7), unless AUTO_IMPORT=false in .env.
+    """
     run_init_db()
+    scheduler = DailyImportScheduler()
+    if os.getenv("AUTO_IMPORT", "true").lower() != "false":
+        scheduler.start()
     yield
+    scheduler.stop()
 
 
 app = FastAPI(title="NEO-Watch Webservice", lifespan=lifespan)
@@ -108,9 +106,10 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 
     logger.error(f"Validation Error\nErrors: {exc.errors()}\nBody: {body_str}")
 
+    # jsonable_encoder: an error can contain the exception itself (not JSON serializable)
     return JSONResponse(
-        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-        content={"detail": exc.errors(), "body": body_str},
+        status_code=422,
+        content=jsonable_encoder({"detail": exc.errors(), "body": body_str}),
     )
 
 
@@ -123,6 +122,7 @@ app.include_router(login_controller.router, prefix="/login", tags=["Login"])
 app.include_router(alert_controller.router)
 app.include_router(favourite_controller.router)
 app.include_router(import_controller.router)
+app.include_router(user_controller.router)
 
 
 @app.get("/", include_in_schema=False)
@@ -133,8 +133,6 @@ async def redirect_to_docs():
 
 # Run the FastAPI application
 if __name__ == "__main__":
-    import os
-
     import uvicorn
 
     uvicorn.run(

@@ -1,14 +1,13 @@
 """Streamlit main menu for NEO-Watch.
 
-Gives access to every feature of the application, starts the daily NASA
-data update and, for administrators, the data management tools.
+Gives access to every feature of the application, shows the new alert
+notifications once logged in and, for administrators, the management tools.
+The NASA data is updated by the backend itself, every day (FO7).
 """
-
-from datetime import date
 
 import streamlit as st
 
-from utils.api_client import api_client
+from utils.api_client import api_client, error_message, fetch_new_notifications
 from utils.auth_guard import check_authentification
 from utils.log_init import get_page_logger
 
@@ -62,6 +61,18 @@ FEATURES = [
 st.title("🔭 NEO-Watch")
 st.markdown(f"Welcome, **{username}**! Choose a feature:")
 
+# F6: the notifications are evaluated when the user logs in (once per session)
+if not st.session_state.get("notifications_checked"):
+    st.session_state["notifications_checked"] = True
+    new_notifications = fetch_new_notifications()
+    if new_notifications:
+        with st.container(border=True):
+            st.markdown(f"🔔 **{len(new_notifications)} new notification(s)**")
+            for notification in new_notifications[:5]:
+                st.warning(notification)
+            if len(new_notifications) > 5:
+                st.caption("See all of them on the Alerts page.")
+
 columns = st.columns(2)
 for index, (title, description, page) in enumerate(FEATURES):
     with columns[index % 2], st.container(border=True):
@@ -78,20 +89,6 @@ if st.button("🚪 Log out", type="secondary"):
     st.switch_page("pages/home.py")
 
 
-today_str = str(date.today())
-
-if st.session_state.get("daily_update_done") != today_str:
-    # Mark it first: the import must be launched only once per session and per day
-    st.session_state["daily_update_done"] = today_str
-    last_res = api_client.get("/import/last")
-    if last_res.get("status_code") == 200:
-        last_date = last_res.get("data", {}).get("last_end_date")
-        if last_date is None or last_date < today_str:
-            # The backend runs the NASA import in the background and answers at once
-            sync_res = api_client.post("/import/update")
-            if sync_res.get("status_code") == 200:
-                st.toast("NASA data update started in the background")
-
 status_res = api_client.get("/import/status")
 if status_res.get("status_code") == 200 and status_res.get("data", {}).get("running"):
     st.info(
@@ -102,9 +99,22 @@ if status_res.get("status_code") == 200 and status_res.get("data", {}).get("runn
 
 if user.get("role") == "admin":
     st.markdown("---")
-    st.subheader("🛠️ Manage data")
+    st.subheader("🛠️ Administration")
 
-    col_reset, col_sync = st.columns(2)
+    last_res = api_client.get("/import/last")
+    if last_res.get("status_code") == 200:
+        last_date = last_res.get("data", {}).get("last_end_date")
+        st.caption(
+            f"NASA data imported up to **{last_date}**. It is updated automatically every day."
+            if last_date
+            else "No NASA data imported yet: the first import starts with the API."
+        )
+
+    col_users, col_reset, col_sync = st.columns(3)
+
+    with col_users:
+        if st.button("👥 Manage users", use_container_width=True):
+            st.switch_page("pages/admin.py")
 
     with col_reset:
         if st.button("🗑️ Reset database", type="secondary", use_container_width=True):
@@ -114,13 +124,11 @@ if user.get("role") == "admin":
 
             if response.get("status_code") == 200:
                 logger.info("Database successfully reset")
-                st.session_state.pop("daily_update_done", None)
-                st.toast("Database succesfully reset ✅")
+                st.toast("Database successfully reset ✅")
                 st.rerun()
             else:
                 logger.error("Error during database reset")
-                err_msg = response.get("data", {}).get("detail", "Fail during the reset")
-                st.error(f"Error: {err_msg}")
+                st.error(f"Error: {error_message(response, 'Fail during the reset')}")
 
     with col_sync:
         if st.button("🔄 Manual update", type="primary", use_container_width=True):
@@ -135,5 +143,4 @@ if user.get("role") == "admin":
                     st.toast("Update started in the background ✅")
             else:
                 logger.error("Error during manual sync")
-                err_msg = response.get("data", {}).get("detail", "Fail during import")
-                st.error(f"Error: {err_msg}")
+                st.error(f"Error: {error_message(response, 'Fail during import')}")

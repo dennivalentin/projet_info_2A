@@ -1,10 +1,18 @@
 import hmac
 
+from fastapi import HTTPException
+
+from business_object.connection import Connection
 from business_object.user import User
 from dao.connection_dao import ConnectionDao
 from dao.user_dao import UserDao
 from utils.log_utils import get_logger, log
-from utils.security import create_access_token, create_refresh_token, hash_password
+from utils.security import (
+    create_access_token,
+    create_refresh_token,
+    decode_token,
+    hash_password,
+)
 
 logger = get_logger(__name__)
 
@@ -44,15 +52,12 @@ class UserService:
         return UserDao().find_by_username(username)
 
     @log
-    def login(
-        self, username: str, password: str, access_token: str | None = None
-    ) -> tuple[User, str, str] | None:
+    def login(self, username: str, password: str) -> tuple[User, str, str] | None:
         """Authenticates a user and records the connection.
 
         Args:
             username: The username.
             password: The plain password.
-            access_token: Optional token to override.
 
         Returns:
             Tuple of (User, access_token, refresh_token) if successful, None otherwise.
@@ -66,13 +71,7 @@ class UserService:
         if not hmac.compare_digest(user.password_hash, pwd_hash):
             return None
 
-        payload = {
-            "sub": user.username,
-            "user_id": user.user_id,
-            "role": user.role,
-        }
-        acc_tok = access_token or create_access_token(payload)
-        ref_tok = create_refresh_token(payload)
+        acc_tok, ref_tok = self._create_tokens(user)
 
         # The connection history is only informative: a failure must not block the login
         try:
@@ -81,6 +80,45 @@ class UserService:
             logger.warning(f"Connection of user {user.user_id} not recorded: {e}")
 
         return user, acc_tok, ref_tok
+
+    @log
+    def refresh(self, refresh_token: str) -> tuple[User, str, str]:
+        """Gives new tokens in exchange for a valid refresh token.
+
+        Args:
+            refresh_token: The refresh token received at login.
+
+        Returns:
+            Tuple of (User, access_token, refresh_token).
+
+        Raises:
+            ValueError: If the token is invalid, expired, not a refresh token,
+                or if its user no longer exists.
+        """
+        try:
+            payload = decode_token(refresh_token)
+        except HTTPException:
+            raise ValueError("Invalid or expired refresh token") from None
+
+        if payload.get("type") != "refresh":
+            raise ValueError("Invalid token type: refresh token expected")
+
+        user = UserDao().find_by_username(payload.get("sub"))
+        if user is None:
+            raise ValueError("User not found")
+
+        access_token, new_refresh_token = self._create_tokens(user)
+        return user, access_token, new_refresh_token
+
+    @staticmethod
+    def _create_tokens(user: User) -> tuple[str, str]:
+        """Creates the access token and the refresh token of a user."""
+        payload = {
+            "sub": user.username,
+            "user_id": user.user_id,
+            "role": user.role,
+        }
+        return create_access_token(payload), create_refresh_token(payload)
 
     @log
     def make_admin(self, user_id: int) -> bool:
@@ -100,3 +138,19 @@ class UserService:
             raise ValueError("The user could not be found")
 
         return UserDao().delete(user.user_id)
+
+    @log
+    def list_users(self) -> list[User]:
+        """All the accounts, sorted by username (administration, F1)."""
+        return UserDao().find_all()
+
+    @log
+    def connection_history(self, user_id: int) -> list[Connection]:
+        """The logins of a user, latest first (administration, F1).
+
+        Raises:
+            ValueError: If the user does not exist.
+        """
+        if UserDao().find_by_id(user_id) is None:
+            raise ValueError("The user could not be found")
+        return ConnectionDao().find_by_user(user_id)

@@ -6,13 +6,13 @@ import requests
 from fastapi import APIRouter, Depends, HTTPException
 
 from service.apod_service import ApodService
-from utils.security import verify_token
+from utils.security import get_current_user
 
 router = APIRouter()
 
 
 @router.get("/", tags=["APOD"])
-def get_apod(day: date | None = None, user=Depends(verify_token)):
+def get_apod(day: date | None = None, user=Depends(get_current_user)):
     """NASA's picture of the day (today, or `day`) - logged-in users only."""
     try:
         return ApodService().get_picture_of_the_day(day).to_dict()

@@ -42,12 +42,12 @@ class UserDao(metaclass=Singleton):
         return nb_affected_rows == 1
 
     @log
-    def find_by_id(self, user_id: int) -> User:
+    def find_by_id(self, user_id: int) -> User | None:
         """Find a user by their id.
         Args:
             user_id (int): The ID of the user to find
         Returns:
-            User matching the given id
+            User matching the given id, or None if not found.
         """
         try:
             with DBConnection().connection as connection:
@@ -63,18 +63,9 @@ class UserDao(metaclass=Singleton):
             logger.error(e)
             raise
 
-        user = None
-        if res:
-            user = User(
-                user_id=res["user_id"],
-                username=res["username"],
-                email=res["email"],
-                password_hash=res["password_hash"],
-                creation_date=res["creation_date"],
-                role=res["role"],
-            )
-
-        return user
+        if not res:
+            return None
+        return self._map_row_to_user(res)
 
     @log
     def find_all(self) -> list[User]:
@@ -97,20 +88,8 @@ class UserDao(metaclass=Singleton):
             raise
 
         users_list = []
-
-        if res:
-            for row in res:
-                user = User(
-                    user_id=row["user_id"],
-                    username=row["username"],
-                    email=row["email"],
-                    password_hash=row["password_hash"],
-                    creation_date=row["creation_date"],
-                    role=row["role"],
-                )
-
-                users_list.append(user)
-
+        for row in res:
+            users_list.append(self._map_row_to_user(row))
         return users_list
 
     @log
@@ -173,7 +152,7 @@ class UserDao(metaclass=Singleton):
         return res > 0
 
     @log
-    def find_by_username(self, username: str) -> User:
+    def find_by_username(self, username: str) -> User | None:
         """Find a user by their username.
 
         Args:
@@ -196,63 +175,12 @@ class UserDao(metaclass=Singleton):
             logger.error(e)
             raise
 
-        user = None
-
-        if res:
-            user = User(
-                user_id=res["user_id"],
-                username=res["username"],
-                email=res["email"],
-                password_hash=res["password_hash"],
-                creation_date=res["creation_date"],
-                role=res["role"],
-            )
-
-        return user
-
-    @log
-    def find_by_token(self, access_token: str) -> User:
-        """Find the user owning an active connection token.
-
-        Args:
-            access_token (str): The token to search for.
-        Returns:
-            User object if the token is valid, otherwise None.
-        """
-        if not access_token:
+        if not res:
             return None
-
-        res = None
-        try:
-            with DBConnection().connection as connection:
-                with connection.cursor() as cursor:
-                    cursor.execute(
-                        "SELECT u.*                                          "
-                        '  FROM "user" u                                    '
-                        "  JOIN connection c ON c.user_id = u.user_id       "
-                        " WHERE c.access_token = %(token)s;                 ",
-                        {"token": access_token},
-                    )
-                    res = cursor.fetchone()
-        except Exception as e:
-            logger.error(f"Error finding user by token: {e}")
-            raise
-
-        user = None
-        if res:
-            user = User(
-                user_id=res["user_id"],
-                username=res["username"],
-                email=res["email"],
-                password_hash=res["password_hash"],
-                creation_date=res["creation_date"],
-                role=res["role"],
-            )
-
-        return user
+        return self._map_row_to_user(res)
 
     @log
-    def find_by_email(self, email: str) -> User:
+    def find_by_email(self, email: str) -> User | None:
         """Find a user by their email.
 
         Args:
@@ -267,7 +195,7 @@ class UserDao(metaclass=Singleton):
                     cursor.execute(
                         "SELECT *                               "
                         '  FROM "user"                          '
-                        " WHERE email = %(email)s;        ",
+                        " WHERE email = %(email)s;              ",
                         {"email": email},
                     )
                     res = cursor.fetchone()
@@ -275,16 +203,17 @@ class UserDao(metaclass=Singleton):
             logger.error(e)
             raise
 
-        user = None
+        if not res:
+            return None
+        return self._map_row_to_user(res)
 
-        if res:
-            user = User(
-                user_id=res["user_id"],
-                email=res["email"],
-                username=res["username"],
-                password_hash=res["password_hash"],
-                creation_date=res["creation_date"],
-                role=res["role"],
-            )
-
-        return user
+    def _map_row_to_user(self, row: dict) -> User:
+        """Builds a User from a row of the "user" table."""
+        return User(
+            user_id=row["user_id"],
+            username=row["username"],
+            email=row["email"],
+            password_hash=row["password_hash"],
+            creation_date=row["creation_date"],
+            role=row["role"],
+        )

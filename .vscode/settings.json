@@ -23,6 +23,8 @@
   "ruff.lint.enable": true,
   "ruff.format.preview": true,
   "ruff.lint.preview": true,
+  // mypy reads its settings in backend/pyproject.toml or frontend/pyproject.toml
+  "mypy-type-checker.cwd": "${nearestConfig}",
   "files.exclude": {
     "**/__pycache__": true,
     "**/.pytest_cache": true,

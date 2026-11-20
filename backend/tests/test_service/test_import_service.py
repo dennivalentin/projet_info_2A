@@ -40,6 +40,12 @@ def _response(status_code: int, feed: dict | None = None) -> MagicMock:
     return response
 
 
+def _fake_neo_create(neo) -> bool:
+    """Like NeoDao.create: the database gives its id to the saved NEO."""
+    neo.neo_id = 1
+    return True
+
+
 @pytest.fixture
 def mocks():
     """Mocks the NASA API, the DAOs and the pauses of ImportService."""
@@ -50,7 +56,7 @@ def mocks():
         patch("service.import_service.ApproachDao") as approach_dao,
         patch("service.import_service.ImportDao") as import_dao,
     ):
-        neo_dao.return_value.create.return_value = True
+        neo_dao.return_value.create.side_effect = _fake_neo_create
         approach_dao.return_value.create.return_value = True
         yield {"get": get, "import_dao": import_dao.return_value}
 
@@ -150,3 +156,27 @@ def test_import_update_resumes_the_day_after_the_last_import(mocks):
     start, end = import_range.call_args.args
     assert start == last_end + timedelta(days=1)
     assert end == date.today() + timedelta(days=365)
+
+
+def test_import_update_with_refresh_imports_the_next_30_days_again(mocks):
+    """Daily update (FO7): the window is complete, the next 30 days are refreshed."""
+    last = Import(user_id=1, start_date=date.today(), end_date=date.today() + timedelta(days=400))
+    mocks["import_dao"].find_last_successful_import.return_value = last
+    mocks["import_dao"].refreshed_today.return_value = False
+
+    with patch.object(ImportService, "import_neo_range", return_value={"nb_calls": 5}) as rng:
+        result = ImportService().import_update(user_id=5, refresh=True)
+
+    rng.assert_called_once_with(
+        date.today(), date.today() + timedelta(days=30), user_id=5, trigger_type="REFRESH"
+    )
+    assert result["nb_calls"] == 5
+
+
+def test_import_update_refreshes_only_once_a_day(mocks):
+    last = Import(user_id=1, start_date=date.today(), end_date=date.today() + timedelta(days=400))
+    mocks["import_dao"].find_last_successful_import.return_value = last
+    mocks["import_dao"].refreshed_today.return_value = True
+
+    assert ImportService().import_update(refresh=True)["status"] == "up_to_date"
+    mocks["get"].assert_not_called()

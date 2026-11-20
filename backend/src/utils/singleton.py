@@ -4,7 +4,7 @@ class Singleton(type):
     https://refactoring.guru/fr/design-patterns/singleton
     """
 
-    _instances = {}
+    _instances: dict = {}
 
     def __call__(cls, *args, **kwargs):
         """Returns the single instance of the class, creating it on the first call."""

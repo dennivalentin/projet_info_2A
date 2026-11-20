@@ -21,7 +21,9 @@ router = APIRouter()
     summary="Search Near-Earth Objects",
     description="Search for NEOs matching criteria such as name, size, hazard flag, and close approaches.",
 )
-def search_neos(criteria: NeoSearchCriteria) -> list[NeoModel]:
+def search_neos(
+    criteria: NeoSearchCriteria, current_user=Depends(get_current_user)
+) -> list[NeoModel]:
     """Search NEOs using multiple filter criteria."""
     try:
         service = NeoService()
@@ -42,7 +44,7 @@ def search_neos(criteria: NeoSearchCriteria) -> list[NeoModel]:
     summary="Get NEO details and approaches",
     description="Retrieve full details for a specific NEO, including all historical and upcoming close approaches.",
 )
-def get_neo_detail(neo_id: int) -> NeoDetailModel:
+def get_neo_detail(neo_id: int, current_user=Depends(get_current_user)) -> NeoDetailModel:
     """Get full details of a single NEO."""
     service = NeoService()
     details = service.get_neo_details(neo_id)
@@ -83,7 +85,7 @@ def create_neo(neo_in: NeoCreateRequest, current_user=Depends(get_current_user))
         raise
     except ValueError as ve:
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=422,
             detail=str(ve),
         ) from ve
     except Exception as e:
@@ -103,6 +105,7 @@ def create_neo(neo_in: NeoCreateRequest, current_user=Depends(get_current_user))
 def list_neos(
     limit: int = Query(default=50, ge=1, le=500),
     offset: int = Query(default=0, ge=0),
+    current_user=Depends(get_current_user),
 ) -> list[NeoModel]:
     """List NEOs paginated."""
     try:

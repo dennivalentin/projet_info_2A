@@ -22,15 +22,16 @@ The interface listens on port 8000 (`.streamlit/config.toml`) and calls the API 
 | --- | --- |
 | `src/app.py` | Entry point: goes to the menu if logged in, to the login page otherwise |
 | `src/pages/home.py` | Log in and create an account |
-| `src/pages/neo_menu.py` | Menu with all the features; starts the daily NASA update; admin tools |
+| `src/pages/neo_menu.py` | Menu with all the features, new alert notifications at login, admin tools |
 | `src/pages/dashboard.py` | Dashboard of the period |
 | `src/pages/search_neo.py` | Search, details of a NEO, CSV export |
 | `src/pages/statistics.py` | Statistics and charts |
-| `src/pages/favourites.py` | Favourite NEOs, their approaches and graph |
+| `src/pages/favourites.py` | Favourite NEOs, their approaches (CSV export) and graph (PNG export) |
 | `src/pages/alert.py` | Alerts and notifications |
 | `src/pages/create_neo.py` | Declare a NEO |
 | `src/pages/apod.py` | NASA picture of the day |
-| `src/utils/api_client.py` | HTTP client of the API: adds the JWT token to every request |
+| `src/pages/admin.py` | Administrators: accounts (promote, delete) and connection history |
+| `src/utils/api_client.py` | HTTP client of the API: adds the JWT token to every request and renews it with the refresh token when it expires |
 | `src/utils/auth_guard.py` | Sends back to the login page when the user is not logged in |
 | `src/utils/log_init.py` | Logs (`frontend/logs/frontend.log`) and page navigation tracking |
 
@@ -39,5 +40,6 @@ The interface listens on port 8000 (`.streamlit/config.toml`) and calls the API 
 ```bash
 cd frontend
 uv run --all-extras ruff check src
+uv run --all-extras mypy src
 uv run --all-extras bandit -r src
 ```

@@ -95,7 +95,10 @@ class AlertDao(metaclass=Singleton):
 
     @log
     def find_matching_approaches_for_user(self, user_id: int) -> list[dict]:
-        """Find all upcoming approaches matching active alerts for a given user.
+        """Find the upcoming approaches matching the active alerts of a user.
+
+        Only the approaches recorded after the last evaluation of the alert are
+        returned, so that the same notification is never shown twice.
 
         Parameters
         ----------
@@ -121,15 +124,12 @@ class AlertDao(metaclass=Singleton):
                         "AND (a.distance_max IS NULL OR app.distance <= a.distance_max)  "
                         "AND (a.diameter_min IS NULL OR n.diameter_max >= a.diameter_min)   "
                         "AND app.approach_date >= CURRENT_DATE  "
+                        # Notify once: only the approaches recorded since the last check
+                        "AND (a.last_eval_date IS NULL OR app.creation_date > a.last_eval_date)  "
                         "ORDER BY app.approach_date ASC;",
                         {"user_id": user_id},
                     )
-                    res = cursor.fetchall()
-
-                    if res is not None:
-                        return list(res)
-                    else:
-                        return []
+                    return list(cursor.fetchall())
 
         except Exception as e:
             logger.error(e)
@@ -177,14 +177,37 @@ class AlertDao(metaclass=Singleton):
 
         return nb_affected_rows == 1
 
+    @log
+    def mark_evaluated(self, alert_id: int) -> bool:
+        """Records that the alert has just been checked (last_eval_date = now).
+
+        The database clock is used, like for approach.creation_date, so that the
+        two dates can be compared.
+
+        Returns:
+            bool: True if the alert exists.
+        """
+        try:
+            with DBConnection().connection as connection:
+                with connection.cursor() as cursor:
+                    cursor.execute(
+                        "UPDATE alert SET last_eval_date = CURRENT_TIMESTAMP "
+                        "WHERE alert_id = %(alert_id)s;",
+                        {"alert_id": alert_id},
+                    )
+                    return cursor.rowcount == 1
+        except Exception as e:
+            logger.error(e)
+            raise
+
     def find_by_user(self, user_id) -> list[Alert]:
-        """find an alert of an user
+        """Find the alerts of a user
         Parameters
         ----------
             user_id : alert of this user
         Returns
         -------
-            list[Alert]
+            list[Alert] : the alerts of the user (empty if none)
         """
         try:
             with DBConnection().connection as connection:
@@ -200,35 +223,19 @@ class AlertDao(metaclass=Singleton):
             logger.error(e)
             raise
 
-        list_alert = None
-
-        if res:
-            list_alert = []
-            for row in res:
-                alert = Alert(
-                    alert_id=row["alert_id"],
-                    user_id=row["user_id"],
-                    label=row["label"],
-                    distance_max=row["distance_max"],
-                    diameter_min=row["diameter_min"],
-                    hazardous_only=row["hazardous_only"],
-                    creation_date=row["creation_date"],
-                    active=row["active"],
-                    last_eval_date=row["last_eval_date"],
-                )
-
-                list_alert.append(alert)
-
+        list_alert = []
+        for row in res:
+            list_alert.append(self._map_row_to_alert(row))
         return list_alert
 
-    def find_by_id(self, alert_id) -> Alert:
-        """find an alert by its id
+    def find_by_id(self, alert_id) -> Alert | None:
+        """Find an alert by its id
         Parameters
         ----------
             alert_id : id of this alert
         Returns
         -------
-            Alert
+            Alert, or None if not found
         """
         try:
             with DBConnection().connection as connection:
@@ -244,19 +251,20 @@ class AlertDao(metaclass=Singleton):
             logger.error(e)
             raise
 
-        if res:
-            alert = Alert(
-                alert_id=res["alert_id"],
-                user_id=res["user_id"],
-                label=res["label"],
-                distance_max=res["distance_max"],
-                diameter_min=res["diameter_min"],
-                hazardous_only=res["hazardous_only"],
-                creation_date=res["creation_date"],
-                active=res["active"],
-                last_eval_date=res["last_eval_date"],
-            )
-        else:
+        if not res:
             return None
+        return self._map_row_to_alert(res)
 
-        return alert
+    def _map_row_to_alert(self, row: dict) -> Alert:
+        """Builds an Alert from a row of the alert table."""
+        return Alert(
+            alert_id=row["alert_id"],
+            user_id=row["user_id"],
+            label=row["label"],
+            distance_max=row["distance_max"],
+            diameter_min=row["diameter_min"],
+            hazardous_only=row["hazardous_only"],
+            creation_date=row["creation_date"],
+            active=row["active"],
+            last_eval_date=row["last_eval_date"],
+        )

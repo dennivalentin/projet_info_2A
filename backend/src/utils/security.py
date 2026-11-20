@@ -2,13 +2,12 @@
 
 import hashlib
 import hmac
-import logging
 import os
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
 import jwt
-from fastapi import Depends, Header, HTTPException, Request, status
+from fastapi import Depends, Header, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 
 from business_object.user import User
@@ -17,7 +16,7 @@ from business_object.user import User
 def _secret_key() -> str:
     key = os.getenv("JWT_SECRET_KEY")
     if not key:
-        raise RuntimeError("JWT_SECRET_KEY  missing in .env")
+        raise RuntimeError("JWT_SECRET_KEY missing in .env")
     return key
 
 
@@ -143,131 +142,62 @@ def decode_token(token: str) -> dict[str, Any]:
 
 
 def get_current_user(
-    token_or_request: Any = None,
     bearer_token: str | None = Depends(oauth2_scheme),
     x_auth_token: str | None = Header(None, alias="X-Auth-Token"),
 ) -> User:
-    """Authenticates the current user via JWT Bearer or legacy X-Auth-Token header.
+    """Authenticates the current user from a JWT access token.
 
-    Args:
-        token_or_request (Any): FastAPI Request or raw token passed directly.
-        bearer_token (str | None): Token from Authorization: Bearer header.
-        x_auth_token (str | None): Token from X-Auth-Token header.
+    The token is read from the "Authorization: Bearer <token>" header or, for the
+    Streamlit frontend, from the "X-Auth-Token" header. It is never read from the URL
+    (a token in a URL ends up in logs and browser history).
 
     Returns:
         User: Authenticated user object.
 
     Raises:
-        HTTPException: 401 if missing, invalid, or expired.
+        HTTPException: 401 if the token is missing, invalid, expired, not an access
+            token, or if its user no longer exists.
     """
-    # The token can come from several places, checked in this order:
-    # a raw token given directly, "Authorization: Bearer <token>",
-    # the "X-Auth-Token" header (used by the Streamlit frontend), the raw request
-    token = None
-
-    if isinstance(token_or_request, str) and token_or_request:
-        token = token_or_request
-    elif bearer_token:
-        token = bearer_token
-    elif x_auth_token:
-        token = x_auth_token
-    elif isinstance(token_or_request, Request):
-        auth_header = token_or_request.headers.get("authorization") or token_or_request.headers.get(
-            "Authorization"
-        )
-        if auth_header:
-            parts = auth_header.split(" ")
-            if len(parts) == 2 and parts[0].lower() == "bearer":
-                token = parts[1]
-            elif len(parts) == 1:
-                token = parts[0]
-        if not token:
-            token = token_or_request.headers.get("x-auth-token") or token_or_request.headers.get(
-                "X-Auth-Token"
-            )
-
+    token = bearer_token or x_auth_token
     if not token:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Missing authentication token",
             headers={"WWW-Authenticate": "Bearer"},
         )
-
-    # If token starts with 'Bearer ', clean it up
     if token.startswith("Bearer "):
         token = token[7:].strip()
 
-    # Try decoding JWT
-    is_jwt = False
-    try:
-        payload = decode_token(token)
-        is_jwt = True
-    except HTTPException:
-        # Could be an expired JWT or an invalid token
-        payload = None
+    # Raises a 401 if the signature is wrong or the token has expired. There is no
+    # fallback: an expired token must never be accepted.
+    payload = decode_token(token)
 
-    if is_jwt and payload:
-        if payload.get("type") != "access":
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid token type: access token expected",
-                headers={"WWW-Authenticate": "Bearer"},
-            )
+    if payload.get("type") != "access":
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token type: access token expected",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
 
-        username = payload.get("sub") or payload.get("username")
-        if not username:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid token payload",
-                headers={"WWW-Authenticate": "Bearer"},
-            )
+    username = payload.get("sub")
+    if not username:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token payload",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
 
-        # Retrieve user from database: a deleted user must not stay logged in
-        from dao.user_dao import UserDao
+    # Retrieve user from database: a deleted user must not stay logged in
+    from dao.user_dao import UserDao
 
-        user = UserDao().find_by_username(username)
-        if not user:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="User not found",
-                headers={"WWW-Authenticate": "Bearer"},
-            )
-
-        return user
-
-    # Fallback for legacy opaque tokens stored in DB
-    try:
-        from dao.user_dao import UserDao
-
-        user = UserDao().find_by_token(token)
-        if user:
-            return user
-    except Exception as e:
-        logging.getLogger(__name__).warning(f"Opaque token lookup failed: {e}")
-
-    raise HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Invalid token",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
-
-
-# Backward compatibility alias
-verify_token = get_current_user
-
-
-def require_role(required_role: str):
-    """Dependency factory checking that the current user has the required role."""
-
-    def role_checker(current_user: User = Depends(get_current_user)) -> User:
-        if current_user.role != required_role:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail=f"Forbidden: '{required_role}' role required",
-            )
-        return current_user
-
-    return role_checker
+    user = UserDao().find_by_username(username)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User not found",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    return user
 
 
 def require_admin(current_user: User = Depends(get_current_user)) -> User:

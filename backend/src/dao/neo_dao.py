@@ -73,7 +73,7 @@ class NeoDao(metaclass=Singleton):
             raise
 
         if res:
-            neo.neo_id = res["neo_id"] if isinstance(res, dict) else res[0]
+            neo.neo_id = res["neo_id"]
             return True
 
         return False
@@ -176,7 +176,7 @@ class NeoDao(metaclass=Singleton):
             )
 
         # Ordering
-        sort_by = search_criteria.get("sort_by")
+        sort_by = search_criteria.get("sort_by", "neo_id")
         order = search_criteria.get("order", "ASC").upper()
         if order not in ("ASC", "DESC"):
             order = "ASC"
@@ -241,5 +241,5 @@ class NeoDao(metaclass=Singleton):
             hazardous=row.get("hazardous", False),
             url_nasa=row.get("url_nasa"),
             origin=row.get("origin", "USER"),
-            date_update=row.get("date_update"),
+            date_update=row["date_update"],
         )

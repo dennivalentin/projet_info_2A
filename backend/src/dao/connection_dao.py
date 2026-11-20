@@ -32,11 +32,7 @@ class ConnectionDao(metaclass=Singleton):
             logger.error(e)
             raise
 
-        return Connection(
-            connection_id=res["connection_id"],
-            user_id=res["user_id"],
-            date=res.get("connection_date"),
-        )
+        return self._map_row_to_connection(res)
 
     @log
     def find_by_user(self, user_id: int) -> list[Connection]:
@@ -45,16 +41,16 @@ class ConnectionDao(metaclass=Singleton):
         Args:
             user_id (int): The id of the user to look for.
         Returns:
-            list[Connection]: The connections of the user (empty if none).
+            list[Connection]: The connections of the user, latest first (empty if none).
         """
-        res = None
         try:
             with DBConnection().connection as connection:
                 with connection.cursor() as cursor:
                     cursor.execute(
                         "SELECT *                               "
                         "  FROM connection                      "
-                        " WHERE user_id = %(user_id)s;          ",
+                        " WHERE user_id = %(user_id)s           "
+                        " ORDER BY connection_date DESC;        ",
                         {"user_id": user_id},
                     )
                     res = cursor.fetchall()
@@ -62,15 +58,15 @@ class ConnectionDao(metaclass=Singleton):
             logger.error(e)
             raise
 
-        connection = []
-        if res:
-            for row in res:
-                connection.append(
-                    Connection(
-                        user_id=row["user_id"],
-                        connection_id=row["connection_id"],
-                        date=row.get("connection_date"),
-                    )
-                )
+        connections = []
+        for row in res:
+            connections.append(self._map_row_to_connection(row))
+        return connections
 
-        return connection
+    def _map_row_to_connection(self, row: dict) -> Connection:
+        """Builds a Connection from a row of the connection table."""
+        return Connection(
+            connection_id=row["connection_id"],
+            user_id=row["user_id"],
+            date=row["connection_date"],
+        )

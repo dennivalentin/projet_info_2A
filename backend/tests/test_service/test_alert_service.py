@@ -1,3 +1,4 @@
+from datetime import datetime
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -36,9 +37,33 @@ def test_check_and_send_notification(mock_alert_dao):
     assert len(result) == 1
 
 
-def test_no_match_gives_no_alert_message(mock_alert_dao):
+def test_no_match_gives_no_notification(mock_alert_dao):
     mock_alert_dao.find_matching_approaches_for_user.return_value = []
-    assert AlertService().check_send_notification(1) == ["No alert detected"]
+    assert AlertService().check_send_notification(1) == []
+    mock_alert_dao.mark_evaluated.assert_not_called()
+
+
+def test_notified_alerts_are_marked_as_evaluated(mock_alert_dao):
+    """Each matching alert is marked once, so the notification is not shown again."""
+    match = {
+        "alert_id": 42,
+        "label": "Close ones",
+        "neo_name": "Apophis",
+        "hazardous_only": True,
+        "diameter_min": None,
+        "diameter_max": 0.45,
+        "distance_max": 100000.0,
+        "distance": 31000.0,
+        "approach_date": datetime(2029, 4, 13, 21, 46),
+    }
+    mock_alert_dao.find_matching_approaches_for_user.return_value = [match, match]
+
+    result = AlertService().check_send_notification(1)
+
+    assert result[0] == (
+        "[Close ones] HAZARDOUS Apophis on 2029-04-13: distance 31,000 km <= 100,000 km"
+    )
+    mock_alert_dao.mark_evaluated.assert_called_once_with(42)
 
 
 def test_create_alert_ok(mock_alert_dao):
@@ -59,6 +84,7 @@ def test_create_alert_with_negative_value_is_refused(mock_alert_dao):
 
 def test_turn_on_off_switches_an_active_alert_off(mock_alert_dao):
     mock_alert_dao.find_by_id.return_value = Alert(alert_id=3, user_id=2, label="x", active=True)
+    mock_alert_dao.update.return_value = True
 
     assert AlertService().turn_on_off(3) is True
 

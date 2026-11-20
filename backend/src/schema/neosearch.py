@@ -1,6 +1,6 @@
 from datetime import date, datetime
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 
 class NeoSearchCriteria(BaseModel):
@@ -22,29 +22,25 @@ class NeoSearchCriteria(BaseModel):
     offset: int = Field(default=0, ge=0)
 
 
-class NeoSearch(BaseModel):
-    """Compatibility alias for basic NEO criteria."""
-
-    nasa_id: str | None = None
-    name: str | None = None
-    absolute_magnitude: float | None = None
-    diameter_min: float | None = None
-    diameter_max: float | None = None
-    hazardous: bool | None = None
-    url_nasa: str | None = None
-    origin: str | None = None
-    date_update: datetime | None = None
-    neo_id: int | None = None
-
-
 class NeoCreateRequest(BaseModel):
-    """Payload to create a new user-observed NEO."""
+    """Payload to create a new user-observed NEO (diameters in km)."""
 
     name: str = Field(..., min_length=1, max_length=100)
-    absolute_magnitude: float | None = None
-    diameter_min: float | None = None
-    diameter_max: float | None = None
+    absolute_magnitude: float | None = Field(default=None, ge=-10, le=40)
+    diameter_min: float | None = Field(default=None, gt=0, le=1000)
+    diameter_max: float | None = Field(default=None, gt=0, le=1000)
     hazardous: bool = False
+
+    @model_validator(mode="after")
+    def check_diameters(self):
+        """The minimum diameter cannot be larger than the maximum diameter."""
+        if (
+            self.diameter_min is not None
+            and self.diameter_max is not None
+            and self.diameter_min > self.diameter_max
+        ):
+            raise ValueError("diameter_min cannot be larger than diameter_max")
+        return self
 
 
 class ApproachModel(BaseModel):

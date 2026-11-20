@@ -54,6 +54,13 @@ def test_add_favourite_ko(daos):
     assert FavouriteService().add_favourite(neo_id=7, user_id=2) is False
 
 
+def test_add_unknown_neo_to_favourites_is_refused(daos):
+    daos["neo"].find_by_id.return_value = None
+    with pytest.raises(ValueError, match="not found"):
+        FavouriteService().add_favourite(neo_id=9999, user_id=2)
+    daos["favourite"].create.assert_not_called()
+
+
 def test_remove_favourite_ko_when_nothing_deleted(daos):
     daos["favourite"].delete.return_value = False
     assert FavouriteService().remove_favourite(neo_id=7, user_id=2) is False
@@ -73,7 +80,7 @@ def test_approaches_favourite_groups_by_neo(daos):
     daos["favourite"].find_favourite_by_user.return_value = [7]
     daos["approach"].find_by_neo_id.return_value = [_approach(10, 1e6)]
 
-    result = FavouriteService().approches_favourite(2)
+    result = FavouriteService().approaches_favourite(2)
 
     assert list(result) == [7]
     assert len(result[7]) == 1
