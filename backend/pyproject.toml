@@ -26,6 +26,7 @@ dev = [
     "bandit",
     "coverage",
     "httpx",
+    "httpx2",
     "mypy",
     "pylint",
     "pytest",

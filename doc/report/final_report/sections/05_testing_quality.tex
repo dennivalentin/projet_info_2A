@@ -1,0 +1,56 @@
+\section{Software Quality and Testing}
+
+\bigskip
+
+To make sure of the quality of our app, we implemented tests. We used these to see if what we did worked well, and whether the results matched expectations. Furthermore, for the readability, we use the linter \texttt{Ruff}.
+
+\subsection{Tests}
+
+We tested the three components of the Layered Architecture which are the DAO, the Services and Controllers. But we have also tested our Business Objects and authentication.
+
+\bigskip
+
+Let's start with Business Objects. The goal of these tests is to verify data encapsulation. Each business object is made with getters and setters. It is used to restrict the direct access to data within a class. All attributes of a class are private, to access them, we set getters, and if we want to modify them we use setters. These are methods of a class that either return the value of the argument (getter) or modify it if the conditions are matched (setter).
+These tests just basically create an object, and verify that each getter returns the right value, and each setter updates the object properly.
+
+\bigskip
+
+Then, the Data Access Object. Here, we test the SQL queries, the uniqueness constraints. We test them either with mocks, or on a new table in PostgreSQL to avoid any false elements in real tables, or any modification of them.
+
+\medskip
+
+We first test the CRUD functions (Create, Read, Update, Delete) and their limits. For example, for an alert, if we give a character to an argument that should be an integer like the distance, the creation method should return \texttt{False}.
+
+\medskip
+
+We also check that elements that should be unique remain like this. Still using the example of the alerts, it is useless to have two times the same alert, so we have tested that if we create the same alert twice, nothing happens.
+
+\medskip
+
+And of course, like in the DAO tests of \texttt{neo}, we test that a search returns the right element, which either returns a Neo or raises an error if the criterion is invalid. In order to test that, we do not use the regular database, we create a fake one using the module \texttt{MagicMock}.
+
+\bigskip
+
+Now the heart of the app, the services. We tested the nine service classes using \texttt{unittest.mock} to simulate DAO responses and NASA NeoWs HTTP status codes. We test not only the core functions, but also key principles. For instance, with the alert and notification, like we have done before, we test if it works well and if something wrong is set, an error occurs. But we also test that a notification is sent only once and not each time the user refreshes the page. It is really easy to test, because the module \texttt{MagicMock} already gives a method \texttt{assert\_called\_once\_with} that tests exactly that.
+
+\bigskip
+
+In order to test our controllers we use the FastAPI \texttt{TestClient}. It is used to send real HTTP queries with JSON payloads to the app in memory. And then, as with the other layers, we check that everything is doing what is expected.
+
+\bigskip
+
+Finally, we use \texttt{Mypy}. It checks whether the types declared in our method signatures match the ones actually used. For example in: 
+
+\texttt{def find\_by\_id(self, neo\_id: int) $->$ Neo $|$ None:}
+
+It verifies that when we use it, \texttt{neo\_id} is an integer, and a \texttt{Neo} or \texttt{None} is returned.
+
+\bigskip
+\bigskip
+
+\subsection{Environment Isolation}
+
+\bigskip
+\bigskip
+
+As said before, some tests aim to verify our SQL queries. In order to test that, we create a cloned PostgreSQL schema with the same \texttt{init\_db.sql} as the original database. We test our methods here to avoid any issues with the real data. In \texttt{conftest.py}, where all test parameters and environment settings are configured. Here we declare a dedicated PostgreSQL schema named \texttt{project\_test\_dao}. Inside this new schema, we inject some observations by running \texttt{pop\_db\_test.sql}. It creates a User, a NEO and an approach. And to make sure that tests do not influence one another, between each test, we delete what could have been created during one, or restore the test tables to their initial state.
