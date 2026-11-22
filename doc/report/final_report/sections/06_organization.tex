@@ -1,0 +1,113 @@
+\section{Team Organization}
+
+This section describes how the four members of the group worked together, how the tasks were distributed, and how the actual schedule compared with the one planned in the analysis report.
+
+\subsection{Working methods}
+
+\paragraph{Weekly sessions.} The project sessions included in our timetable served as our weekly meeting. They were used to review the progress of each member and to decide on the next priorities, and they were also the occasion to ask our tutor, Olivier Ricciardi, for advice when someone was blocked.
+
+\paragraph{Weekly tracking.} After each session, every member filled in a shared tracking file stored in the repository (\texttt{doc/tracking/}), listing the tasks completed during the week and the remaining backlog. Twelve of these files were written between September and November. They gave everyone a clear view of the progress of the others and kept a written record of the project.
+
+\paragraph{Communication.} Between sessions, the group communicated mainly through a WhatsApp group. It was used to report progress, ask for help on a bug, and warn the others when a change could affect their work, for example a modification of the database schema.
+
+\paragraph{Git workflow.} All the code and the reports are hosted in a single GitHub repository. Each member developed their features on a dedicated branch (for example \texttt{adam/f2-dashboard}) and opened a pull request once the feature was finished. Valentin was responsible for merging the pull requests into the \texttt{main} branch, which ensured that one person always had an overview of the state of the code. The linter Ruff was used to keep a consistent coding style across the contributions.
+
+\paragraph{Rules inherited from the analysis phase.} Two rules set during the analysis phase remained useful during the implementation. First, every section of a report has a writer and a different reviewer. Second, the shared vocabulary (NEO, Approach, Favourite\ldots) fixed at the beginning was kept in the code, which limited inconsistencies between the class diagram, the database and the endpoints.
+
+\subsection{Task distribution}
+
+The analysis report was written by the whole group, each section having a writer and a reviewer. For the implementation, the work was organized in two stages. The shared foundations were built first: business objects, database schema and NASA import. The features were then distributed among the members, as shown in Table~\ref{tab:tasks}.
+
+\begin{table}[H]
+\centering
+\begin{tabularx}{\textwidth}{lX}
+\toprule
+\textbf{Member} & \textbf{Main responsibilities} \\
+\midrule
+Sofia Bounaga & F1 (accounts, authentication, login history), FO7 (automatic update), harmonization of the variable names in the existing code \\
+Valentin Denni & F3 (search, sort, export), F4 (user-created NEOs), merging of the pull requests and integration of the full application \\
+Yalalt Schneider & F5 (favourites and distance history), F6 (alerts), NASA import \\
+Mohammed-Adam Lakhrissi & F2 (dashboard), FO3 (statistics), FO8 (Picture of the Day) \\
+\bottomrule
+\end{tabularx}
+\caption{Distribution of the features among the members}
+\label{tab:tasks}
+\end{table}
+
+Each member was in charge of the full stack of their features: DAO, service, controller, unit tests and Streamlit page. This choice gave everyone a complete view of the layered architecture and avoided waiting for another member to connect a backend to its interface.
+
+For the final report, the sections were distributed according to the same logic: each member wrote the parts closest to the work they had done, and one member was in charge of coordination (title page, introduction, organization and conclusion).
+
+\subsection{Planned versus actual schedule}
+
+Figure~\ref{fig:gantt} compares, for each component, the dates planned in the analysis report (light bars) with the actual dates (dark bars). The actual dates are taken from the Git history of the repository.
+
+\begin{figure}[H]
+\centering
+\resizebox{\textwidth}{!}{%
+\begin{ganttchart}[
+  time slot format=isodate,
+  x unit=0.17cm,
+  y unit chart=0.42cm,
+  y unit title=0.5cm,
+  vgrid={*6{draw=none}, dotted},
+  title label font=\scriptsize,
+  bar label font=\scriptsize,
+  milestone label font=\scriptsize,
+  bar height=0.6,
+  bar top shift=0.2,
+  bar/.append style={fill=teal!75, draw=teal!90!black},
+  milestone/.append style={fill=teal!75, draw=teal!90!black}
+]{2026-09-21}{2026-11-27}
+\gantttitlecalendar{month=name} \\
+% Database schema
+\ganttbar[bar/.append style={fill=gray!30, draw=gray!60}]{Database schema}{2026-09-21}{2026-09-27} \\
+\ganttbar{}{2026-10-08}{2026-10-23} \\
+% NASA import
+\ganttbar[bar/.append style={fill=gray!30, draw=gray!60}]{NASA import}{2026-09-29}{2026-10-08} \\
+\ganttbar{}{2026-10-03}{2026-10-10} \\
+% F1
+\ganttbar[bar/.append style={fill=gray!30, draw=gray!60}]{F1 Accounts}{2026-09-29}{2026-10-08} \\
+\ganttbar{}{2026-10-15}{2026-10-27} \\
+% F3 and F4
+\ganttbar[bar/.append style={fill=gray!30, draw=gray!60}]{F3 / F4 Search, NEO creation}{2026-10-06}{2026-10-15} \\
+\ganttbar{}{2026-10-18}{2026-11-01} \\
+% F5 and F6
+\ganttbar[bar/.append style={fill=gray!30, draw=gray!60}]{F5 / F6 Favourites, alerts}{2026-10-12}{2026-10-20} \\
+\ganttbar{}{2026-10-17}{2026-10-25} \\
+% F2
+\ganttbar[bar/.append style={fill=gray!30, draw=gray!60}]{F2 Dashboard}{2026-10-21}{2026-10-25} \\
+\ganttbar{}{2026-10-26}{2026-11-03} \\
+% FO7
+\ganttbar[bar/.append style={fill=gray!30, draw=gray!60}]{FO7 Automatic update}{2026-10-14}{2026-10-17} \\
+\ganttbar{}{2026-10-10}{2026-10-16} \\
+% FO3 and FO8
+\ganttbar[bar/.append style={fill=gray!30, draw=gray!60}]{FO3 / FO8 Statistics, APOD}{2026-11-03}{2026-11-11} \\
+\ganttbar{}{2026-11-03}{2026-11-11} \\
+% Frontend and integration
+\ganttbar[bar/.append style={fill=gray!30, draw=gray!60}]{Streamlit and integration}{2026-11-03}{2026-11-14} \\
+\ganttbar{}{2026-11-01}{2026-11-11} \\
+% Tests and cleanup
+\ganttbar[bar/.append style={fill=gray!30, draw=gray!60}]{Tests, docs, cleanup}{2026-11-09}{2026-11-15} \\
+\ganttbar{}{2026-11-03}{2026-11-16} \\
+% Final report
+\ganttbar[bar/.append style={fill=gray!30, draw=gray!60}]{Final report}{2026-11-03}{2026-11-21} \\
+\ganttbar{}{2026-11-14}{2026-11-25} \\
+% Submission
+\ganttmilestone[milestone/.append style={fill=gray!30, draw=gray!60}]{Submission}{2026-11-22} \\
+\ganttmilestone{}{2026-11-25}
+\end{ganttchart}%
+}
+\caption{Planned schedule (light) and actual schedule (dark) of the implementation phase}
+\label{fig:gantt}
+\end{figure}
+
+\paragraph{A late start on the foundations.} The main gap concerns the beginning of the implementation. The NASA import was ready early, around 10 October, close to the planned date. The database schema, however, was planned for the end of September but was only stable around 23 October. It went through several iterations: columns were added or restored as the features revealed new needs, and simultaneous modifications of \texttt{init\_db.sql} on different branches led to merge conflicts that had to be resolved. Since every feature depends on the database, this delay shifted F1, F3 and F4 by about two weeks. The planning had anticipated the exams of 28 September and 2 November by leaving lighter periods around them, but it had not anticipated the time needed to stabilize the schema.
+
+\paragraph{Features close to the plan.} Once the foundations were in place, the features progressed at a steady pace. F5 and F6 were completed almost on schedule, F2 about a week late because it relies on the data of the other features, and the optional features FO3 and FO8 were delivered exactly on the planned dates. FO7 was also completed on schedule.
+
+\paragraph{Frontend and integration.} The analysis report planned a separate frontend phase after the backend. In practice, since each member built the Streamlit page of their own features, the interface was developed progressively from the beginning of November. The main difficulty appeared at the integration stage: the backend had to be run as a whole, with the JWT authentication connecting all the controllers. Starting the backend and connecting the pages raised several technical issues, which were solved around 10 November. The complete application was working on 11 November, slightly ahead of the planned date, and a final pass on tests, documentation and code quality was completed on 16 November.
+
+\paragraph{The final report.} The writing of the final report was planned from 3 November, in parallel with the end of the development. We finally chose to start it on 14 November, once the application was complete, so that the report would describe the application as it was actually built.
+
+\paragraph{Lessons learned.} Two lessons can be drawn from this comparison. First, the database schema should be frozen as early as possible, and any later change should be announced to the whole group, since it affects every feature. Second, running the full application regularly, even with unfinished features, would have revealed the integration issues earlier instead of concentrating them at the end of the project.
