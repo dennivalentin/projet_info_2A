@@ -36,3 +36,25 @@ def test_nasa_error_is_raised(mock_get):
     mock_get.return_value.raise_for_status.side_effect = requests.HTTPError("429")
     with pytest.raises(requests.HTTPError):
         ApodService().get_picture_of_the_day()
+
+
+@patch("service.apod_service.requests.get")
+def test_nasa_logo_instead_of_the_picture_is_not_shown(mock_get):
+    """NASA sometimes answers with its logo and the title "NASA Science": no image then."""
+    mock_get.return_value = MagicMock(
+        json=MagicMock(
+            return_value={
+                "title": "NASA Science",
+                "date": "2024-07-04",
+                "explanation": "The real description of the day.",
+                "url": "https://science.nasa.gov/wp-content/themes/nasa-child/assets/images/nasa-logo@2x.png",
+            }
+        )
+    )
+
+    apod = ApodService().get_picture_of_the_day(date(2024, 7, 4))
+
+    assert apod.image_available is False
+    assert apod.title == ""
+    assert apod.caption == "The real description of the day."  # the description is kept
+    assert apod.to_dict()["nasa_page_url"] == "https://apod.nasa.gov/apod/ap240704.html"

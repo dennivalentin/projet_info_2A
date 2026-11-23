@@ -37,25 +37,34 @@ if not res or res.get("status_code") != 200:
     st.stop()
 
 apod = res.get("data", {})
-st.subheader(apod.get("title", ""))
-st.caption(apod.get("date", "")[:10])
-
 url = apod.get("url", "")
+nasa_page_url = apod.get("nasa_page_url", "https://apod.nasa.gov/apod/")
+
+st.subheader(apod.get("title") or f"Picture of {day.strftime('%d %B %Y')}")
+st.caption(apod.get("date", "")[:10])
 
 # Download the image so it can be shown and exported
 image_bytes = None
-try:
-    r = requests.get(url, timeout=10)
-    if r.ok and r.headers.get("Content-Type", "").startswith("image"):
-        image_bytes = r.content
-except requests.RequestException:
-    logger.warning(f"Could not download {url}")
+if apod.get("image_available", bool(url)):
+    try:
+        r = requests.get(url, timeout=10)
+        if r.ok and r.headers.get("Content-Type", "").startswith("image"):
+            image_bytes = r.content
+    except requests.RequestException:
+        logger.warning(f"Could not download {url}")
 
 if image_bytes:
     st.image(image_bytes, use_container_width=True)
+elif not apod.get("image_available", bool(url)):
+    # NASA's API answered with its generic logo instead of the picture of the day
+    st.warning(
+        "NASA's service did not provide the picture for this day: only its description "
+        "is available. You can see the picture on NASA's website."
+    )
+    st.link_button("See the picture on NASA's website", nasa_page_url)
 else:
     # Some days NASA publishes a video instead of an image
-    st.info("Today's media is not an image (often a video).")
+    st.info("The media of this day is not an image (often a video).")
     st.link_button("Open on NASA's website", url)
 
 st.write(apod.get("caption", ""))
@@ -71,6 +80,6 @@ if image_bytes:
     )
 c2.download_button(
     "Download the description (.txt)",
-    data=f"{apod.get('title', '')}\n{apod.get('date', '')[:10]}\n\n{apod.get('caption', '')}\n\nSource: {url}",
+    data=f"{apod.get('title', '')}\n{apod.get('date', '')[:10]}\n\n{apod.get('caption', '')}\n\nSource: {url or nasa_page_url}",
     file_name=f"apod_{day.isoformat()}.txt",
 )

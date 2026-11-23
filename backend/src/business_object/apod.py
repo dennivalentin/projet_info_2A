@@ -50,6 +50,16 @@ class ApodData:
     def url(self, value: str) -> None:
         self._url = value
 
+    @property
+    def image_available(self) -> bool:
+        """True when NASA gave the media of the day (False: only the description is known)."""
+        return bool(self._url)
+
+    @property
+    def nasa_page_url(self) -> str:
+        """Page of this picture on NASA's APOD website (one page per day)."""
+        return f"https://apod.nasa.gov/apod/ap{self._date:%y%m%d}.html"
+
     def to_dict(self) -> dict:
         """Returns the object as a dict (JSON-friendly) for the API responses."""
         return {
@@ -59,6 +69,8 @@ class ApodData:
             ),
             "caption": self._caption,
             "url": self._url,
+            "image_available": self.image_available,
+            "nasa_page_url": self.nasa_page_url,
         }
 
     def __repr__(self) -> str:
