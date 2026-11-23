@@ -1,0 +1,133 @@
+\section{Needs, features and working hypotheses}
+\label{sec:specifications}
+
+\subsection{Needs addressed by the application}
+
+We designed NEO-Watch for two kinds of users. The first are \emph{astronomy enthusiasts}: they
+want to know which objects come close to the Earth, to follow some of them over time, and to
+be warned of the passages that interest them without checking the data every day. The second
+are the \emph{administrators} of the application: they manage the accounts and make sure that
+the data stays up to date.
+
+\medskip
+
+The NASA API alone does not meet these needs. It answers one request at a time, it has no
+notion of user, of favourite or of alert, and its main endpoint, \texttt{/feed}, returns at most
+seven days of data per call. NEO-Watch therefore stores the data once in its own database, and
+builds the user features on top of it.
+
+\subsection{Features delivered}
+
+The subject required six features (F1 to F6). We also chose three optional features
+(FO3, FO7, FO8) in the analysis report. All of them are implemented.
+Table~\ref{tab:features} summarises what each feature does in the final application.
+
+\begin{table}[H]
+  \centering
+  \small
+  \begin{tabularx}{\textwidth}{@{}l>{\raggedright\arraybackslash}X l@{}}
+    \toprule
+    \textbf{Feature} & \textbf{What the user can do} & \textbf{Status} \\
+    \midrule
+    F1 Accounts & Create an account, log in (JWT tokens). Administrators list, promote and delete
+      accounts, and see the connection history of a user. & Done \\
+    F2 Dashboard & See the approaches of a chosen period (next 7 days by default), the number of
+      NEOs and of hazardous NEOs, the closest approach, and their favourites. & Done \\
+    F3 Search & Search by name, identifier, diameter, hazard flag, origin and approach date; sort
+      the results; see the details and approaches of a NEO (km and astronomical units); export
+      to CSV. & Done \\
+    F4 Declare a NEO & Record an object they observed. It is stored with the origin
+      \texttt{USER} and is never overwritten by the NASA imports. & Done, simplified \\
+    F5 Favourites & Add and remove favourites, see their approaches, plot their distance to the
+      Earth over time, export the history (CSV) and the plot (PNG). & Done \\
+    F6 Alerts & Define alerts (minimum diameter, maximum distance, hazardous only), switch them
+      on and off, and be notified once of each matching approach when logging in. & Done \\
+    FO3 Statistics & Approaches per month, size distribution, share of hazardous NEOs, mean
+      and median distance. & Done \\
+    FO7 Automatic import & The NASA data is updated automatically every day; administrators
+      can also start an update by hand. & Done \\
+    FO8 Picture of the day & See and download NASA's Astronomy Picture of the Day, for any
+      date. & Done \\
+    \bottomrule
+  \end{tabularx}
+  \caption{Features of NEO-Watch and their status}
+  \label{tab:features}
+\end{table}
+
+\subsection{Working hypotheses}
+
+The application relies on a few hypotheses, decided in the analysis report and kept during
+the development.
+
+\begin{itemize}
+  \item \textbf{Data source.} NEO-Watch only uses the \texttt{/feed} endpoint of NeoWs. It is
+    organised by period, like our features (dashboard, search by date, alerts), and filling three
+    years of data takes about 160 calls, against more than 3,000 with \texttt{/neo/browse}. As a
+    consequence, the application only knows the NEOs that come close to the Earth during its
+    import window: it monitors approaches, it is not a full catalogue.
+  \item \textbf{Import window.} Two years in the past and one year in the future. The past is
+    imported once. Every day, the application adds the missing days at the end of the window and
+    imports the next 30 days again, to get the objects discovered since the last import.
+  \item \textbf{Units.} Distances and diameters in kilometres, speeds in kilometres per hour.
+    Distances in astronomical units are computed when they are displayed, not stored.
+  \item \textbf{NASA data is read-only.} The application never changes a NASA object; users only
+    add their own objects (F4), their favourites and their alerts.
+  \item \textbf{Notifications at login.} Alerts are evaluated when the user logs in. Each
+    matching approach is notified once.
+  \item \textbf{Accounts.} The first administrator is created with the seed data; every other
+    administrator is promoted by an existing one.
+\end{itemize}
+
+\subsection{Differences with the analysis report}
+
+Some elements of the analysis report were changed or dropped during the development.
+Table~\ref{tab:changes} lists them, with the reason for each change.
+
+\begin{table}[H]
+  \centering
+  \small
+  \begin{tabularx}{\textwidth}{@{}>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X@{}}
+    \toprule
+    \textbf{Planned} & \textbf{Implemented} & \textbf{Reason} \\
+    \midrule
+    User NEOs and corrections of NEO fields submitted as \emph{proposals}, accepted or rejected
+      by an administrator (\texttt{proposal} table). &
+    Users create their NEOs directly, with the origin \texttt{USER}. The \texttt{proposal} table
+      exists but is not used. &
+    We gave priority to the six required features. The origin column still separates user
+      objects from NASA objects. \\
+    \addlinespace
+    Call \texttt{/neo/\{id\}} when a NEO becomes a favourite, to get its full approach history. &
+    The history of a favourite comes from the approaches already imported. &
+    Fewer API calls and simpler code. The drawback: an object that passes rarely has only one or
+      two points on its plot. \\
+    \addlinespace
+    Use the minimum estimated diameter for filtering, to be cautious in alerts (an alert ``larger
+      than 100 m'' only for objects surely larger than 100 m). &
+    The alert compares its threshold with the \emph{maximum} estimated diameter. &
+    No object that may be large enough is missed, but an alert can fire for an object that is
+      smaller than the threshold. This point should be harmonised. \\
+    \addlinespace
+    An alert on a specific NEO chosen by the user. &
+    Not implemented. &
+    Following a given NEO is already the role of the favourites (F5). \\
+    \addlinespace
+    A \texttt{search} table recording the searches. &
+    Created but not used. &
+    It would only have served usage statistics, which no feature needed. \\
+    \addlinespace
+    A session opened at login (\texttt{/api/v1/auth/login}). &
+    Signed JWT tokens: an access token (30 minutes) and a refresh token (7 days). &
+    A JWT is verified by its signature, without storing anything on the server; this solution
+      was suggested to us during the project follow-up. \\
+    \addlinespace
+    Personal endpoints under \texttt{/users/me/} (the user is taken from the session). &
+    Endpoints with the user identifier in the path (\texttt{/favourites/user/\{user\_id\}}), checked
+      against the token: a user can only reach their own data (error 403 otherwise). &
+    Simpler for the administrators, who can reach any user's data; the check on the token keeps
+      the same protection. \\
+    \bottomrule
+  \end{tabularx}
+  \caption{Differences between the analysis report and the final application}
+  \label{tab:changes}
+\end{table}
