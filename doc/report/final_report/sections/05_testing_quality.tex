@@ -19,7 +19,7 @@ Then, the Data Access Object. Here, we test the SQL queries, the uniqueness cons
 
 \medskip
 
-We first test the CRUD functions (Create, Read, Update, Delete) and their limits. For example, for an alert, if we give a character to an argument that should be an integer like the distance, the creation method should return \texttt{False}.
+We first test the CRUD functions (Create, Read, Update, Delete) and their limits. For example, for an alert, if we give a character to an argument that should be an integer like the distance, the creation method should fail, or if the uniqueness constraint is unmatched.
 
 \medskip
 
@@ -27,7 +27,7 @@ We also check that elements that should be unique remain like this. Still using 
 
 \medskip
 
-And of course, like in the DAO tests of \texttt{neo}, we test that a search returns the right element, which either returns a Neo or raises an error if the criterion is invalid. In order to test that, we do not use the regular database, we create a fake one using the module \texttt{MagicMock}.
+And of course, like in the DAO tests of \texttt{neo}, we test that a search returns the right element, which either returns a Neo or raises an error if the criterion is invalid. In order to test that, we do not use the regular database, we create a fake one using the class \texttt{MagicMock}.
 
 \bigskip
 
@@ -39,11 +39,16 @@ In order to test our controllers we use the FastAPI \texttt{TestClient}. It is u
 
 \bigskip
 
-Finally, we use \texttt{Mypy}. It checks whether the types declared in our method signatures match the ones actually used. For example in: 
+Moreover, with Pydantic, what is sent is checked in order that if an input, a variable should be of a precise class, then Pydantic verifies that the class is the good one according to what has been written in the \texttt{schema} file. If the test is not true, then an error \texttt{422 Unprocessable Entity} is sent.
 
-\texttt{def find\_by\_id(self, neo\_id: int) $->$ Neo $|$ None:}
+Furthermore, we use \texttt{Mypy}. It checks whether the types declared in our method signatures match the ones actually used. For example in: 
 
-It verifies that when we use it, \texttt{neo\_id} is an integer, and a \texttt{Neo} or \texttt{None} is returned.
+\texttt{def find\_by\_id(self, neo\_id: int) -> Neo | None:}
+
+It verifies that when we use it, \texttt{neo\_id} is an integer, and a \texttt{Neo} or \texttt{None} is returned. And also \texttt{Bandit} for security. It detects for example when passwords are hard-coded, it also makes sure that there is no possibility of SQL injections.
+
+And finally for readability, we use docstrings to explain what our methods do. There are also two more \texttt{README} files, one in the backend and one in the frontend to explain more precisely how our app works. Also the swagger provided by FastAPI, gives a list of all the methods available, their URLs address, and an interface to try functions of the app.
+
 
 \bigskip
 \bigskip
@@ -53,4 +58,29 @@ It verifies that when we use it, \texttt{neo\_id} is an integer, and a \texttt{N
 \bigskip
 \bigskip
 
-As said before, some tests aim to verify our SQL queries. In order to test that, we create a cloned PostgreSQL schema with the same \texttt{init\_db.sql} as the original database. We test our methods here to avoid any issues with the real data. In \texttt{conftest.py}, where all test parameters and environment settings are configured. Here we declare a dedicated PostgreSQL schema named \texttt{project\_test\_dao}. Inside this new schema, we inject some observations by running \texttt{pop\_db\_test.sql}. It creates a User, a NEO and an approach. And to make sure that tests do not influence one another, between each test, we delete what could have been created during one, or restore the test tables to their initial state.
+As said before, some tests aim to verify our SQL queries. In order to test that, we create a cloned PostgreSQL schema with the same \texttt{init\_db.sql} as the original database. We test our methods here to avoid any issues with the real data. In \texttt{conftest.py}, where all test parameters and environment settings are configured. Here we declare a dedicated PostgreSQL schema named \texttt{project\_test\_dao}. Inside this new schema, we inject some observations by running \texttt{pop\_db\_test.sql}. It creates two users, two NEOs and two approaches. And to make sure that tests do not influence one another, at the end, some tests delete what could have been created during one, or restore the test tables to their initial state.
+
+\bigskip
+
+\subsection{Results}
+
+There is a total of 151 tests if we use a test database, without it, there are 111, they pass and the 40 DAO tests are skipped. The tests cover 86\,\% of the code of the service and DAO (we measured only these ones). All the services are above 80\,\%, except the scheduler of the automatic import (64\,\%), whose background thread
+is harder to test. Ruff, mypy (55 files in the backend, 15 in the frontend) and Bandit report no issue. The two warnings of Bandit about a ``hard-coded password'' were false positives (the
+token type \texttt{"bearer"} and an empty default hash).
+
+Writing the tests, and reviewing the code at the same time, revealed several problems that we had not noticed when using the application:
+
+First an interrupted import was recorded as failed, so the next one started again from the beginning. With the demonstration key, the recent data was never reached. Because of that the \texttt{partial} status stayed without being able to finish it.
+
+Then, when a \texttt{.env} file was present, the DAO tests used the application schema instead of the test schema. This is now forced, and checked by a test.
+
+And when creating an invalid NEO, it returned an error \texttt{500} instead of \texttt{400}, because the error was caught a second time by a generic exception handler.
+
+\bigskip
+
+Unfortunately, the tests are limited. The Streamlit pages have no automated tests, we had to check them manually by using every feature after each modification. Testing them automatically would
+require a tool driving a browser, which we did not have time to set up.
+
+
+\bigskip
+\bigskip
