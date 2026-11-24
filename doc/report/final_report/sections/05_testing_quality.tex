@@ -2,7 +2,7 @@
 
 \bigskip
 
-To make sure of the quality of our app, we implemented tests. We used these to see if what we did worked well, and whether the results matched expectations. Furthermore, for the readability, we use the linter \texttt{Ruff}.
+To make sure of the quality of our app, we implemented tests. We used these to see if what we did worked well, and whether the results matched expectations. Furthermore, for the readability, we use the linter \texttt{Ruff} and to help us understand what is happening in case of error, we have a log of everything happening during the process.
 
 \subsection{Tests}
 
@@ -23,7 +23,7 @@ We first test the CRUD functions (Create, Read, Update, Delete) and their limits
 
 \medskip
 
-We also check that elements that should be unique remain like this. Still using the example of the alerts, it is useless to have two times the same alert, so we have tested that if we create the same alert twice, nothing happens.
+We also check that elements that should be unique remain like this. Still using the example of the alerts, it is useless to have the same alert twice, so we have tested that if we create the same alert twice, nothing happens.
 
 \medskip
 
@@ -45,7 +45,7 @@ Furthermore, we use \texttt{Mypy}. It checks whether the types declared in our m
 
 \texttt{def find\_by\_id(self, neo\_id: int) -> Neo | None:}
 
-It verifies that when we use it, \texttt{neo\_id} is an integer, and a \texttt{Neo} or \texttt{None} is returned. And also \texttt{Bandit} for security. It detects for example when passwords are hard-coded, it also makes sure that there is no possibility of SQL injections.
+It verifies that when we use it, \texttt{neo\_id} is an integer, and a \texttt{Neo} or \texttt{None} is returned. And also \texttt{Bandit} for security. It detects for example when passwords are hard-coded, it also makes sure that there is no possibility of SQL injections or that exceptions are not silently ignored.
 
 And finally for readability, we use docstrings to explain what our methods do. There are also two more \texttt{README} files, one in the backend and one in the frontend to explain more precisely how our app works. Also the swagger provided by FastAPI, gives a list of all the methods available, their URLs address, and an interface to try functions of the app.
 
@@ -58,19 +58,19 @@ And finally for readability, we use docstrings to explain what our methods do. T
 \bigskip
 \bigskip
 
-As said before, some tests aim to verify our SQL queries. In order to test that, we create a cloned PostgreSQL schema with the same \texttt{init\_db.sql} as the original database. We test our methods here to avoid any issues with the real data. In \texttt{conftest.py}, where all test parameters and environment settings are configured. Here we declare a dedicated PostgreSQL schema named \texttt{project\_test\_dao}. Inside this new schema, we inject some observations by running \texttt{pop\_db\_test.sql}. It creates two users, two NEOs and two approaches. And to make sure that tests do not influence one another, at the end, some tests delete what could have been created during one, or restore the test tables to their initial state.
+As said before, some tests aim to verify our SQL queries. In order to test that, we create a cloned PostgreSQL schema with the same \texttt{init\_db.sql} as the original database. We test our methods here to avoid any issues with the real data. In \texttt{conftest.py}, where all test parameters and environment settings are configured. Here we declare a dedicated PostgreSQL schema named \texttt{project\_test\_dao}. Inside this new schema, we inject some observations by running \texttt{pop\_db\_test.sql}. It creates two users, two NEOs and two approaches. And to make sure that tests do not influence one another, between each test, if it has created elements, modified some, it restores all the test data at their initial state.
 
 \bigskip
 
 \subsection{Results}
 
-There is a total of 151 tests if we use a test database, without it, there are 111, they pass and the 40 DAO tests are skipped. The tests cover 86\,\% of the code of the service and DAO (we measured only these ones). All the services are above 80\,\%, except the scheduler of the automatic import (64\,\%), whose background thread
+There is a total of 152 tests if we use a test database, without it, there are 112, they pass and the 40 DAO tests are skipped. The tests cover 86\,\% of the code (cf. test coverage table in appendix) of the service and DAO (we measured only these ones). All the services are above 80\,\%, except the scheduler of the automatic import (64\,\%), whose background thread
 is harder to test. Ruff, mypy (55 files in the backend, 15 in the frontend) and Bandit report no issue. The two warnings of Bandit about a ``hard-coded password'' were false positives (the
 token type \texttt{"bearer"} and an empty default hash).
 
 Writing the tests, and reviewing the code at the same time, revealed several problems that we had not noticed when using the application:
 
-First an interrupted import was recorded as failed, so the next one started again from the beginning. With the demonstration key, the recent data was never reached. Because of that the \texttt{partial} status stayed without being able to finish it.
+First, an interrupted import was recorded as failed, so the next one started again from the beginning. With the demonstration key, the recent data was never reached. Because of that the \texttt{partial} status stayed without being able to finish it.
 
 Then, when a \texttt{.env} file was present, the DAO tests used the application schema instead of the test schema. This is now forced, and checked by a test.
 
