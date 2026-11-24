@@ -120,7 +120,7 @@ In September, in the first analysis report we fixed the main technical choices. 
 
 \medskip
 
-However, even if the global architecture did not change, these details did. In fact, now, there are thirty endpoints that you can find in the Table of endpoints.
+However, even if the global architecture did not change, these details did. In fact, now, there are thirty endpoints that you can find in the Table of endpoints (Table 4).
 
 Furthermore, in the final version we use the identifier of the user in the path about personal data, for example we have \texttt{/users/12} instead of \texttt{/users/me}. Leaving the situation like that would have allowed other users to access personal data of everybody just by modifying the id in the endpoint. That is why the server compares this id with the one of the token. Administrators are the exception, actually they can access and manage every account.
 
