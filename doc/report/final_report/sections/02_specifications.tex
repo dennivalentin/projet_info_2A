@@ -3,10 +3,10 @@
 
 \subsection{Needs addressed by the application}
 
-We designed NEO-Watch for two kinds of users. The first are \emph{astronomy enthusiasts}: they
+We designed NEO-Watch for two kinds of users. The first are \emph{astronomy enthusiasts}. They
 want to know which objects come close to the Earth, to follow some of them over time, and to
 be warned of the passages that interest them without checking the data every day. The second
-are the \emph{administrators} of the application: they manage the accounts and make sure that
+are the \emph{administrators} of the application. They manage the accounts and make sure that
 the data stays up to date.
 
 \medskip
@@ -19,7 +19,9 @@ builds the user features on top of it.
 \subsection{Features delivered}
 
 The subject required six features (F1 to F6). We also chose three optional features
-(FO3, FO7, FO8) in the analysis report. All of them are implemented.
+(FO3, FO7, FO8) in the analysis report. Eight of them are fully
+implemented. The Picture of the Day (FO8) only works in part, because NASA's service often sends
+its logo instead of the picture.
 Table~\ref{tab:features} summarises what each feature does in the final application.
 
 \begin{table}[H]
@@ -46,8 +48,10 @@ Table~\ref{tab:features} summarises what each feature does in the final applicat
       and median distance. & Done \\
     FO7 Automatic import & The NASA data is updated automatically every day; administrators
       can also start an update by hand. & Done \\
-    FO8 Picture of the day & See and download NASA's Astronomy Picture of the Day, for any
-      date. & Done \\
+    FO8 Picture of the day & Choose a date, read the description of NASA's Astronomy Picture of
+      the Day and export it as a text file. When NASA gives no picture, which happens often, the
+      image cannot be shown or downloaded, and a button leads to it on NASA's website. &
+      Partially done \\
     \bottomrule
   \end{tabularx}
   \caption{Features of NEO-Watch and their status}
@@ -59,24 +63,34 @@ Table~\ref{tab:features} summarises what each feature does in the final applicat
 The application relies on a few hypotheses, decided in the analysis report and kept during
 the development.
 
-\begin{itemize}
-  \item \textbf{Data source.} NEO-Watch only uses the \texttt{/feed} endpoint of NeoWs. It is
-    organised by period, like our features (dashboard, search by date, alerts), and filling three
-    years of data takes about 160 calls, against more than 3,000 with \texttt{/neo/browse}. As a
-    consequence, the application only knows the NEOs that come close to the Earth during its
-    import window: it monitors approaches, it is not a full catalogue.
-  \item \textbf{Import window.} Two years in the past and one year in the future. The past is
-    imported once. Every day, the application adds the missing days at the end of the window and
-    imports the next 30 days again, to get the objects discovered since the last import.
-  \item \textbf{Units.} Distances and diameters in kilometres, speeds in kilometres per hour.
-    Distances in astronomical units are computed when they are displayed, not stored.
-  \item \textbf{NASA data is read-only.} The application never changes a NASA object; users only
-    add their own objects (F4), their favourites and their alerts.
-  \item \textbf{Notifications at login.} Alerts are evaluated when the user logs in. Each
-    matching approach is notified once.
-  \item \textbf{Accounts.} The first administrator is created with the seed data; every other
-    administrator is promoted by an existing one.
-\end{itemize}
+\subsubsection{Where the data comes from}
+
+NEO-Watch only uses the \texttt{/feed} endpoint of NeoWs. This endpoint is organised by period,
+just like our features (the dashboard, the search by date and the alerts all work on dates).
+Filling three years of data takes about 140 calls with it, against more than 3\,000 with
+\texttt{/neo/browse}. There is a price to pay, though. The application only knows the objects
+that come close to the Earth during its import window. In other words, it monitors approaches
+and is not a full catalogue of NEOs.
+
+The window itself goes from two years in the past to one year in the future. The past is
+imported once. After that, the application adds every day the missing days at the end of the
+window, and imports the next 30 days again to pick up the objects discovered since the last
+import.
+
+Distances and diameters are stored in kilometres, speeds in kilometres per hour. Distances in
+astronomical units are only computed when they are displayed.
+
+\subsubsection{What users can change}
+
+NASA data is read-only. The application never changes an object that came from NASA. Users only
+add their own objects (F4), their favourites and their alerts. As for accounts, the first
+administrator is created with the seed data, and every other administrator has to be promoted by
+an existing one.
+
+\subsubsection{When alerts are checked}
+
+Alerts are evaluated when the user logs in, not continuously. Each matching approach is notified
+only once, so the same message does not come back at every login.
 
 \subsection{Differences with the analysis report}
 
