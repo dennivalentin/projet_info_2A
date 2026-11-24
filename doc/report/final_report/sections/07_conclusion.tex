@@ -1,0 +1,28 @@
+\section{Conclusion}
+\label{sec:conclusion}
+
+In the end, NEO-Watch does what we wanted it to do. The six required features work, and so do
+the three optional ones we chose. A user can log in, see the next approaches on the dashboard,
+search for an object, follow it in their favourites and get an alert when an object matches their
+criteria. The NASA data is also updated every day on its own.
+
+Not everything went as planned, though. Some ideas from the analysis report were dropped or
+simplified because we did not have the time, like the validation of user objects by an
+administrator. Others changed once we started coding. Logging in now uses tokens instead of sessions, and the
+web service ended up with thirty endpoints organised quite differently from the plan. The database also took us longer than expected to get right, and it
+delayed the start of several features. Looking back, we should have fixed the schema earlier and
+run the whole application together sooner, instead of discovering the integration problems at
+the end.
+
+The application also has limits. It only knows the objects that come close to the Earth during
+the three years we import, so it is not a complete catalogue, and some favourites only have one
+point on their graph. It depends completely on the NASA API, and when NASA has a problem, so do
+we. With more time, we would have liked to store the passwords with a safer algorithm such as
+bcrypt, bring back the validation of user objects, and test the Streamlit pages automatically.
+
+On our side, this project taught us a lot. It was the first time most of us worked on the same
+code base at four, with branches, pull requests and merge conflicts to solve. We also understood
+why tests matter. At first they felt like extra work, but our 152 tests found real bugs that we had
+never noticed by using the application. For example, an interrupted NASA import used to start
+again from scratch instead of resuming where it had stopped. Overall, we are happy with the result, and we learned as much
+from what went wrong as from what worked.
