@@ -252,3 +252,126 @@ Two utilities are shared by all the pages. \texttt{api\_client.py} adds the toke
 request; when the access token has expired (it lasts 30 minutes), it asks for a new one with the
 refresh token and sends the request again, so that the user is not logged out in the middle of
 their work. \texttt{auth\_guard.py} sends a user who is not logged in back to the login page.
+
+\subsection{A tour of the application}
+\label{sec:tour}
+
+This part walks through the main pages of NEO-Watch, in the order a new user would discover
+them. All the screenshots come from the application running on our own database, filled by the
+NASA import.
+
+\subsubsection{Dashboard}
+
+The dashboard is the first thing a user looks at after logging in. By default it covers the next
+seven days, but the period can be changed with the two dates at the top of the page. Three key
+figures come first, namely the number of NEOs passing by, how many of them are potentially
+hazardous, and their share. Below them, the page highlights the closest approach of the period.
+In Figure~\ref{fig:tourdashboard}, it is Apophis, which passes at about 31\,000~km from the Earth.
+The full list of approaches follows, and it can be exported as a CSV file.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{figures/dashboard.png}
+  \caption{Dashboard of the coming week}
+  \label{fig:tourdashboard}
+\end{figure}
+
+\subsubsection{Searching for a NEO}
+
+The search page combines several criteria. The user can type part of a name, keep only the
+hazardous objects, choose the origin (NASA or created by a user), set a minimum or maximum
+diameter, or look for the objects passing between two dates. The results can be sorted on any
+column, limited in number and exported as CSV. In Figure~\ref{fig:toursearch}, a search on
+``Apophis'' among the hazardous NASA objects returns a single NEO.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{figures/search.png}
+  \caption{Multi-criteria search}
+  \label{fig:toursearch}
+\end{figure}
+
+Selecting a result opens its details (Figure~\ref{fig:tourdetails}). The page shows the
+estimated diameter, the hazard flag, the NASA identifier and a link to the NASA JPL page of the
+object. The close approaches come next, with the distance in kilometres and in astronomical units
+and the speed. From here, a single click adds the object to the user's favourites.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{figures/search_neos_favourite.png}
+  \caption{Details and close approaches of a NEO}
+  \label{fig:tourdetails}
+\end{figure}
+
+\subsubsection{Favourites}
+
+The favourites page gathers the objects a user wants to follow (Figure~\ref{fig:tourfavourites}).
+A NEO can be added with its identifier, or directly from the search page. Each favourite can be
+removed at any time. The page also lists the approaches of the favourites and draws, for the one
+chosen, its distance to the Earth over time. This plot can be downloaded as a picture, and the
+history as a CSV file.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{figures/favourite_neos.png}
+  \caption{Favourites page}
+  \label{fig:tourfavourites}
+\end{figure}
+
+\subsubsection{Alerts}
+
+An alert is a set of criteria chosen by the user. It can combine three of them.
+\begin{itemize}
+  \item A minimum diameter, in kilometres.
+  \item A maximum distance to the Earth, in kilometres.
+  \item Only the objects NASA classifies as potentially hazardous.
+\end{itemize}
+At least one criterion is required, and each alert gets a label. Figure~\ref{fig:touralertcreate}
+shows the creation of an alert, and the same alert once saved. An alert can be turned off without
+being deleted, then turned on again later.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{figures/alert_neos.png}
+
+  \medskip
+
+  \includegraphics[width=\textwidth]{figures/alert_neos_2.png}
+  \caption{Creating an alert (top) and the alert once saved (bottom)}
+  \label{fig:touralertcreate}
+\end{figure}
+
+The alerts are checked when the user logs in. Every upcoming approach that matches an active
+alert is shown once, at the top of the alerts page, with the label of the alert in brackets
+(Figure~\ref{fig:touralerts}). Here, an alert on the objects larger than 5~km found two of them,
+4953 (1990 MU) and 11066 Sigurd, which will pass in 2027.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{figures/alerts.png}
+  \caption{Notifications triggered by an alert}
+  \label{fig:touralerts}
+\end{figure}
+
+\subsubsection{Statistics}
+
+The statistics page looks at the whole database rather than at a single period
+(Figure~\ref{fig:tourstats}). In our database, at the moment of the screenshot, it counts 3\,928 NEOs, 13.5\,\% of which are
+potentially hazardous, and a median distance of about 102 lunar distances. Two charts follow.
+The first one shows the number of approaches per month. The second one sorts the objects into
+four size classes, chosen because each of them matches a different kind of impact. Objects under
+25~m mostly burn up in the atmosphere. From 140~m, NASA speaks of regional damage, and above
+1~km the consequences would be global. Each chart comes with a short sentence that explains how
+to read it.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{figures/neo_statistics_1.png}
+
+  \medskip
+
+  \includegraphics[width=\textwidth]{figures/neo_statistic_2.png}
+  \caption{Statistics on the NEOs of the database}
+  \label{fig:tourstats}
+\end{figure}
+
