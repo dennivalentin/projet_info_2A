@@ -110,4 +110,29 @@ Figure~\ref{fig:gantt} compares, for each component, the dates planned in the an
 
 \paragraph{The final report.} The writing of the final report was planned from 3 November, in parallel with the end of the development. We finally chose to start it on 14 November, once the application was complete, so that the report would describe the application as it was actually built.
 
-\paragraph{Lessons learned.} Two lessons can be drawn from this comparison. First, the database schema should be frozen as early as possible, and any later change should be announced to the whole group, since it affects every feature. Second, running the full application regularly, even with unfinished features, would have revealed the integration issues earlier instead of concentrating them at the end of the project.
+
+\subsection{Use of artificial intelligence tools}
+
+
+The use of AI was allowed in this project, and we used it. Our main tool was Claude, an AI
+assistant used through Claude Code. It reads the project files, runs the tests and edits the code
+itself.
+
+We mainly used it for the following tasks.
+\begin{itemize}
+  \item Fixing errors in the database, and the bugs that broke the search, the statistics
+    and the dashboard.
+  \item Making the business object
+  \item Securing the application, for example by removing a hard-coded administrator login.
+  \item Writing a large share of the unit tests and setting up the continuous integration.
+  \item Handling the case where NASA sends its logo instead of the Picture of the Day.
+  \item Making the report clearer and checking the LaTeX code.
+\end{itemize}
+In most cases, we designed and wrote the first version ourselves. The assistant then corrected it.
+
+
+The assistant saved us a lot of time on long and repetitive tasks. It also found problems we had
+missed. Still, code we do not understand is code we cannot maintain. Each member therefore went
+back over the code of their own features, so as to be able to explain it.
+
+
