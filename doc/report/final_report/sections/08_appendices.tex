@@ -50,20 +50,29 @@ Altogether, I think that our group worked effectively, everyone knew what they s
 
 \subsection{Valentin Denni}
 
+\subsection{Valentin Denni}
+
 In this project, I was in charge of the search for NEOs (F3) and the creation of a NEO by a user
 (F4). I also wrote the business objects for the NEOs, their approaches and the proposals, and I
-set up the first version of the backend. 
+set up the first version of the backend. For the analysis report, I wrote the specifications and
+the design part, with the package and sequence diagrams and the table of endpoints. I also kept
+the weekly tracking up to date.
+
+The creation of a NEO was harder than it looked. A NEO can come from the NASA API or from a user,
+and these two cases do not need the same data. It took me several versions of the create method
+before it handled both of them properly.
+
+The search gave me even more trouble, especially the DAO methods. I did not know how to take
+search criteria as input and turn them into a query on the database. The user can fill in only
+some of the criteria, so the query cannot be written in advance. In the end, I gathered the
+criteria in a dictionary and built the query step by step, adding one condition for each criterion
+that was filled in. Some criteria concern the approaches and not the NEO itself, which meant
+joining a second table. I also had to pass the values to the database separately from the query,
+and not write them directly inside it. My first version of the find method did not work, and I
+had to correct it several times before the search gave the right results. The help of ai was really useful here.
 
 
-The hardest part of my features was the creation of a NEO. A NEO can come from the NASA API or
-from a user, and these two cases do not need the same data. It took me several versions of the
-create method before it handled both of them properly. I also worked on connecting
-the backend. I corrected the JWT authentication, fixed the favourite and alert controllers, and
-restricted the database reset to administrators. Just getting the backend to start took me longer
-than expected, between a port already in use and code left over from the template.
-
-I used an AI assistant.
-It helped me fix bugs, secure the application and write tests much faster than I could have alone.
+Ai also helped me fix bugs, secure the application and write tests much faster than I could have alone.
 
 
 Overall, the group worked well. Everyone knew their task, and we helped each other when someone
